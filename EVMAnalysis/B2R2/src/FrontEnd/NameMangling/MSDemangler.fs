@@ -26,10 +26,10 @@ namespace B2R2.FrontEnd.NameMangling
 
 open System
 open FParsec
-open B2R2
 open B2R2.FrontEnd.NameMangling.MSUtils
 
 type MSDemangler () =
+  inherit Demangler ()
   (* Helper functions for updating the UserState. *)
   let addToNameList c =
     updateUserState ( fun us -> { us with NameList = c :: us.NameList })
@@ -56,7 +56,7 @@ type MSDemangler () =
 
   let phex =
     many1 upper .>> pchar '@' |>> List.map getHexChar |>> List.map string
-    |>> List.fold (+) "0x"
+    |>> List.fold (fun s d -> s + d) "0x"
     |>> int64
 
   /// Parses the encodedNumber in an MSMangled string.
@@ -195,7 +195,7 @@ type MSDemangler () =
     digit |>> string |>> int .>>. getUserState
     |>> (fun (x, us) ->
           if x >= us.NameList.Length then Name "???????"
-          else (List.rev us.NameList)[x])
+          else (List.rev us.NameList).[x])
 
   (*---------------For the type components of functions.-----------------*)
 
@@ -309,7 +309,7 @@ type MSDemangler () =
     digit |>> string |>> int .>>. getUserState
     |>> (fun (x, us) ->
           if x >= us.TypeList.Length then Name "?????"
-          else (List.rev us.TypeList)[x])
+          else (List.rev us.TypeList).[x])
 
   /// Parses a type and adds it to the typeList if it is not a simple type.
   let smartParseType =
@@ -495,28 +495,28 @@ type MSDemangler () =
 
   (* -------------Tying the knot for the references created-----------------*)
   do
-    nameFragmentRef.Value <-
+    nameFragmentRef :=
        nameBackRef <|> pnameAndAt <|> attempt pTemplate
        <|> attempt nestedFunc <|> attempt pRTTICode <|> attempt numName
        <|> pSpecialName <|> attempt constructedName
 
-    fullNameRef.Value <-
+    fullNameRef :=
       smartParseName .>>. many (pAnonymousNameSpace <|> smartParseName )
       |>> (fun (fst, rst) -> FullName (fst :: rst))
 
-    possibleTypeRef.Value <-
+    possibleTypeRef :=
       attempt allFuncPointers <|> attempt arrayPtr <|> attempt complexType
       <|> enumType <|> attempt arrayType <|> normalBuiltInType
       <|> extendedBuiltInType
       <|> basicPointerTypes <|> typeBackRef
 
-    pFuncRef.Value <-
+    pFuncRef :=
       functionFullName .>> pchar '@' .>>. fInfo
       |>> (fun (name, (scope, modifier, callT, tList, rtMod)) ->
             (scope, modifier, callT, name, tList.Head, tList.Tail, rtMod)
             |> FunctionT)
 
-    pTemplateRef.Value <-
+    pTemplateRef :=
       saveScopeAndReturn (
         clearUserState >>.pstring "?$"
         >>. (pnameAndAt >>= addToNameList <|> pSpecialName )
@@ -524,7 +524,7 @@ type MSDemangler () =
         .>> pchar '@'
         |>> Template
       )
-    returnTypeOperatorRef.Value <-
+    returnTypeOperatorRef :=
       fullName .>> pchar '@' .>>. fInfo |>>
       (fun (name, (scope, mods, callT, tList, rtMod)) ->
         let newName = FullName [ConcatT [Name "operator "; tList.Head]; name]
@@ -532,22 +532,20 @@ type MSDemangler () =
         FunctionT (scope, mods, callT, newName, newReturn, tList.Tail, rtMod)
       )
 
-  (* ---------------All Expressions from a mangled string------------------ *)
-  let allExprs =
+  (*---------------All Expressions from a mangled string------------------*)
+  let allExpressions =
     attempt pFunc <|> attempt nonFunctionString <|> attempt allThunkFunc
     <|> attempt pTemplate <|> fullName
+
+  override __.Run str =
+    match runParserOnString allExpressions MSUserState.Default "" str.[1..] with
+    | Success (result, _, _) ->
+      let result = MSInterpreter.interpret result
+      Result.Ok <| result.Trim ()
+    | Failure (_, _, _) ->
+      Result.Error ParsingFailure
 
   /// Check if the given string is a well-formed mangled string.
   static member IsWellFormed (str: string) =
     let str = str.Trim ()
     str.Length <> 0 && str.StartsWith "?" && str.Contains "@"
-
-  interface IDemanglable with
-    member __.Demangle str =
-      match runParserOnString allExprs MSUserState.Default "" str[1..] with
-      | Success (result, _, _) ->
-        let result = MSInterpreter.interpret result
-        Result.Ok <| result.Trim ()
-      | Failure _ ->
-        Result.Error ErrorCase.ParsingFailure
-

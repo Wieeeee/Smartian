@@ -26,78 +26,105 @@ module B2R2.MiddleEnd.BinGraph.SCC
 
 open System.Collections.Generic
 
-type private SCCInfo<'V when 'V: equality> = {
+type SCC<'D when 'D :> VertexData> = Set<Vertex<'D>>
+
+type SCCInfo<'D when  'D :> VertexData> = {
   /// Vertex ID -> DFNum
   DFNumMap: Dictionary<VertexID, int>
   /// DFNum -> Vertex
-  Vertex: IVertex<'V>[]
+  Vertex: Vertex<'D> []
   /// DFNum -> LowLink
-  LowLink: int[]
+  LowLink: int []
 }
 
-let private initSCCInfo (g: IGraph<_, _>) =
-  let len = g.Size + 1
+type CondensationBlock<'D when 'D :> VertexData> (scc: SCC<'D>) =
+  inherit VertexData(VertexData.genID ())
+
+  member __.SCC = scc
+
+type CondensationGraph<'D when  'D :> VertexData> =
+  DiGraph<CondensationBlock<'D>, unit>
+
+let initSCCInfo g =
+  let len = DiGraph.getSize g + 1
   { DFNumMap = Dictionary<VertexID, int>()
     Vertex = Array.zeroCreate len
     LowLink = Array.zeroCreate len }
 
-let inline private dfnum ctxt (v: IVertex<_>) =
-  ctxt.DFNumMap[v.ID]
+let inline dfnum ctxt (v: Vertex<_>) =
+  ctxt.DFNumMap.[v.GetID ()]
 
-let inline private lowlink ctxt v =
-  ctxt.LowLink[dfnum ctxt v]
+let inline lowlink ctxt v =
+  ctxt.LowLink.[dfnum ctxt v]
 
-let rec private assignSCC ctxt vNum stack (scc: HashSet<_>) =
-  if not (List.isEmpty stack) then
+let rec assignSCC ctxt vNum stack scc =
+  if List.length stack <> 0 then
     let wNum = List.head stack
     if wNum >= vNum then
       let stack = List.tail stack
-      scc.Add ctxt.Vertex[wNum] |> ignore
+      let w = ctxt.Vertex.[wNum]
+      let scc = Set.add w scc
       assignSCC ctxt vNum stack scc
-    else stack
-  else stack
+    else stack, scc
+  else stack, scc
 
-let private createSCC ctxt v stack sccs =
+let createSCC ctxt v stack sccs =
   let vNum = dfnum ctxt v
   if lowlink ctxt v = vNum then
-    let scc = HashSet<IVertex<_>> ()
-    let stack = assignSCC ctxt vNum stack scc
+    let stack, scc = assignSCC ctxt vNum stack Set.empty
     stack, scc :: sccs
   else stack, sccs
 
+let inline min x y = if x < y then x else y
+
 /// R.Tarjan. Depth-first search and linear graph algorithms
-let rec private computeSCC (g: IGraph<_, _>) ctxt (v: IVertex<_>) n stack sccs =
-  assert (not (ctxt.DFNumMap.ContainsKey v.ID))
-  ctxt.DFNumMap[v.ID] <- n
-  ctxt.LowLink[n] <- n
-  ctxt.Vertex[n] <- v
+let rec computeSCC g ctxt (v: Vertex<_>) n stack sccs =
+  ctxt.DFNumMap.[v.GetID ()] <- n
+  ctxt.LowLink.[n] <- n
+  ctxt.Vertex.[n] <- v
   let n, stack, sccs =
-    g.GetSuccs v
-    |> Seq.fold (computeLowLink g ctxt v) (n + 1, n :: stack, sccs)
+    DiGraph.getSuccs g v
+    |> List.fold (computeLowLink g ctxt v) (n + 1, n :: stack, sccs)
   let stack, sccs = createSCC ctxt v stack sccs
   n, stack, sccs
 
-and private computeLowLink g ctxt v (n, stack, sccs) (w: IVertex<_>) =
+and computeLowLink g ctxt v (n, stack, sccs) (w: Vertex<_>) =
   let vNum = dfnum ctxt v
   let vLink = lowlink ctxt v
-  if ctxt.DFNumMap.ContainsKey w.ID then
+  if ctxt.DFNumMap.ContainsKey <| w.GetID () then
     let wNum = dfnum ctxt w
-    if List.contains wNum stack then ctxt.LowLink[vNum] <- min vLink wNum
+    if List.contains wNum stack then ctxt.LowLink.[vNum] <- min vLink wNum
     n, stack, sccs
   else
     let n, stack, sccs = computeSCC g ctxt w n stack sccs
     let wLink = lowlink ctxt w
-    ctxt.LowLink[vNum] <- min vLink wLink
+    ctxt.LowLink.[vNum] <- min vLink wLink
     n, stack, sccs
 
-let compute (g: IGraph<_, _>) =
+let compute g root =
   let ctxt = initSCCInfo g
-  g.Vertices
-  |> Array.fold (fun (n, acc) root ->
-    if ctxt.DFNumMap.ContainsKey root.ID then n, acc
-    else
-      let n, _, sccs = computeSCC g ctxt root n [] []
-      n, sccs :: acc) (1, [])
+  DiGraph.getUnreachables g
+  |> Seq.fold (fun acc v -> Set.add v acc) Set.empty
+  |> Set.add root
+  |> Set.fold (fun (n, acc) root ->
+    let n, _, sccs = computeSCC g ctxt root n [] []
+    let acc = sccs |> List.fold (fun acc scc -> Set.add scc acc) acc
+    n, acc) (1, Set.empty)
   |> snd
-  |> List.concat
-  |> List.toArray
+
+let condensation graphInit g root =
+  let sccs = compute g root
+  let cGraph = graphInit ()
+  let vMap, cGraph =
+    sccs
+    |> Set.fold (fun (acc, cGraph) scc ->
+      let v, cGraph = DiGraph.addVertex cGraph <| CondensationBlock (scc)
+      let acc = Set.fold (fun acc w -> Map.add w v acc) acc scc
+      acc, cGraph) (Map.empty, cGraph)
+  Set.empty
+  |> DiGraph.foldEdge g (fun acc src dst _ ->
+    let src = Map.find src vMap
+    let dst = Map.find dst vMap
+    Set.add (src, dst) acc)
+  |> Set.fold (fun condensation (src, dst) ->
+    DiGraph.addEdge condensation src dst ()) cGraph

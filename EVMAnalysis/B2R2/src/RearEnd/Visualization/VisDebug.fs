@@ -28,7 +28,6 @@ namespace B2R2.RearEnd.Visualization
 module VisDebug =
   open System
   open B2R2.MiddleEnd.BinGraph
-  open B2R2.MiddleEnd.ControlFlowGraph
 
   let private fs = IO.File.Create ("visualization.log")
 
@@ -41,19 +40,18 @@ module VisDebug =
     fs.Write (bytes, 0, bytes.Length)
     fs.Flush ()
 
-  let private ppNode (vGraph: IGraph<_, _>) (vNode: IVertex<VisBBlock>) =
+  let private ppNode vGraph (vNode: Vertex<VisBBlock>) =
     logn "Node {"
-    sprintf "\tID: %d" vNode.ID |> logn
-    sprintf "\tAddr: (%x)" ((vNode.VData :> IVisualizable).BlockAddress)
-    |> logn
+    sprintf "\tID: %d" (vNode.GetID ()) |> logn
+    sprintf "\tAddr: (%s)" (vNode.VData.PPoint.ToString ()) |> logn
     sprintf "\tLayer: %d" vNode.VData.Layer |> logn
     logn "\tPreds: ["
-    Seq.iter (fun (v: IVertex<VisBBlock>) ->
-      sprintf "%d, " v.ID |> logn) <| vGraph.GetPreds vNode
+    List.iter (fun (v: Vertex<VisBBlock>) ->
+      sprintf "%d, " (v.GetID ()) |> logn) <| DiGraph.getPreds vGraph vNode
     logn "]"
     logn "\tSuccss: ["
-    Seq.iter (fun (v: IVertex<VisBBlock>) ->
-      sprintf "%d, " v.ID |> logn) <| vGraph.GetSuccs vNode
+    List.iter (fun (v: Vertex<VisBBlock>) ->
+      sprintf "%d, " (v.GetID ()) |> logn) <| DiGraph.getSuccs vGraph vNode
     logn "]"
     logn "}"
 

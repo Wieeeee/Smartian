@@ -26,11 +26,12 @@ namespace B2R2.FrontEnd.NameMangling
 
 open FParsec
 open System
-open B2R2
 open B2R2.FrontEnd.NameMangling.ItaniumTables
 open B2R2.FrontEnd.NameMangling.ItaniumUtils
 
 type ItaniumDemangler () =
+  inherit Demangler ()
+
   let charListtoStr a = String (List.toArray a)
 
   let rec convertbase36todecimal idx res input =
@@ -54,17 +55,17 @@ type ItaniumDemangler () =
     .>>. getUserState
     |>> (fun (x, us) ->
           if x + 2 <= us.Namelist.Length then
-            let a2 = (List.rev us.Namelist)[x + 1]
+            let a2 = (List.rev us.Namelist).[x + 1]
             match a2 with
             | NestedName (a, b) -> NestedName (a, List.rev b)
             | PointerArg (a, b, Specific idx) ->
-              let value = us.TemplateArgList[idx + 1]
+              let value = us.TemplateArgList.[idx + 1]
               PointerArg (a, b, value)
             | RefArg (a, Specific idx) ->
-              let value = us.TemplateArgList[idx + 1]
+              let value = us.TemplateArgList.[idx + 1]
               RefArg (a, value)
             | Specific idx ->
-              let value = us.TemplateArgList[idx + 1]
+              let value = us.TemplateArgList.[idx + 1]
               value
             | _ -> a2
           else
@@ -76,7 +77,7 @@ type ItaniumDemangler () =
     .>>. getUserState
     |>> (fun (x, us) ->
           if x + 2 <= us.TemplateArgList.Length then
-            let a2 = (us.TemplateArgList)[x + 1]
+            let a2 = (us.TemplateArgList).[x + 1]
             (a2, x)
           else
             (Dummy "", x)) |>> TemplateSub
@@ -91,7 +92,7 @@ type ItaniumDemangler () =
     |>> Vendor
 
   let builtinsingle =
-    satisfy (fun c -> getTypeS c <> "")
+    satisfy (fun c -> if (getTypeS c <>"") then true else false)
     |>> string |>> BuiltinTypeIndicator.ofString
 
   let builtindouble =
@@ -497,17 +498,17 @@ type ItaniumDemangler () =
     |>> FunctionBegin
 
   do
-    pTemplateref.Value <-
-      saveandreturn (
-        ((attempt pABITag <|> name <|> attempt psxname <|> pOperator
-        <|> attempt pSxoperator <|> attempt pConsOrDes) >>= addtoNamelist
-        <|> attempt pSxsubstitution <|> namebackrefS <|> (namebackrefT))
-        .>> clearCarry .>> pchar 'I' .>>. (pIarguments) .>> pchar 'E'
-        >>= checkBeginning
-        |>> Template
-      )
+    pTemplateref :=
+    saveandreturn (
+      ((attempt pABITag <|> name <|> attempt psxname <|> pOperator
+      <|> attempt pSxoperator <|> attempt pConsOrDes) >>= addtoNamelist
+      <|> attempt pSxsubstitution <|> namebackrefS <|> (namebackrefT))
+      .>> clearCarry .>> pchar 'I' .>>. (pIarguments) .>> pchar 'E'
+      >>= checkBeginning
+      |>> Template
+    )
 
-    pNestedNameref.Value <-
+    pNestedNameref :=
       pchar 'N' >>. (pCVR <|> preturn (Name ""))
       .>>.
       (attempt (pNestedBeginning)
@@ -517,13 +518,13 @@ type ItaniumDemangler () =
       |>> fun (a, (b, c)) -> (a, b :: c)
       |>> NestedName
 
-    pPointerArgref.Value <-
+    pPointerArgref :=
       (pstring "P" .>>. (opt (pRCVqualifier <|> pCVqualifier)
       ) .>>. (pNormalArg <|> pLambda <|> pUnnamedType <|> pDecltype))
       |>> (fun ((a, b), c) -> (a, b, c)) |>> PointerArg >>= addargumenttolist
       .>> clearCarry
 
-    pfuncref.Value <-
+    pfuncref :=
       ((nparse <|> pReference) <|> preturn (Name "")) .>>. (opt pCVqualifier)
       .>> pchar 'F'
       .>>. pFunctionArg .>>. pArguments .>> pchar 'E'
@@ -531,18 +532,18 @@ type ItaniumDemangler () =
       |>> FunctionPointer
       >>= addfunctionptolist .>> clearCarry
 
-    prefArgref.Value <-
+    prefArgref :=
       pReferenceArg .>>.
       (attempt pNormalArg <|> pfunc <|> pLambda <|> pDecltype)
       |>> RefArg >>= addargumenttolist
 
-    pExpressionRef.Value <-
+    pExpressionRef :=
       attempt pBinaryExpr <|> attempt pUnaryExpr <|> attempt pCallExpr
       <|> attempt pConversionOneArg <|> pDotExpr <|> pDotPointerExpr
       <|> pConversionMoreArg <|> pCastingExpr <|> pTypeMeasure <|> pExprMeasure
       <|> pExpressionArgPack
 
-    scopeEncodingref.Value <-
+    scopeEncodingref :=
       pchar 'Z' >>.
       (attempt pFunctionRetArgs <|> scopeEncoding <|> namebackrefS
       <|> attempt pGuardVariable <|> pTransactionSafeFunc
@@ -550,7 +551,7 @@ type ItaniumDemangler () =
       <|> (attempt pVirtualThunk <|> attempt pVirtualThunkRet) <|> pTC
       ) .>> pchar 'E' |>> Scope
 
-    stmtref.Value <-
+    stmtref :=
       attempt pGuardVariable
       <|> pReferenceTemporary
       <|> pTransactionSafeFunc <|> attempt pRTTiVirtualTable
@@ -558,16 +559,15 @@ type ItaniumDemangler () =
       <|> attempt (pScope .>> pDiscard)
       <|> attempt (pFunctionRetArgs)
 
+  override __.Run str =
+    match runParserOnString (stmt) ItaniumUserState.Default "" str.[2..] with
+    | Success (result, _, pos) ->
+      if pos.Column = int64(str.Length) - 1L then
+        Result.Ok <| ItaniumInterpreter.interpret result
+      else Result.Error TrailingChars
+    | Failure (e, _, _) ->
+      Result.Error ParsingFailure
+
   /// Check if the given string is a well-formed mangled string.
   static member IsWellFormed (str: string) =
-    str.Length > 2 && str[0 .. 1] = "_Z"
-
-  interface IDemanglable with
-    member __.Demangle str =
-      match runParserOnString (stmt) ItaniumUserState.Default "" str[2..] with
-      | Success (result, _, pos) ->
-        if pos.Column = int64(str.Length) - 1L then
-          Result.Ok <| ItaniumInterpreter.interpret result
-        else Result.Error ErrorCase.ParsingFailure (* Didn't consume all. *)
-      | Failure (e, _, _) ->
-        Result.Error ErrorCase.ParsingFailure
+    str.Length > 2 && str.[0 .. 1] = "_Z"

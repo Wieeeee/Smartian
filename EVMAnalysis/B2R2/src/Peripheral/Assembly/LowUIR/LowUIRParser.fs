@@ -35,9 +35,10 @@ open B2R2.BinIR.LowUIR
 open B2R2.Peripheral.Assembly.Utils
 open B2R2.Peripheral.Assembly.LowUIR.Helper
 
-type Parser<'T> = Parser<'T, RegType>
+type Parser<'t> = Parser<'t, RegType>
 
-type LowUIRParser (isa, regFactory: RegisterFactory) =
+type LowUIRParser (isa, regbay: RegisterBay) =
+
   let isAllowedFirstCharForID c = isAsciiLetter c
 
   let isAllowedCharForID c = isAsciiLetter c || isDigit c
@@ -61,7 +62,7 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
       if s.StartsWith ("0x") then
         BigInteger.Parse ("0" + s.Substring (2), NumberStyles.AllowHexSpecifier)
       else BigInteger.Parse (s)
-      |> BitVector.OfBInt
+      |> BitVector.ofBInt
 
   let pRegType =
     (anyOf "IiFf") >>. pint32 |>> RegType.fromBitWidth
@@ -71,33 +72,28 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
     .>>. opt (pchar ':' >>. ws >>. pRegType)
     >>= (fun (toBV, typ) ->
       match typ with
-      | None -> getUserState |>> toBV
+      | None -> getUserState |>> (fun t -> toBV t)
       | Some typ -> preturn (toBV typ))
 
   let pUnaryOperator =
     [ "-"; "~"; "sqrt"; "cos"; "sin"; "tan"; "atan" ]
-    |> List.map (pstring >> attempt)
-    |> choice
-    |>> UnOpType.ofString
+    |> List.map pstring |> List.map attempt |> choice |>> UnOpType.ofString
 
   let pCastType =
-    [ "sext"; "zext"; "float"; "round"; "ceil"; "floor"; "trunc"; "fext"
-      "roundf"; "ceilf"; "floorf"; "truncf" ]
-    |> List.map (pstring >> attempt)
-    |> choice
-    |>> CastKind.ofString
+    [ "sext"; "zext"; "float"; "round"; "ceil"; "floor"; "trunc"; "fext" ]
+    |> List.map pstring |> List.map attempt |> choice |>> CastKind.ofString
 
   let pExpr, pExprRef = createParserForwardedToRef ()
 
   let pNum = pBitVector |>> AST.num
 
-  let regnames = regFactory.GetAllRegNames ()
+  let regnames = regbay.GetAllRegNames ()
 
   let pVar =
-    regnames
-    |> List.map (pstringCI >> attempt)
+    List.map pstringCI regnames
+    |> List.map attempt
     |> choice
-    |>> regFactory.StrToRegExpr
+    |>> regbay.StrToRegExpr
 
   let pTempVar =
     pstring "T_" >>. pint32 .>> ws
@@ -190,7 +186,7 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
 
   let () =
     opp.TermParser <- term
-    pExprRef.Value <- pOps
+    pExprRef := pOps
 
     [ AST.binop BinOpType.ADD, "+", 3, Associativity.Left
       AST.binop BinOpType.SUB, "-", 3, Associativity.Left
@@ -225,8 +221,6 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
       AST.relop RelOpType.LE, "<=", 2, Associativity.Left
       AST.relop RelOpType.SLT, "?<", 2, Associativity.Left
       AST.relop RelOpType.SLE, "?<=", 2, Associativity.Left
-      AST.relop RelOpType.FEQ, "=.", 2, Associativity.Left
-      AST.relop RelOpType.FNEQ, "!=.", 2, Associativity.Left
       AST.relop RelOpType.FGT, ">.", 2, Associativity.Left
       AST.relop RelOpType.FGE, ">=.", 2, Associativity.Left
       AST.relop RelOpType.FLT, "<.", 2, Associativity.Left
@@ -298,50 +292,14 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
       let rt = TypeCheck.typeOf tExp
       AST.intercjmp cond tExp fExp)
 
-  let comma = pstring ","
-
-  let pArgs =
-    sepBy (ws >>. pExpr) comma
-
-  let pApp =
-    ws
-    >>. pIdentifier
-    .>>. pBetweenParen pArgs
-    .>> ws .>> pchar ':' .>> ws .>>. pRegType
-    |>> (fun ((fnName, args), rt) -> AST.app fnName args rt)
-
-  let pExtCall =
-    ws
-    >>. pstringCI "call"
-    >>. pApp
-    |>> AST.extCall
-
-  let pException =
-    pstringCI "Exception"
-    >>. ws >>. pchar '(' >>. ws >>. pIdentifier .>> ws .>> pchar ')'
-    |>> Exception
-
-  let pSideEffectKind =
-    attempt (pstringCI "breakpoint" >>% Breakpoint)
-    <|> attempt (pstringCI "clk" >>% ClockCounter)
-    <|> attempt (pstringCI "fence" >>% Fence)
-    <|> attempt (pstringCI "delay" >>% Delay)
-    <|> attempt (pstringCI "terminate" >>% Terminate)
-    <|> attempt (pstringCI "int" >>. pint32 |>> Interrupt)
-    <|> attempt pException
-    <|> attempt (pstringCI "lock" >>% Lock)
-    <|> attempt (pstringCI "pid" >>% ProcessorID)
-    <|> attempt (pstringCI "syscall" >>% SysCall)
-    <|> attempt (pstringCI "undef" >>% UndefinedInstr)
-    <|> attempt (pstringCI "fp" >>% UnsupportedFP)
-    <|> attempt (pstringCI "privinstr" >>% UnsupportedPrivInstr)
-    <|> attempt (pstringCI "far" >>% UnsupportedFAR)
-    <|> attempt (pstringCI "cpu extension" >>% UnsupportedExtension)
+  let pSideEffectIdentifier =
+    let isAllowedChar c = isAllowedCharForID c || c = '(' || c = ')'
+    many1Satisfy2L isAllowedFirstCharForID isAllowedChar "identifier"
 
   let pSideEffect =
     ws
-    >>. pstring "!!" .>> ws >>. pSideEffectKind
-    |>> AST.sideEffect
+    >>. pstring "!!" .>> ws >>. pSideEffectIdentifier
+    |>> (fun str -> SideEffect.ofString str |> AST.sideEffect)
 
   let pStatement =
     attempt pISMark
@@ -353,7 +311,6 @@ type LowUIRParser (isa, regFactory: RegisterFactory) =
     <|> attempt pCJmp
     <|> attempt pInterJmp
     <|> attempt pInterCJmp
-    <|> attempt pExtCall
     <|> attempt pSideEffect
     >>= typeCheck
 

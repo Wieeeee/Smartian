@@ -24,8 +24,10 @@
 
 namespace B2R2.RearEnd.BinExplorer
 
+open System
 open System.Text
 open B2R2
+open B2R2.MiddleEnd.BinEssence
 
 type CmdShow () =
   inherit Cmd ()
@@ -46,64 +48,58 @@ type CmdShow () =
   override __.SubCommands = []
 
   member private __.CallerToString (sb: StringBuilder) (addr: Addr) =
-    sb.Append $"  - referenced by {addr:x}\n"
+    sb.Append ("  - referenced by " + String.u64ToHexNoPrefix addr + "\n")
 
-  // member private __.CalleeToSimpleString prefix (sb: StringBuilder) callee =
-  //   let noret =
-  //     match (callee: Function).NoReturnProperty with
-  //     | NoRet -> " [no return]"
-  //     | ConditionalNoRet _ -> " [conditional no return]"
-  //     | NotNoRetConfirmed | NotNoRet -> ""
-  //     | UnknownNoRet -> ""
-  //   if callee.FunctionKind <> FunctionKind.Regular then
-  //     sb.Append (prefix + callee.FunctionName + noret + "\n")
-  //   else
-  //     sb.Append (prefix + callee.FunctionName
-  //              + noret + $" @ {callee.EntryPoint:x}\n")
+  member private __.CalleeToSimpleString prefix (sb: StringBuilder) callee =
+    let noret = if callee.IsNoReturn then " [no return]" else ""
+    match callee.Addr with
+    | None -> sb.Append (prefix + callee.CalleeName + noret + "\n")
+    | Some addr ->
+      sb.Append (prefix + callee.CalleeName
+               + noret + " @ " + String.u64ToHexNoPrefix addr + "\n")
 
-  // member private __.CalleeToString ess (sb: StringBuilder) callee =
-  //   __.CalleeToSimpleString "" sb callee
-  //   |> (fun sb -> callee.Callers |> Seq.fold __.CallerToString sb)
+  member private __.CalleeToString (sb: StringBuilder) callee =
+    __.CalleeToSimpleString "" sb callee
+    |> (fun sb -> callee.Callers |> Set.fold __.CallerToString sb)
 
-  // member __.ShowCaller ess = function
-  //   | (expr: string) :: _ ->
-  //     let addr = CmdUtils.convHexString expr |> Option.defaultValue 0UL
-  //     match ess.CodeManager.FunctionMaintainer.TryFind addr with
-  //     | None -> [| "[*] Not found." |]
-  //     | Some func ->
-  //       let sb = StringBuilder ()
-  //       let sb = sb.Append (expr + " calls:\n")
-  //       let sb =
-  //         func.Callers
-  //         |> Seq.fold (fun sb (addr: Addr) ->
-  //           match ess.CodeManager.FunctionMaintainer.TryFind addr with
-  //           | Some callee -> __.CalleeToSimpleString "  - " sb callee
-  //           | None -> sb) sb
-  //       [| sb.ToString () |]
-  //   | _ -> [| __.CmdHelp |]
+  member __.ShowCaller ess = function
+    | (expr: string) :: _ ->
+      let addr = CmdUtils.convHexString expr |> Option.defaultValue 0UL
+      match Map.tryFind addr ess.CalleeMap.CallerMap with
+      | None -> [| "[*] Not found." |]
+      | Some callees ->
+        let sb = StringBuilder ()
+        let sb = sb.Append (expr + " calls:\n")
+        let sb =
+          callees
+          |> Set.fold (fun sb (addr: Addr) ->
+            match ess.CalleeMap.Find addr with
+            | Some callee -> __.CalleeToSimpleString "  - " sb callee
+            | None -> sb) sb
+        [| sb.ToString () |]
+    | _ -> [| __.CmdHelp |]
 
-  // member __.ShowCallee ess = function
-  //   | (expr: string) :: _ ->
-  //     let addr = CmdUtils.convHexString expr |> Option.defaultValue 0UL
-  //     let sb = StringBuilder ()
-  //     if Char.IsDigit expr[0] then
-  //       ess.CodeManager.FunctionMaintainer.TryFind (addr)
-  //     else ess.CodeManager.FunctionMaintainer.TryFind (expr)
-  //     |> Option.map (fun callee ->
-  //       (__.CalleeToString ess sb callee).ToString ())
-  //     |> Option.defaultValue "[*] Not found."
-  //     |> Array.singleton
-  //   | _ -> [| __.CmdHelp |]
+  member __.ShowCallee ess = function
+    | (expr: string) :: _ ->
+      let addr = CmdUtils.convHexString expr |> Option.defaultValue 0UL
+      let sb = StringBuilder ()
+      if Char.IsDigit expr.[0] then ess.CalleeMap.Find (addr)
+      else ess.CalleeMap.Find (expr)
+      |> Option.map (fun callee -> (__.CalleeToString sb callee).ToString ())
+      |> Option.defaultValue "[*] Not found."
+      |> Array.singleton
+    | _ -> [| __.CmdHelp |]
 
-  // member __.CmdHandle ess opts = function
-  //   | "caller" -> __.ShowCaller ess opts
-  //   | "callee"
-  //   | "function" -> __.ShowCallee ess opts
-  //   | _ -> [| __.CmdHelp |]
+  member __.CmdHandle ess opts = function
+    | "caller" -> __.ShowCaller ess opts
+    | "callee"
+    | "function" -> __.ShowCallee ess opts
+    | _ -> [| __.CmdHelp |]
 
   override __.CallBack _ ess args =
     match args with
-    | _ -> [| __.CmdHelp |]
+    | [] -> [| __.CmdHelp |]
+    | c :: opts -> c.ToLower () |> __.CmdHandle ess opts
     |> Array.map OutputNormal
 
 // vim: set tw=80 sts=2 sw=2:

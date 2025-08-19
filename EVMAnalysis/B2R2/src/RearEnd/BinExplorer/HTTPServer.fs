@@ -29,11 +29,9 @@ open System.Net
 open System.Runtime.Serialization
 open System.Runtime.Serialization.Json
 open B2R2
-open B2R2.FrontEnd
-open B2R2.MiddleEnd
-open B2R2.MiddleEnd.BinGraph
-open B2R2.MiddleEnd.ControlFlowGraph
-open B2R2.MiddleEnd.ControlFlowAnalysis
+open B2R2.FrontEnd.BinInterface
+open B2R2.MiddleEnd.BinEssence
+open B2R2.MiddleEnd.Lens
 open B2R2.MiddleEnd.DataFlow
 open B2R2.RearEnd.Visualization
 
@@ -98,15 +96,15 @@ let listener host handler =
 
 let defaultEnc = Text.Encoding.UTF8
 
-let json<'T> (obj: 'T) =
+let json<'t> (obj: 't) =
   use ms = new IO.MemoryStream ()
-  (DataContractJsonSerializer(typeof<'T>)).WriteObject(ms, obj)
+  (new DataContractJsonSerializer(typeof<'t>)).WriteObject(ms, obj)
   Text.Encoding.Default.GetString (ms.ToArray ())
 
-let jsonParser<'T> (jsonString:string): 'T =
+let jsonParser<'t> (jsonString:string)  : 't =
   use ms = new IO.MemoryStream (Text.Encoding.Default.GetBytes(jsonString))
-  let obj = (DataContractJsonSerializer(typeof<'T>)).ReadObject(ms)
-  obj :?> 'T
+  let obj = (new DataContractJsonSerializer(typeof<'t>)).ReadObject(ms)
+  obj :?> 't
 
 let readIfExists path =
   if IO.File.Exists path then Some (IO.File.ReadAllBytes (path))
@@ -133,46 +131,47 @@ let answer (req: HttpListenerRequest) (resp: HttpListenerResponse) = function
     resp.Close ()
 
 let handleBinInfo req resp arbiter =
-  let brew = Protocol.getBinaryBrew arbiter
-  let txt = brew.BinHandle.File.Path
+  let ess = Protocol.getBinEssence arbiter
+  let txt = ess.BinHandle.FileInfo.FilePath
   let txt = "\"" + txt.Replace(@"\", @"\\") + "\""
   Some (defaultEnc.GetBytes (txt)) |> answer req resp
 
-let cfgToJSON cfgType (brew: BinaryBrew<_, _>) (g: LowUIRCFG) =
+let cfgToJSON cfgType ess g roots =
   match cfgType with
   | IRCFG ->
-    let roots = g.GetRoots () |> Seq.toList
     Visualizer.getJSONFromGraph g roots
   | DisasmCFG ->
-    let g = DisasmCFG.create g
-    let roots = g.GetRoots () |> Seq.toList
+    let lens = DisasmLens.Init ess
+    let g, roots = lens.Filter (g, roots, ess)
     Visualizer.getJSONFromGraph g roots
   | SSACFG ->
-    let factory = SSA.SSALifterFactory.Create (brew.BinHandle)
-    let ssaCFG = factory.Lift g
-    let roots = ssaCFG.GetRoots () |> List.ofArray
-    Visualizer.getJSONFromGraph ssaCFG roots
+    let lens = SSALens.Init ess
+    let g, roots = lens.Filter (g, roots, ess)
+    Visualizer.getJSONFromGraph g roots
   | _ -> failwith "Invalid CFG type"
 
-let handleRegularCFG req resp funcID (brew: BinaryBrew<_, _>)
-                     cfgType =
-  let func = brew.Functions.FindByID funcID
-  try
-    let s = cfgToJSON cfgType brew func.CFG
-    Some (defaultEnc.GetBytes s) |> answer req resp
-  with e ->
+let handleRegularCFG req resp (name: string) (ess: BinEssence) cfgType =
+  match ess.CalleeMap.Find name with
+  | None -> answer req resp None
+  | Some callee ->
+    try
+      let cfg, root = ess.GetFunctionCFG (callee.Addr.Value) |> Result.get
+      let s = cfgToJSON cfgType ess cfg [root]
+      Some (defaultEnc.GetBytes s) |> answer req resp
+    with e ->
 #if DEBUG
-    printfn "%A" e; failwith "[FATAL]: Failed to generate CFG"
+      printfn "%A" e; failwith "[FATAL]: Failed to generate CFG"
 #else
-    answer req resp None
+      answer req resp None
 #endif
 
-let handleCFG req resp arbiter cfgType funcID =
-  let brew = Protocol.getBinaryBrew arbiter
+let handleCFG req resp arbiter cfgType name =
+  let ess = Protocol.getBinEssence arbiter
   match cfgType with
   | CallCFG ->
     try
-      let g, roots = CallGraph.create BinGraph.Imperative brew
+      let lens = CallGraphLens.Init ()
+      let g, roots = lens.Filter (ess.SCFG, [], ess)
       let s = Visualizer.getJSONFromGraph g roots
       Some (defaultEnc.GetBytes s) |> answer req resp
     with e ->
@@ -181,25 +180,24 @@ let handleCFG req resp arbiter cfgType funcID =
 #else
       answer req resp None
 #endif
-  | typ -> handleRegularCFG req resp funcID brew typ
+  | typ -> handleRegularCFG req resp name ess typ
 
 let handleFunctions req resp arbiter =
-  let brew = Protocol.getBinaryBrew arbiter
+  let ess = Protocol.getBinEssence arbiter
   let names =
-    brew.Functions.Sequence
-    |> Seq.sortBy (fun fn -> fn.EntryPoint)
-    |> Seq.map (fun fn -> { FuncID = fn.ID; FuncName = fn.Name })
+    ess.CalleeMap.InternalCallees
+    |> Seq.map (fun c -> { FuncID = c.CalleeID; FuncName = c.CalleeName })
     |> Seq.toArray
   Some (json<(JsonFuncInfo) []> names |> defaultEnc.GetBytes)
   |> answer req resp
 
 let handleHexview req resp arbiter =
-  let brew = Protocol.getBinaryBrew arbiter
-  brew.BinHandle.File.GetSegments ()
+  let ess = Protocol.getBinEssence arbiter
+  ess.BinHandle.FileInfo.GetSegments ()
   |> Seq.map (fun seg ->
-    let bs = brew.BinHandle.ReadBytes (seg.Address, int (seg.Size))
-    let coloredHex = bs |> Array.map ColoredSegment.hexOfByte
-    let coloredAscii = bs |> Array.map ColoredSegment.asciiOfByte
+    let bs = BinHandle.ReadBytes (ess.BinHandle, seg.Address, int (seg.Size))
+    let coloredHex = bs |> Array.map ColoredSegment.byteToHex
+    let coloredAscii = bs |> Array.map ColoredSegment.byteToAscii
     let cha = (* DataColoredHexAscii *)
       Array.map2 (fun (c, h) (_, a) ->
         { Color = Color.toString c
@@ -231,30 +229,30 @@ let computeConnectedVars chain v =
       | None -> s
       | Some us -> Set.union us s) ds
 
-let getVarNames (hdl: BinHandle) = function
+let getVarNames handler = function
   | Regular v ->
-    hdl.RegisterFactory.GetRegisterAliases v
-    |> Array.map (hdl.RegisterFactory.RegIDToString)
+    handler.RegisterBay.GetRegisterAliases v
+    |> Array.map (handler.RegisterBay.RegIDToString)
   | _ -> [||]
 
 let handleDataflow req resp arbiter (args: string) =
-  let brew = Protocol.getBinaryBrew arbiter
+  let ess = Protocol.getBinEssence arbiter
   let args = args.Split ([|','|])
-  let entry = args[0] |> uint64
-  let addr = args[1] |> uint64
-  let tag = args[2] (* either variable or value. *)
+  let entry = args.[0] |> uint64
+  let addr = args.[1] |> uint64
+  let tag = args.[2] (* either variable or value. *)
   match tag with
   | "variable" ->
-    let var = args[3] |> brew.BinHandle.RegisterFactory.RegIDFromString
+    let var = args.[3] |> ess.BinHandle.RegisterBay.RegIDFromString
     try
-      let cfg = brew.Functions[entry].CFG
-      let chain = DataFlowChain.init cfg true
-      let v = { ProgramPoint = ProgramPoint (addr, 0); VarKind = Regular var }
+      let cfg, root = ess.GetFunctionCFG (entry) |> Result.get
+      let chain = DataFlowChain.init cfg root true
+      let v = { ProgramPoint = ProgramPoint (addr, 0); VarExpr = Regular var }
       computeConnectedVars chain v
       |> Set.toArray
       |> Array.map (fun vp ->
         { VarAddr = vp.ProgramPoint.Address
-          VarNames = getVarNames brew.BinHandle vp.VarKind })
+          VarNames = getVarNames ess.BinHandle vp.VarExpr })
       |> json<JsonVarPoint []>
       |> defaultEnc.GetBytes
       |> Some
@@ -283,7 +281,7 @@ let handleAJAX req resp arbiter cmdMap query args =
 let handle (req: HttpListenerRequest) (resp: HttpListenerResponse) arbiter m =
   match req.Url.LocalPath.Remove (0, 1) with (* Remove the first '/' *)
   | "ajax/" ->
-    handleAJAX req resp arbiter m req.QueryString["q"] req.QueryString["args"]
+    handleAJAX req resp arbiter m req.QueryString.["q"] req.QueryString.["args"]
   | "" ->
     IO.Path.Combine (rootDir, "index.html") |> readIfExists |> answer req resp
   | path ->
@@ -292,9 +290,9 @@ let handle (req: HttpListenerRequest) (resp: HttpListenerResponse) arbiter m =
 let startServer arbiter ip port verbose =
   let host = "http://" + ip + ":" + port.ToString () + "/"
   let cmdMap = CmdSpec.speclist |> CmdMap.build
-  let hdl (req: HttpListenerRequest) (resp: HttpListenerResponse) =
+  let handler (req: HttpListenerRequest) (resp: HttpListenerResponse) =
     try handle req resp arbiter cmdMap
     with e -> if verbose then eprintfn "%A" e else ()
-  listener host hdl
+  listener host handler
 
 // vim: set tw=80 sts=2 sw=2:

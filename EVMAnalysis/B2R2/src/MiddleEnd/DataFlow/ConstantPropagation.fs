@@ -1,4 +1,4 @@
-﻿(*
+(*
   B2R2 - the Next-Generation Reversing Platform
 
   Copyright (c) SoftSec Lab. @ KAIST, since 2016
@@ -25,124 +25,59 @@
 namespace B2R2.MiddleEnd.DataFlow
 
 open B2R2
-open B2R2.BinIR
-open B2R2.BinIR.LowUIR
-open B2R2.FrontEnd
-open B2R2.MiddleEnd.DataFlow
+open B2R2.BinIR.SSA
+open B2R2.MiddleEnd.BinGraph
+open B2R2.MiddleEnd.BinEssence
+open B2R2.MiddleEnd.Lens
 
-module internal ConstantPropagation =
-  let evalUnOp op c =
-    match op with
-    | UnOpType.NEG -> ConstantDomain.neg c
-    | UnOpType.NOT -> ConstantDomain.not c
-    | _ -> ConstantDomain.NotAConst
+/// Modified version of sparse conditional constant propagation of Wegman et al.
+type ConstantPropagation<'L when 'L: equality>
+    (ssaCFG: DiGraph<SSABBlock, CFGEdgeKind>, st: CPState<'L>) =
+  inherit DataFlowAnalysis<'L, SSABBlock> ()
 
-  let evalBinOp op c1 c2 =
-    match op with
-    | BinOpType.ADD -> ConstantDomain.add c1 c2
-    | BinOpType.SUB -> ConstantDomain.sub c1 c2
-    | BinOpType.MUL -> ConstantDomain.mul c1 c2
-    | BinOpType.DIV -> ConstantDomain.div c1 c2
-    | BinOpType.SDIV -> ConstantDomain.sdiv c1 c2
-    | BinOpType.MOD -> ConstantDomain.``mod`` c1 c2
-    | BinOpType.SMOD -> ConstantDomain.smod c1 c2
-    | BinOpType.SHL -> ConstantDomain.shl c1 c2
-    | BinOpType.SHR -> ConstantDomain.shr c1 c2
-    | BinOpType.SAR -> ConstantDomain.sar c1 c2
-    | BinOpType.AND -> ConstantDomain.``and`` c1 c2
-    | BinOpType.OR -> ConstantDomain.``or`` c1 c2
-    | BinOpType.XOR -> ConstantDomain.xor c1 c2
-    | BinOpType.CONCAT -> ConstantDomain.concat c1 c2
-    | _ -> ConstantDomain.NotAConst
+  override __.Top: 'L = st.Top
 
-  let evalRelOp op c1 c2 =
-    match op with
-    | RelOpType.EQ -> ConstantDomain.eq c1 c2
-    | RelOpType.NEQ -> ConstantDomain.neq c1 c2
-    | RelOpType.GT -> ConstantDomain.gt c1 c2
-    | RelOpType.GE -> ConstantDomain.ge c1 c2
-    | RelOpType.SGT -> ConstantDomain.sgt c1 c2
-    | RelOpType.SGE -> ConstantDomain.sge c1 c2
-    | RelOpType.LT -> ConstantDomain.lt c1 c2
-    | RelOpType.LE -> ConstantDomain.le c1 c2
-    | RelOpType.SLT -> ConstantDomain.slt c1 c2
-    | RelOpType.SLE -> ConstantDomain.sle c1 c2
-    | _ -> ConstantDomain.NotAConst
+  member private __.GetNumIncomingExecutedEdges st (blk: Vertex<SSABBlock>) =
+    let myid = blk.GetID ()
+    DiGraph.getPreds ssaCFG blk
+    |> List.map (fun p -> p.GetID (), myid)
+    |> List.filter (fun (src, dst) -> CPState.isExecuted st src dst)
+    |> List.length
 
-  let evalCast op rt c =
-    match op with
-    | CastKind.SignExt -> ConstantDomain.signExt rt c
-    | CastKind.ZeroExt -> ConstantDomain.zeroExt rt c
-    | _ -> ConstantDomain.NotAConst
+  member private __.ProcessSSA ess st =
+    while st.SSAWorkList.Count > 0 do
+      let def = st.SSAWorkList.Pop ()
+      match Map.tryFind def st.SSAEdges.Uses with
+      | Some uses ->
+        uses
+        |> Set.iter (fun (vid, idx) ->
+          let v = DiGraph.findVertexByID ssaCFG vid
+          if __.GetNumIncomingExecutedEdges st v > 0 then
+            let ppoint, stmt = v.VData.SSAStmtInfos.[idx]
+            st.TransferFn ess ssaCFG st v ppoint stmt
+          else ())
+      | None -> ()
 
-type ConstantPropagation =
-  inherit VarBasedDataFlowAnalysis<ConstantDomain.Lattice>
+  member private __.ProcessFlow ess st =
+    if st.FlowWorkList.Count > 0 then
+      let parentid, myid = st.FlowWorkList.Dequeue ()
+      st.ExecutedEdges.Add (parentid, myid) |> ignore
+      let blk = DiGraph.findVertexByID ssaCFG myid
+      blk.VData.SSAStmtInfos
+      |> Array.iter (fun (ppoint, stmt) ->
+        st.TransferFn ess ssaCFG st blk ppoint stmt)
+      match blk.VData.GetLastStmt () with
+      | Jmp _ -> ()
+      | _ ->
+        DiGraph.getSuccs ssaCFG blk
+        |> List.iter (fun succ ->
+          let succid = succ.GetID ()
+          CPState.markExecutable st myid succid)
+    else ()
 
-  new (hdl: BinHandle) =
-    let evaluateVarPoint (state: VarBasedDataFlowState<_>) pp varKind =
-      let vp = { ProgramPoint = pp; VarKind = varKind }
-      match state.UseDefMap.TryGetValue vp with
-      | false, _ -> ConstantDomain.Undef
-      | true, defVp -> (state: IDataFlowState<_, _>).GetAbsValue defVp
-
-    let rec evaluateExpr state pp e =
-      match e.E with
-      | PCVar (rt, _) ->
-        let addr = (pp: ProgramPoint).Address
-        let bv = BitVector.OfUInt64 addr rt
-        ConstantDomain.Const bv
-      | Num bv -> ConstantDomain.Const bv
-      | Var _ | TempVar _ -> evaluateVarPoint state pp (VarKind.ofIRExpr e)
-      | Load (_m, rt, addr) ->
-        match state.StackPointerSubState.EvalExpr pp addr with
-        | StackPointerDomain.ConstSP bv ->
-          let addr = BitVector.ToUInt64 bv
-          let offset = VarBasedDataFlowState<_>.ToFrameOffset addr
-          let c = evaluateVarPoint state pp (StackLocal offset)
-          match c with
-          | ConstantDomain.Const bv when bv.Length < rt ->
-            ConstantDomain.Const <| BitVector.ZExt (bv, rt)
-          | ConstantDomain.Const bv when bv.Length > rt ->
-            ConstantDomain.Const <| BitVector.Extract (bv, rt, 0)
-          | _ -> c
-        | StackPointerDomain.NotConstSP -> ConstantDomain.NotAConst
-        | StackPointerDomain.Undef -> ConstantDomain.Undef
-      | UnOp (op, e) ->
-        evaluateExpr state pp e
-        |> ConstantPropagation.evalUnOp op
-      | BinOp (op, _, e1, e2) ->
-        let c1 = evaluateExpr state pp e1
-        let c2 = evaluateExpr state pp e2
-        ConstantPropagation.evalBinOp op c1 c2
-      | RelOp (op, e1, e2) ->
-        let c1 = evaluateExpr state pp e1
-        let c2 = evaluateExpr state pp e2
-        ConstantPropagation.evalRelOp op c1 c2
-      | Ite (e1, e2, e3) ->
-        let c1 = evaluateExpr state pp e1
-        let c2 = evaluateExpr state pp e2
-        let c3 = evaluateExpr state pp e3
-        ConstantDomain.ite c1 c2 c3
-      | Cast (op, rt, e) ->
-        let c = evaluateExpr state pp e
-        ConstantPropagation.evalCast op rt c
-      | Extract (e, rt, pos) ->
-        let c = evaluateExpr state pp e
-        ConstantDomain.extract c rt pos
-      | FuncName _ | Nil | Undefined _ -> ConstantDomain.NotAConst
-      | _ -> Utils.impossible ()
-
-    let analysis =
-      { new IVarBasedDataFlowAnalysis<ConstantDomain.Lattice> with
-          member __.OnInitialize state = state
-
-          member __.Bottom = ConstantDomain.Undef
-
-          member __.Join a b = ConstantDomain.join a b
-
-          member __.Subsume a b = ConstantDomain.subsume a b
-
-          member __.EvalExpr state pp e = evaluateExpr state pp e }
-
-    { inherit VarBasedDataFlowAnalysis<ConstantDomain.Lattice>
-        (hdl, analysis) }
+  member __.Compute ess (root: Vertex<_>) =
+    st.FlowWorkList.Enqueue (0, root.GetID ())
+    while st.FlowWorkList.Count > 0 || st.SSAWorkList.Count > 0 do
+      __.ProcessFlow ess st
+      __.ProcessSSA ess st
+    st

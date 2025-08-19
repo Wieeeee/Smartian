@@ -26,8 +26,8 @@ namespace B2R2.RearEnd.BinExplorer
 
 open System
 open B2R2
-open B2R2.FrontEnd
-open B2R2.MiddleEnd
+open B2R2.FrontEnd.BinInterface
+open B2R2.MiddleEnd.BinEssence
 
 type CmdDisasm () =
   inherit Cmd ()
@@ -40,24 +40,24 @@ type CmdDisasm () =
     try Ok (count, Convert.ToUInt64 (str, 16))
     with _ -> Error "[*] Invalid address is given."
 
-  let rec disasmLoop acc hdl (instrs: InstructionCollection) addr count =
+  let rec disasmLoop acc hdl addr count =
     if count <= 0 then List.rev acc |> List.toArray
     else
-      match instrs.TryFind (addr, ArchOperationMode.NoMode) with
+      match BinHandle.TryParseInstr (hdl, addr=addr) with
       | Ok ins ->
-        let d = ins.Disasm (true, (hdl: BinHandle).File)
-        disasmLoop (d :: acc) hdl instrs (addr + uint64 ins.Length) (count - 1)
+        let d = ins.Disasm (true, true, hdl.DisasmHelper)
+        disasmLoop (d :: acc) hdl (addr + uint64 ins.Length) (count - 1)
       | Error _ ->
-        disasmLoop ("(invalid)" :: acc) hdl instrs (addr + 1UL) (count - 1)
+        disasmLoop ("(invalid)" :: acc) hdl (addr + 1UL) (count - 1)
 
-  let render hdl instrs = function
-    | Ok (count, addr: uint64) -> disasmLoop [] hdl instrs addr count
+  let render (ess: BinEssence) = function
+    | Ok (count, addr: uint64) -> disasmLoop [] ess.BinHandle addr count
     | Error str -> [| str |]
 
-  let disasm hdl instrs count addr =
+  let disasm ess count addr =
     convertCount count
     |> Result.bind (convertAddr addr)
-    |> render hdl instrs
+    |> render ess
 
   override __.CmdName = "disasm"
 
@@ -73,10 +73,10 @@ type CmdDisasm () =
 
   override __.SubCommands = []
 
-  override __.CallBack _ brew args =
+  override __.CallBack _ ess args =
     match args with
-    | cnt :: addr :: _ -> disasm brew.BinHandle brew.Instructions cnt addr
-    | addr :: _ -> disasm brew.BinHandle brew.Instructions "1" addr
+    | cnt :: addr :: _ -> disasm ess cnt addr
+    | addr :: _ -> disasm ess "1" addr
     | _ -> [| __.CmdHelp |]
     |> Array.map OutputNormal
 

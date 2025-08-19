@@ -24,7 +24,6 @@
 
 namespace B2R2.FrontEnd.BinLifter.Intel
 
-open System
 open B2R2
 open B2R2.FrontEnd.BinLifter
 open B2R2.FrontEnd.BinLifter.Intel
@@ -35,26 +34,26 @@ open type Prefix
 /// Parser for Intel (x86 or x86-64) instructions. Parser will return a
 /// platform-agnostic instruction type (Instruction).
 type IntelParser (wordSz) =
+  inherit Parser ()
+
   let oparsers =
     [| OpRmGpr () :> OperandParser
        OpRmSeg () :> OperandParser
-       OpGprCtrl () :> OperandParser
-       OpGprDbg () :> OperandParser
+       OpRmCtrl () :> OperandParser
+       OpRmDbg () :> OperandParser
        OpRMMmx () :> OperandParser
        OpMmMmx () :> OperandParser
        OpBmBnd () :> OperandParser
        OpRmBnd () :> OperandParser
        OpGprRm () :> OperandParser
        OpGprM () :> OperandParser
-       OpMGpr () :> OperandParser
        OpSegRm () :> OperandParser
        OpBndBm () :> OperandParser
        OpBndRm () :> OperandParser
-       OpCtrlGpr () :> OperandParser
-       OpDbgGpr () :> OperandParser
+       OpCtrlRm () :> OperandParser
+       OpDbgRm () :> OperandParser
        OpMmxRm () :> OperandParser
        OpMmxMm () :> OperandParser
-       OpMxMx () :> OperandParser
        OpGprRMm () :> OperandParser
        OpRegImm8 () :> OperandParser
        OpImm8Reg () :> OperandParser
@@ -124,7 +123,6 @@ type IntelParser (wordSz) =
        OpImmImm () :> OperandParser
        OpRmImm () :> OperandParser
        OpRmImm8 () :> OperandParser
-       OpRmSImm8 () :> OperandParser
        OpMmxImm8 () :> OperandParser
        OpMem () :> OperandParser
        OpM1 () :> OperandParser
@@ -133,33 +131,15 @@ type IntelParser (wordSz) =
        OpGprVvRm () :> OperandParser
        OpXmVvXmm () :> OperandParser
        OpGpr () :> OperandParser
-       OpRmXmmImm8 () :> OperandParser
        OpXmmRmImm8 () :> OperandParser
        OpMmxMmImm8 () :> OperandParser
        OpMmxRmImm8 () :> OperandParser
        OpGprMmxImm8 () :> OperandParser
        OpXmmVvXmImm8 () :> OperandParser
-       OpXmmVvXmXmm () :> OperandParser
        OpXmRegImm8 () :> OperandParser
        OpGprRmVv () :> OperandParser
        OpVvRmImm8 () :> OperandParser
-       OpRmGprCL () :> OperandParser
-       OpXmmXmXmm0 () :> OperandParser
-       OpXmmXmVv () :> OperandParser
-       OpVvRm () :> OperandParser
-       OpGprRmImm8Imm8 () :> OperandParser
-       OpRmImm8Imm8 () :> OperandParser
-       OpKnVvXm () :> OperandParser
-       OpGprKn () :> OperandParser
-       OpKnVvXmImm8 () :> OperandParser
-       OpKnGpr () :> OperandParser
-       OpXmmVvXmmXm () :> OperandParser
-       OpKnKm () :> OperandParser
-       OpMKn () :> OperandParser
-       OpKKn () :> OperandParser
-       OpKnKmImm8 () :> OperandParser
-       OpXmmVsXm () :> OperandParser
-       OpXmVsXmm () :> OperandParser |]
+       OpRmGprCL () :> OperandParser |]
 
   let szcomputers =
     [| SzByte () :> InsSizeComputer
@@ -173,7 +153,6 @@ type IntelParser (wordSz) =
        SzWV () :> InsSizeComputer
        SzD64 () :> InsSizeComputer
        SzPZ () :> InsSizeComputer
-       SzDDq () :> InsSizeComputer
        SzDqDq () :> InsSizeComputer
        SzDqdDq () :> InsSizeComputer
        SzDqdDqMR () :> InsSizeComputer
@@ -200,7 +179,6 @@ type IntelParser (wordSz) =
        SzDwDqMR () :> InsSizeComputer
        SzQD () :> InsSizeComputer
        SzDqd () :> InsSizeComputer
-       SzXDq () :> InsSizeComputer
        SzDqX () :> InsSizeComputer
        SzXD () :> InsSizeComputer
        SzDqqdqX () :> InsSizeComputer
@@ -231,15 +209,7 @@ type IntelParser (wordSz) =
        SzQXz () :> InsSizeComputer
        SzDqQq () :> InsSizeComputer
        SzDqXz () :> InsSizeComputer
-       SzYDq () :> InsSizeComputer
-       SzQq () :> InsSizeComputer
-       SzDqwdX () :> InsSizeComputer
-       SzY () :> InsSizeComputer
-       SzQQb () :> InsSizeComputer
-       SzQQd () :> InsSizeComputer
-       SzQQw () :> InsSizeComputer
-       SzVecDefRC () :> InsSizeComputer
-       SzYP () :> InsSizeComputer |]
+       SzYDq () :> InsSizeComputer |]
 
   let oneByteParsers =
     [| OneOp00 () :> ParsingJob
@@ -516,55 +486,53 @@ type IntelParser (wordSz) =
 
   let rhlp = ReadHelper (wordSz, oparsers, szcomputers)
 
-  member inline private __.ParsePrefix (span: ByteSpan) =
-    let mutable pos = 0
+  member inline private __.ParsePrefix (reader, pos: int) =
+    let mutable pos = pos
     let mutable pref = PrxNone
-    let mutable b = span[0]
-    while ((prefixCheck[(int b >>> 5)] >>> (int b &&& 0b11111)) &&& 1u) > 0u do
+    let mutable b = (reader: BinReader).PeekByte pos
+    while ((prefixCheck.[(int b >>> 5)] >>> (int b &&& 0b11111)) &&& 1u) > 0u do
       match b with
-      | 0xF0uy -> pref <- PrxLOCK ||| (ClearGrp1PrefMask &&& pref)
-      | 0xF2uy -> pref <- PrxREPNZ ||| (ClearGrp1PrefMask &&& pref)
-      | 0xF3uy -> pref <- PrxREPZ ||| (ClearGrp1PrefMask &&& pref)
-      | 0x2Euy -> pref <- PrxCS ||| (ClearSegMask &&& pref)
-      | 0x36uy -> pref <- PrxSS ||| (ClearSegMask &&& pref)
-      | 0x3Euy -> pref <- PrxDS ||| (ClearSegMask &&& pref)
-      | 0x26uy -> pref <- PrxES ||| (ClearSegMask &&& pref)
-      | 0x64uy -> pref <- PrxFS ||| (ClearSegMask &&& pref)
-      | 0x65uy -> pref <- PrxGS ||| (ClearSegMask &&& pref)
+      | 0xF0uy -> pref <- PrxLOCK ||| (clearGrp1PrefMask &&& pref)
+      | 0xF2uy -> pref <- PrxREPNZ ||| (clearGrp1PrefMask &&& pref)
+      | 0xF3uy -> pref <- PrxREPZ ||| (clearGrp1PrefMask &&& pref)
+      | 0x2Euy -> pref <- PrxCS ||| (clearSegMask &&& pref)
+      | 0x36uy -> pref <- PrxSS ||| (clearSegMask &&& pref)
+      | 0x3Euy -> pref <- PrxDS ||| (clearSegMask &&& pref)
+      | 0x26uy -> pref <- PrxES ||| (clearSegMask &&& pref)
+      | 0x64uy -> pref <- PrxFS ||| (clearSegMask &&& pref)
+      | 0x65uy -> pref <- PrxGS ||| (clearSegMask &&& pref)
       | 0x66uy -> pref <- PrxOPSIZE ||| pref
       | 0x67uy -> pref <- PrxADDRSIZE ||| pref
       | _ -> pos <- pos - 1
       pos <- pos + 1
-      b <- span[pos]
+      b <- reader.PeekByte pos
     rhlp.Prefixes <- pref
     pos
 
-  member inline private __.ParseREX (bs: ByteSpan, pos, rex: REXPrefix byref) =
+  member inline private __.ParseREX (reader, pos, rex: REXPrefix byref) =
     if wordSz = WordSize.Bit32 then pos
     else
-      let rb = bs[pos] |> int
+      let rb = (reader: BinReader).PeekByte pos |> int
       if rb &&& 0b11110000 = 0b01000000 then
         rex <- EnumOfValue rb
         pos + 1
       else pos
 
-  interface IInstructionParsable with
-    member __.Parse (bs: byte[], addr) =
-      (__ :> IInstructionParsable).Parse (ReadOnlySpan bs, addr)
-
-    member __.Parse (span: ByteSpan, addr) =
-      let mutable rex = REXPrefix.NOREX
-      let prefEndPos = __.ParsePrefix span
-      let nextPos = __.ParseREX (span, prefEndPos, &rex)
-      rhlp.VEXInfo <- None
-      rhlp.InsAddr <- addr
-      rhlp.REXPrefix <- rex
-      rhlp.CurrPos <- nextPos
+  override __.Parse reader addr pos =
+    let mutable rex = REXPrefix.NOREX
+    let prefEndPos = __.ParsePrefix (reader, pos)
+    let nextPos = __.ParseREX (reader, prefEndPos, &rex)
+    rhlp.VEXInfo <- None
+    rhlp.BinReader <- reader
+    rhlp.InsAddr <- addr
+    rhlp.REXPrefix <- rex
+    rhlp.InitialPos <- pos
+    rhlp.CurrPos <- nextPos
 #if LCACHE
-      rhlp.MarkPrefixEnd (prefEndPos)
+    rhlp.MarkPrefixEnd (prefEndPos)
 #endif
-      oneByteParsers[int (rhlp.ReadByte span)].Run (span, rhlp) :> Instruction
+    oneByteParsers.[int (rhlp.ReadByte ())].Run rhlp :> Instruction
 
-    member __.MaxInstructionSize = 15
+  override __.OperationMode with get() = ArchOperationMode.NoMode and set _ = ()
 
-    member __.OperationMode with get() = ArchOperationMode.NoMode and set _ = ()
+// vim: set tw=80 sts=2 sw=2:

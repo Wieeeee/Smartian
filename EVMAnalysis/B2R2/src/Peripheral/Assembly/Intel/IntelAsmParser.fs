@@ -36,7 +36,7 @@ open System
 type LabelDefs = Map<string, int>
 
 type IntelAsmParser (isa, baseAddr: Addr) =
-  inherit AsmParser (isa, ArchOperationMode.NoMode)
+  inherit AsmParser ()
 
   let mutable inferredPrefix = Prefix.PrxNone
   let defaultRegType = isa.WordSize |> WordSize.toRegType
@@ -80,10 +80,13 @@ type IntelAsmParser (isa, baseAddr: Addr) =
 
   let pOpcode =
     (Enum.GetNames typeof<Opcode>)
-    |> Array.map (fun s ->
-      attempt (pstringCI s .>> (lookAhead (anyOf "\n;. " |>> ignore) <|> eof))
-      |>> fun name -> Enum.Parse(typeof<Opcode>, name.ToUpper()) :?> Opcode
-    )
+    |> Array.map pstringCI
+    |> Array.map (fun p -> p .>> (lookAhead (anyOf "\n;. " |>> ignore) <|> eof))
+    |> Array.map attempt
+    |> Array.map
+      (fun (p) ->
+        p
+        |>> (fun name -> Enum.Parse(typeof<Opcode>, name.ToUpper()) :?> Opcode))
     |> choice
     (* Since far calls, jmps, and rets are unnatural they are ignored *)
     <|> (pstringCI "jmp" >>. preturn Opcode.JMPNear)
@@ -101,15 +104,15 @@ type IntelAsmParser (isa, baseAddr: Addr) =
   let pImm =
     numberLiteral numberFormat "number"
     |>> (fun x ->
-          if x.HasPlusSign then int64 x.String[1 ..] else int64 x.String)
+          if x.HasPlusSign then int64 x.String.[1 ..] else int64 x.String)
 
   let pAddr = pImm |>> uint64
 
   let registersList =
     (Enum.GetNames typeof<Register>)
-    |> Array.map (fun s ->
-      attempt (pstringCI s .>> (notFollowedBy (satisfy isLetter)))
-    )
+    |> Array.map pstringCI
+    |> Array.map (fun p -> p .>> (notFollowedBy (satisfy isLetter)) )
+    |> Array.map attempt
 
   let pReg =
     registersList |> choice
@@ -145,7 +148,8 @@ type IntelAsmParser (isa, baseAddr: Addr) =
     [ "byte ptr"; "word ptr"; "word far ptr"; "dword ptr"; "dword far ptr";
     "qword ptr"; "qword far ptr"; "tword ptr"; "xmmword ptr"; "ymmword ptr";
     "zmmword ptr" ]
-    |> Seq.map (pstringCI >> attempt)
+    |> Seq.map pstringCI
+    |> Seq.map attempt
     |> choice
     |>> ptrStringToBitSize
 

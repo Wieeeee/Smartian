@@ -26,45 +26,52 @@
 [<RequireQualifiedAccess>]
 module B2R2.FrontEnd.BinFile.FormatDetector
 
+open System.IO
 open B2R2
 
-let private identifyELF bytes =
-  match ELF.Header.getISA bytes with
-  | Ok isa -> Some struct (FileFormat.ELFBinary, isa)
-  | _ -> None
-
-let private identifyPE bytes =
-  match PE.Helper.getPEArch bytes with
-  | Ok arch ->
-    let isa = ISA.Init arch Endian.Little
-    Some struct (FileFormat.PEBinary, isa)
-  | Error _ -> None
-
-let private identifyMach bytes isa =
-  if Mach.Header.isMach bytes 0UL then
-    let toolBox = Mach.Header.parse bytes None isa
-    let isa = Mach.Helper.getISA toolBox.Header
-    Some struct (FileFormat.MachBinary, isa)
+let private identifyELF reader =
+  if ELF.Header.isELF reader 0 then
+    let cls = ELF.Header.peekClass reader 0
+    let arch = ELF.Header.peekArch reader cls 0
+    let endian = ELF.Header.peekEndianness reader 0
+    let isa = ISA.Init arch endian
+    Some (FileFormat.ELFBinary, isa)
   else None
 
-let private identifyWASM bytes isa =
-  let reader = BinReader.Init Endian.Little
-  if Wasm.Header.isWasm bytes reader then
-    Some struct (FileFormat.WasmBinary, isa)
+let private identifyPE bytes =
+  match PE.Helper.getPEArch bytes 0 with
+  | Ok arch ->
+    let isa = ISA.Init arch Endian.Little
+    Some (FileFormat.PEBinary, isa)
+  | Error _ -> None
+
+let private identifyMach reader isa =
+  if Mach.Header.isMach reader 0 then
+    if Mach.Header.isFat reader 0 then
+      Some (FileFormat.MachBinary, isa)
+    else
+      let arch = Mach.Header.peekArch reader 0
+      let endian = Mach.Header.peekEndianness reader 0
+      let isa = ISA.Init arch endian
+      Some (FileFormat.MachBinary, isa)
+  else None
+
+let private identifyWASM reader isa =
+  if Wasm.Header.isWasm reader 0 then
+    Some (FileFormat.WasmBinary, isa)
   else None
 
 /// <summary>
-///   Given a binary bytes, identify its binary file format (B2R2.FileFormat)
-///   and its underlying ISA (B2R2.ISA). For FAT binaries, this function will
-///   select an ISA only when there is a match with the given input ISA.
-///   Otherwise, this function will raise InvalidISAException.
+///   Given a byte array, identify its binary file format and return
+///   B2R2.FileFormat and B2R2.ISA.
 /// </summary>
 [<CompiledName("Identify")>]
 let identify bytes isa =
+  let reader = BinReader.Init (bytes)
   Monads.OrElse.orElse {
-    yield! identifyELF bytes
+    yield! identifyELF reader
     yield! identifyPE bytes
-    yield! identifyMach bytes isa
-    yield! identifyWASM bytes isa
+    yield! identifyMach reader isa
+    yield! identifyWASM reader isa
     yield! Some (FileFormat.RawBinary, isa)
   } |> Option.get

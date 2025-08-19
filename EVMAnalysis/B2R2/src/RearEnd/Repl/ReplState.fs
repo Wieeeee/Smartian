@@ -25,6 +25,7 @@
 namespace B2R2.RearEnd.Repl
 
 open B2R2
+open B2R2.BinIR
 open B2R2.BinIR.LowUIR
 open B2R2.FrontEnd.BinLifter
 open B2R2.MiddleEnd.ConcEval
@@ -33,29 +34,26 @@ type ParserState =
   | LowUIRParser
   | BinParser of Architecture
 
-type ReplState (isa: ISA, regFactory: RegisterFactory, doFiltering) =
+type ReplState (isa: ISA, regbay: RegisterBay, doFiltering) =
   let rstate = EvalState ()
   let mutable parser = BinParser isa.Arch
   do
-    rstate.SideEffectEventHandler <-
-      (fun e st -> printfn $"[*] Unhandled side-effect ({e}) encountered"
-                   st.IsInstrTerminated <- true)
-    regFactory.GetAllRegExprs ()
+    regbay.GetAllRegExprs ()
     |> List.map (fun r ->
-      (regFactory.RegIDFromRegExpr r, BitVector.OfInt32 0 (TypeCheck.typeOf r)))
-    |> rstate.InitializeContext 0UL
+      (regbay.RegIDFromRegExpr r, BitVector.ofInt32 0 (TypeCheck.typeOf r)))
+    |> List.map (fun (x, y) -> (x, y))
+    |> rstate.PrepareContext 0 0UL
   let mutable prevReg =
-    rstate.Registers.ToArray ()
-    |> Array.map (fun (i, v) -> RegisterID.create i, v)
-  let mutable prevTmp = rstate.Temporaries.ToArray ()
+    (rstate.GetCurrentContext ()).Registers.ToSeq () |> Seq.toArray
+  let mutable prevTmp =
+    (rstate.GetCurrentContext ()).Temporaries.ToSeq () |> Seq.toArray
   let generalRegs =
-    regFactory.GetGeneralRegExprs ()
-    |> List.map regFactory.RegIDFromRegExpr
+    regbay.GetGeneralRegExprs ()
+    |> List.map regbay.RegIDFromRegExpr
     |> Set.ofList
 
   member private __.EvaluateStmts (stmts: Stmt []) =
-    rstate.PrepareInstrEval stmts
-    Evaluator.evalStmts stmts rstate
+    stmts |> Array.iter (fun stmt -> Evaluator.evalStmt rstate stmt)
 
   member private __.ComputeDelta prev curr =
     Array.fold2 (fun acc t1 t2 ->
@@ -66,10 +64,9 @@ type ReplState (isa: ISA, regFactory: RegisterFactory, doFiltering) =
   member __.Update stmts =
     try __.EvaluateStmts stmts
     with exc -> printfn "%s" exc.Message
-    let currReg =
-      rstate.Registers.ToArray ()
-      |> Array.map (fun (i, v) -> RegisterID.create i, v)
-    let currTmp = rstate.Temporaries.ToArray ()
+    let currContext = rstate.GetCurrentContext ()
+    let currReg = currContext.Registers.ToSeq () |> Seq.toArray
+    let currTmp = currContext.Temporaries.ToSeq () |> Seq.toArray
     let regdelta = __.ComputeDelta prevReg currReg
     prevReg <- currReg
     prevTmp <- currTmp
@@ -80,7 +77,6 @@ type ReplState (isa: ISA, regFactory: RegisterFactory, doFiltering) =
       regPairs
       |> List.filter (fun (r, _) -> Set.contains r generalRegs)
     else regPairs
-    |> List.filter (fun (_, v) -> not (isNull v))
 
   member __.GetAllRegValString delta =
     let set = Set.ofList delta
@@ -88,13 +84,13 @@ type ReplState (isa: ISA, regFactory: RegisterFactory, doFiltering) =
     |> Seq.toList
     |> __.Filter
     |> List.map (fun (r, v) ->
-      let regStr = regFactory.RegIDToString r
+      let regStr = regbay.RegIDToString r
       let regVal = v.ToString ()
       regStr + ": " + regVal, Set.contains r set)
 
   /// Gets a temporary register name and EvalValue string representation.
   member private __.TempRegString (n: int) v =
-    "T_" + string (n) + ": " + (if isNull v then "n/a" else v.ToString ())
+    "T_" + string (n) + ": " + v.ToString ()
 
   member __.GetAllTempValString delta =
     let set = Set.ofList delta

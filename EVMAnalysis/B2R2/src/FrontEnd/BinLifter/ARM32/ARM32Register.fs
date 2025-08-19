@@ -26,7 +26,6 @@ namespace B2R2.FrontEnd.BinLifter.ARM32
 
 open B2R2
 
-/// ARMv7, ARMv8 AARCH32 registers.
 type Register =
   /// R0.
   | R0 = 0x0
@@ -61,379 +60,315 @@ type Register =
   /// PC, the program counter.
   | PC = 0xF
   /// S0.
-  | S0 = 0x10
+  | S0 = 0x100
   /// S1.
-  | S1 = 0x11
+  | S1 = 0x101
   /// S2.
-  | S2 = 0x12
+  | S2 = 0x102
   /// S3.
-  | S3 = 0x13
+  | S3 = 0x103
   /// S4.
-  | S4 = 0x14
+  | S4 = 0x104
   /// S5.
-  | S5 = 0x15
+  | S5 = 0x105
   /// S6.
-  | S6 = 0x16
+  | S6 = 0x106
   /// S7.
-  | S7 = 0x17
+  | S7 = 0x107
   /// S8.
-  | S8 = 0x18
+  | S8 = 0x108
   /// S9.
-  | S9 = 0x19
+  | S9 = 0x109
   /// S10.
-  | S10 = 0x1A
+  | S10 = 0x10A
   /// S11.
-  | S11 = 0x1B
+  | S11 = 0x10B
   /// S12.
-  | S12 = 0x1C
+  | S12 = 0x10C
   /// S13.
-  | S13 = 0x1D
+  | S13 = 0x10D
   /// S14.
-  | S14 = 0x1E
+  | S14 = 0x10E
   /// S15.
-  | S15 = 0x1F
+  | S15 = 0x10F
   /// S16.
-  | S16 = 0x20
+  | S16 = 0x110
   /// S17.
-  | S17 = 0x21
+  | S17 = 0x111
   /// S18.
-  | S18 = 0x22
+  | S18 = 0x112
   /// S19.
-  | S19 = 0x23
+  | S19 = 0x113
   /// S20.
-  | S20 = 0x24
+  | S20 = 0x114
   /// S21.
-  | S21 = 0x25
+  | S21 = 0x115
   /// S22.
-  | S22 = 0x26
+  | S22 = 0x116
   /// S23.
-  | S23 = 0x27
+  | S23 = 0x117
   /// S24.
-  | S24 = 0x28
+  | S24 = 0x118
   /// S25.
-  | S25 = 0x29
+  | S25 = 0x119
   /// S26.
-  | S26 = 0x2A
+  | S26 = 0x11A
   /// S27.
-  | S27 = 0x2B
+  | S27 = 0x11B
   /// S28.
-  | S28 = 0x2C
+  | S28 = 0x11C
   /// S29.
-  | S29 = 0x2D
+  | S29 = 0x11D
   /// S30.
-  | S30 = 0x2E
+  | S30 = 0x11E
   /// S31.
-  | S31 = 0x2F
+  | S31 = 0x11F
   /// D0.
-  | D0 = 0x30
+  | D0 = 0x200
   /// D1.
-  | D1 = 0x31
+  | D1 = 0x201
   /// D2.
-  | D2 = 0x32
+  | D2 = 0x202
   /// D3.
-  | D3 = 0x33
+  | D3 = 0x203
   /// D4.
-  | D4 = 0x34
+  | D4 = 0x204
   /// D5.
-  | D5 = 0x35
+  | D5 = 0x205
   /// D6.
-  | D6 = 0x36
+  | D6 = 0x206
   /// D7.
-  | D7 = 0x37
+  | D7 = 0x207
   /// D8.
-  | D8 = 0x38
+  | D8 = 0x208
   /// D9.
-  | D9 = 0x39
+  | D9 = 0x209
   /// D10.
-  | D10 = 0x3A
+  | D10 = 0x20A
   /// D11.
-  | D11 = 0x3B
+  | D11 = 0x20B
   /// D12.
-  | D12 = 0x3C
+  | D12 = 0x20C
   /// D13.
-  | D13 = 0x3D
+  | D13 = 0x20D
   /// D14.
-  | D14 = 0x3E
+  | D14 = 0x20E
   /// D15.
-  | D15 = 0x3F
+  | D15 = 0x20F
   /// D16.
-  | D16 = 0x40
+  | D16 = 0x210
   /// D17.
-  | D17 = 0x41
+  | D17 = 0x211
   /// D18.
-  | D18 = 0x42
+  | D18 = 0x212
   /// D19.
-  | D19 = 0x43
+  | D19 = 0x213
   /// D20.
-  | D20 = 0x44
+  | D20 = 0x214
   /// D21.
-  | D21 = 0x45
+  | D21 = 0x215
   /// D22.
-  | D22 = 0x46
+  | D22 = 0x216
   /// D23.
-  | D23 = 0x47
+  | D23 = 0x217
   /// D24.
-  | D24 = 0x48
+  | D24 = 0x218
   /// D25.
-  | D25 = 0x49
+  | D25 = 0x219
   /// D26.
-  | D26 = 0x4A
+  | D26 = 0x21A
   /// D27.
-  | D27 = 0x4B
+  | D27 = 0x21B
   /// D28.
-  | D28 = 0x4C
+  | D28 = 0x21C
   /// D29.
-  | D29 = 0x4D
+  | D29 = 0x21D
   /// D30.
-  | D30 = 0x4E
+  | D30 = 0x21E
   /// D31.
-  | D31 = 0x4F
+  | D31 = 0x21F
   /// FPINST2.
-  | FPINST2 = 0x50
+  | FPINST2 = 0x220
   /// MVFR0.
-  | MVFR0 = 0x51
+  | MVFR0 = 0x221
   /// MVFR1.
-  | MVFR1 = 0x52
+  | MVFR1 = 0x222
   /// Q0.
-  | Q0 = 0x53
+  | Q0 = 0x300
   /// Q1.
-  | Q1 = 0x54
+  | Q1 = 0x301
   /// Q2.
-  | Q2 = 0x55
+  | Q2 = 0x302
   /// Q3.
-  | Q3 = 0x56
+  | Q3 = 0x303
   /// Q4.
-  | Q4 = 0x57
+  | Q4 = 0x304
   /// Q5.
-  | Q5 = 0x58
+  | Q5 = 0x305
   /// Q6.
-  | Q6 = 0x59
+  | Q6 = 0x306
   /// Q7.
-  | Q7 = 0x5A
+  | Q7 = 0x307
   /// Q8.
-  | Q8 = 0x5B
+  | Q8 = 0x308
   /// Q9.
-  | Q9 = 0x5C
+  | Q9 = 0x309
   /// Q10.
-  | Q10 = 0x5D
+  | Q10 = 0x30A
   /// Q11.
-  | Q11 = 0x5E
+  | Q11 = 0x30B
   /// Q12.
-  | Q12 = 0x5F
+  | Q12 = 0x30C
   /// Q13.
-  | Q13 = 0x60
+  | Q13 = 0x30D
   /// Q14.
-  | Q14 = 0x61
+  | Q14 = 0x30E
   /// Q15.
-  | Q15 = 0x62
+  | Q15 = 0x30F
   /// C0.
-  | C0 = 0x63
+  | C0 = 0x400
   /// C1.
-  | C1 = 0x64
+  | C1 = 0x401
   /// C2.
-  | C2 = 0x65
+  | C2 = 0x402
   /// C3.
-  | C3 = 0x66
+  | C3 = 0x403
   /// C4.
-  | C4 = 0x67
+  | C4 = 0x404
   /// C5.
-  | C5 = 0x68
+  | C5 = 0x405
   /// C6.
-  | C6 = 0x69
+  | C6 = 0x406
   /// C7.
-  | C7 = 0x6A
+  | C7 = 0x407
   /// C8.
-  | C8 = 0x6B
+  | C8 = 0x408
   /// C9.
-  | C9 = 0x6C
+  | C9 = 0x409
   /// C10.
-  | C10 = 0x6D
+  | C10 = 0x40A
   /// C11.
-  | C11 = 0x6E
+  | C11 = 0x40B
   /// C12.
-  | C12 = 0x6F
+  | C12 = 0x40C
   /// C13.
-  | C13 = 0x70
+  | C13 = 0x40D
   /// C14.
-  | C14 = 0x71
+  | C14 = 0x40E
   /// C15.
-  | C15 = 0x72
+  | C15 = 0x40F
   /// P0.
-  | P0 = 0x73
+  | P0 = 0x500
   /// P1.
-  | P1 = 0x74
+  | P1 = 0x501
   /// P2.
-  | P2 = 0x75
+  | P2 = 0x502
   /// P3.
-  | P3 = 0x76
+  | P3 = 0x503
   /// P4.
-  | P4 = 0x77
+  | P4 = 0x504
   /// P5.
-  | P5 = 0x78
+  | P5 = 0x505
   /// P6.
-  | P6 = 0x79
+  | P6 = 0x506
   /// P7.
-  | P7 = 0x7A
+  | P7 = 0x507
   /// P8.
-  | P8 = 0x7B
+  | P8 = 0x508
   /// P9.
-  | P9 = 0x7C
+  | P9 = 0x509
   /// P10.
-  | P10 = 0x7D
+  | P10 = 0x50A
   /// P11.
-  | P11 = 0x7E
+  | P11 = 0x50B
   /// P12.
-  | P12 = 0x7F
+  | P12 = 0x50C
   /// P13.
-  | P13 = 0x80
+  | P13 = 0x50D
   /// P14.
-  | P14 = 0x81
+  | P14 = 0x50E
   /// P15.
-  | P15 = 0x82
+  | P15 = 0x50F
   /// R8usr.
-  | R8usr = 0x83
+  | R8usr = 0x600
   /// R9usr.
-  | R9usr = 0x84
+  | R9usr = 0x601
   /// R10usr.
-  | R10usr = 0x85
+  | R10usr = 0x602
   /// R11usr.
-  | R11usr = 0x86
+  | R11usr = 0x603
   /// R12usr.
-  | R12usr = 0x87
+  | R12usr = 0x604
   /// SPusr.
-  | SPusr = 0x88
+  | SPusr = 0x605
   /// LRusr.
-  | LRusr = 0x89
+  | LRusr = 0x606
   /// SPhyp.
-  | SPhyp = 0x8A
+  | SPhyp = 0x607
   /// SPSRhyp.
-  | SPSRhyp = 0x8B
+  | SPSRhyp = 0x608
   /// ELRhyp.
-  | ELRhyp = 0x8C
+  | ELRhyp = 0x609
   /// SPsvc.
-  | SPsvc = 0x8D
+  | SPsvc = 0x60A
   /// LRsvc.
-  | LRsvc = 0x8E
+  | LRsvc = 0x60B
   /// SPSRsvc.
-  | SPSRsvc = 0x8F
+  | SPSRsvc = 0x60C
   /// SPabt.
-  | SPabt = 0x90
+  | SPabt = 0x60D
   /// LRabt.
-  | LRabt = 0x91
+  | LRabt = 0x60E
   /// SPSRabt.
-  | SPSRabt = 0x92
+  | SPSRabt = 0x60F
   /// SPund.
-  | SPund = 0x93
+  | SPund = 0x610
   /// LRund.
-  | LRund = 0x94
+  | LRund = 0x611
   /// SPSRund.
-  | SPSRund = 0x95
+  | SPSRund = 0x612
   /// SPmon.
-  | SPmon = 0x96
+  | SPmon = 0x613
   /// LRmon.
-  | LRmon = 0x97
+  | LRmon = 0x614
   /// SPSRmon.
-  | SPSRmon = 0x98
+  | SPSRmon = 0x615
   /// SPirq.
-  | SPirq = 0x99
+  | SPirq = 0x616
   /// LRirq.
-  | LRirq = 0x9A
+  | LRirq = 0x617
   /// SPSRirq.
-  | SPSRirq = 0x9B
+  | SPSRirq = 0x618
   /// R8fiq.
-  | R8fiq = 0x9C
+  | R8fiq = 0x619
   /// R9fiq.
-  | R9fiq = 0x9D
+  | R9fiq = 0x61A
   /// R10fiq.
-  | R10fiq = 0x9E
+  | R10fiq = 0x61B
   /// R11fiq.
-  | R11fiq = 0x9F
+  | R11fiq = 0x61C
   /// R12fiq.
-  | R12fiq = 0xA0
+  | R12fiq = 0x61D
   /// SPfiq.
-  | SPfiq = 0xA1
+  | SPfiq = 0x61E
   /// LRfiq.
-  | LRfiq = 0xA2
+  | LRfiq = 0x61F
   /// SPSRfiq.
-  | SPSRfiq = 0xA3
+  | SPSRfiq = 0x620
   /// Application Program Status Register.
-  | APSR = 0xA4
+  | APSR = 0x700
   /// Current Program Status Register.
-  | CPSR = 0xA5
+  | CPSR = 0x701
   /// Saved Program Status Register.
-  | SPSR = 0xA6
+  | SPSR = 0x702
   /// Secure Configuration Register.
-  | SCR = 0xA7
+  | SCR = 0x703
   /// System Control register
-  | SCTLR = 0xA8
+  | SCTLR = 0x704
   /// Non-Secure Access Control Register.
-  | NSACR = 0xA9
+  | NSACR = 0x705
   /// FPSCR, Floating-point Status and Control Register, VMSA.
-  | FPSCR = 0xAA
-  /// Q0A is the 1st 64-bit chunk of Q0A.
-  | Q0A = 0xAB
-  /// Q0B is the 2nd 64-bit chunk of Q0B.
-  | Q0B = 0xAC
-  /// Q1A is the 1st 64-bit chunk of Q1A.
-  | Q1A = 0xAD
-  /// Q1B is the 2nd 64-bit chunk of Q1B.
-  | Q1B = 0xAE
-  /// Q2A is the 1st 64-bit chunk of Q2A.
-  | Q2A = 0xAF
-  /// Q2B is the 2nd 64-bit chunk of Q2B.
-  | Q2B = 0xB0
-  /// Q3A is the 1st 64-bit chunk of Q3A.
-  | Q3A = 0xB1
-  /// Q3B is the 2nd 64-bit chunk of Q3B.
-  | Q3B = 0xB2
-  /// Q4A is the 1st 64-bit chunk of Q4A.
-  | Q4A = 0xB3
-  /// Q4B is the 2nd 64-bit chunk of Q4B.
-  | Q4B = 0xB4
-  /// Q5A is the 1st 64-bit chunk of Q5A.
-  | Q5A = 0xB5
-  /// Q5B is the 2nd 64-bit chunk of Q5B.
-  | Q5B = 0xB6
-  /// Q6A is the 1st 64-bit chunk of Q6A.
-  | Q6A = 0xB7
-  /// Q6B is the 2nd 64-bit chunk of Q6B.
-  | Q6B = 0xB8
-  /// Q7A is the 1st 64-bit chunk of Q7A.
-  | Q7A = 0xB9
-  /// Q7B is the 2nd 64-bit chunk of Q7B.
-  | Q7B = 0xBA
-  /// Q8A is the 1st 64-bit chunk of Q8A.
-  | Q8A = 0xBB
-  /// Q8B is the 2nd 64-bit chunk of Q8B.
-  | Q8B = 0xBC
-  /// Q9A is the 1st 64-bit chunk of Q9A.
-  | Q9A = 0xBD
-  /// Q9B is the 2nd 64-bit chunk of Q9B.
-  | Q9B = 0xBE
-  /// Q10A is the 1st 64-bit chunk of Q10A.
-  | Q10A = 0xBF
-  /// Q10B is the 2nd 64-bit chunk of Q10B.
-  | Q10B = 0xC0
-  /// Q11A is the 1st 64-bit chunk of Q11A.
-  | Q11A = 0xC1
-  /// Q11B is the 2nd 64-bit chunk of Q11B.
-  | Q11B = 0xC2
-  /// Q12A is the 1st 64-bit chunk of Q12A.
-  | Q12A = 0xC3
-  /// Q12B is the 2nd 64-bit chunk of Q12B.
-  | Q12B = 0xC4
-  /// Q13A is the 1st 64-bit chunk of Q13A.
-  | Q13A = 0xC5
-  /// Q13B is the 2nd 64-bit chunk of Q13B.
-  | Q13B = 0xC6
-  /// Q14A is the 1st 64-bit chunk of Q14A.
-  | Q14A = 0xC7
-  /// Q14B is the 2nd 64-bit chunk of Q14B.
-  | Q14B = 0xC8
-  /// Q15A is the 1st 64-bit chunk of Q15A.
-  | Q15A = 0xC9
-  /// Q15B is the 2nd 64-bit chunk of Q15B.
-  | Q15B = 0xCA
+  | FPSCR = 0x800
 
 /// Shortcut for Register type.
 type internal R = Register
@@ -448,7 +383,7 @@ module Register =
     LanguagePrimitives.EnumToValue (reg) |> RegisterID.create
 
   let ofString (str: string) =
-    match str.ToLowerInvariant () with
+    match str.ToLower () with
     | "r0" -> R.R0
     | "r1" -> R.R1
     | "r2" -> R.R2
@@ -548,38 +483,6 @@ module Register =
     | "q13" -> R.Q13
     | "q14" -> R.Q14
     | "q15" -> R.Q15
-    | "q0a" -> R.Q0A
-    | "q0b" -> R.Q0B
-    | "q1a" -> R.Q1A
-    | "q1b" -> R.Q1B
-    | "q2a" -> R.Q2A
-    | "q2b" -> R.Q2B
-    | "q3a" -> R.Q3A
-    | "q3b" -> R.Q3B
-    | "q4a" -> R.Q4A
-    | "q4b" -> R.Q4B
-    | "q5a" -> R.Q5A
-    | "q5b" -> R.Q5B
-    | "q6a" -> R.Q6A
-    | "q6b" -> R.Q6B
-    | "q7a" -> R.Q7A
-    | "q7b" -> R.Q7B
-    | "q8a" -> R.Q8A
-    | "q8b" -> R.Q8B
-    | "q9a" -> R.Q9A
-    | "q9b" -> R.Q9B
-    | "q10a" -> R.Q10A
-    | "q10b" -> R.Q10B
-    | "q11a" -> R.Q11A
-    | "q11b" -> R.Q11B
-    | "q12a" -> R.Q12A
-    | "q12b" -> R.Q12B
-    | "q13a" -> R.Q13A
-    | "q13b" -> R.Q13B
-    | "q14a" -> R.Q14A
-    | "q14b" -> R.Q14B
-    | "q15a" -> R.Q15A
-    | "q15b" -> R.Q15B
     | "c0" -> R.C0
     | "c1" -> R.C1
     | "c2" -> R.C2
@@ -754,38 +657,6 @@ module Register =
     | R.Q13 -> "q13"
     | R.Q14 -> "q14"
     | R.Q15 -> "q15"
-    | R.Q0A -> "q0a"
-    | R.Q0B -> "q0b"
-    | R.Q1A -> "q1a"
-    | R.Q1B -> "q1b"
-    | R.Q2A -> "q2a"
-    | R.Q2B -> "q2b"
-    | R.Q3A -> "q3a"
-    | R.Q3B -> "q3b"
-    | R.Q4A -> "q4a"
-    | R.Q4B -> "q4b"
-    | R.Q5A -> "q5a"
-    | R.Q5B -> "q5b"
-    | R.Q6A -> "q6a"
-    | R.Q6B -> "q6b"
-    | R.Q7A -> "q7a"
-    | R.Q7B -> "q7b"
-    | R.Q8A -> "q8a"
-    | R.Q8B -> "q8b"
-    | R.Q9A -> "q9a"
-    | R.Q9B -> "q9b"
-    | R.Q10A -> "q10a"
-    | R.Q10B -> "q10b"
-    | R.Q11A -> "q11a"
-    | R.Q11B -> "q11b"
-    | R.Q12A -> "q12a"
-    | R.Q12B -> "q12b"
-    | R.Q13A -> "q13a"
-    | R.Q13B -> "q13b"
-    | R.Q14A -> "q14a"
-    | R.Q14B -> "q14b"
-    | R.Q15A -> "q15a"
-    | R.Q15B -> "q15b"
     | R.C0 -> "c0"
     | R.C1 -> "c1"
     | R.C2 -> "c2"
@@ -871,11 +742,7 @@ module Register =
     | R.D0 | R.D1 | R.D2 | R.D3 | R.D4 | R.D5 | R.D6 | R.D7 | R.D8 | R.D9
     | R.D10 | R.D11 | R.D12 | R.D13 | R.D14 | R.D15 | R.D16 | R.D17
     | R.D18 | R.D19 | R.D20 | R.D21 | R.D22 | R.D23 | R.D24 | R.D25
-    | R.D26 | R.D27 | R.D28 | R.D29 | R.D30 | R.D31 | R.Q0A | R.Q0B
-    | R.Q1A | R.Q1B | R.Q2A | R.Q2B | R.Q3A | R.Q3B | R.Q4A | R.Q4B
-    | R.Q5A | R.Q5B | R.Q6A | R.Q6B | R.Q7A | R.Q7B | R.Q8A | R.Q8B
-    | R.Q9A | R.Q9B | R.Q10A | R.Q10B | R.Q11A | R.Q11B | R.Q12A | R.Q12B
-    | R.Q13A | R.Q13B | R.Q14A | R.Q14B | R.Q15A | R.Q15B -> 64<rt>
+    | R.D26 | R.D27 | R.D28 | R.D29 | R.D30 | R.D31 -> 64<rt>
     | R.Q0 | R.Q1 | R.Q2 | R.Q3 | R.Q4 | R.Q5 | R.Q6 | R.Q7 | R.Q8 | R.Q9
     | R.Q10 | R.Q11 | R.Q12 | R.Q13 | R.Q14 | R.Q15 -> 128<rt>
     | _ -> Utils.impossible ()

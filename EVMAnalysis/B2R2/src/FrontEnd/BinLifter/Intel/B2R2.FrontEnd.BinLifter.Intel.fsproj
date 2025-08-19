@@ -1,18 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>b2r2-240x240.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>B2R2 Intel frontend.</Description>
+    <RepositoryUrl>https://github.com/B2R2-org/B2R2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="IntelRegister.fs" />
+    <Compile Include="IntelRegisterSet.fs" />
     <Compile Include="IntelOpcodes.fs" />
     <Compile Include="IntelTypes.fs" />
     <Compile Include="IntelRegExprs.fs" />
-    <Compile Include="IntelRegisterFactory.fs" />
+    <Compile Include="IntelRegisterBay.fs" />
     <Compile Include="IntelHelper.fs" />
     <Compile Include="IntelOperands.fs" />
     <Compile Include="IntelDisasm.fs" />
@@ -27,10 +29,9 @@
     <Compile Include="IntelParsingHelper.fs" />
     <Compile Include="IntelParsingJob.fs" />
     <Compile Include="IntelParser.fs" />
-    <Compile Include="IntelTranslationContext.fs" />
-    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath="" />
+    <Compile Include="Intel.fs" />
+    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath=""/>
     <None Include="..\..\..\..\assets\b2r2-240x240.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>

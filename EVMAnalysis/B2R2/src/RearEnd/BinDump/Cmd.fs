@@ -25,7 +25,6 @@
 namespace B2R2.RearEnd.BinDump
 
 open B2R2
-open B2R2.FrontEnd.BinLifter
 open B2R2.RearEnd
 open System
 
@@ -86,7 +85,7 @@ type BinDumpOpts () =
   /// "-i" or "--isa" option for specifying ISA.
   static member OptISA () =
     let cb opts (arg: string []) =
-      (BinDumpOpts.ToThis opts).ISA <- ISA.OfString arg[0]
+      (BinDumpOpts.ToThis opts).ISA <- ISA.OfString arg.[0]
       opts
     CmdOpts.New (descr = "Specify <ISA> (e.g., x86) from command line",
                  extra = 1, callback = cb, short = "-i", long = "--isa")
@@ -95,7 +94,7 @@ type BinDumpOpts () =
   static member OptBaseAddr () =
     let cb opts (arg: string []) =
       (BinDumpOpts.ToThis opts).BaseAddress <-
-        Some (Convert.ToUInt64 (arg[0], 16))
+        Some (Convert.ToUInt64 (arg.[0], 16))
       (BinDumpOpts.ToThis opts).ShowAddress <- true
       opts
     CmdOpts.New (descr = "Specify the base <address> in hex (default=0)",
@@ -111,18 +110,10 @@ type BinDumpOpts () =
       descr = "Always display disassembly for all sections.",
       callback = cb, long = "--only-disasm")
 
-  /// "--att" for using AT&T syntax.
-  static member OptATTSyntax () =
-    let cb opts _ =
-      Intel.Disasm.setDisassemblyFlavor ATTSyntax
-      opts
-    CmdOpts.New (descr = "Use AT&T syntax for disassembling Intel instructions",
-                 callback = cb, long = "--att")
-
   /// "-S" or "--section" for displaying contents of a specific section.
   static member OptDumpSection () =
     let cb opts (arg: string []) =
-      (BinDumpOpts.ToThis opts).InputSecName <- Some arg[0]
+      (BinDumpOpts.ToThis opts).InputSecName <- Some arg.[0]
       opts
     CmdOpts.New (
       descr = "Display the contents of a specific section",
@@ -131,7 +122,7 @@ type BinDumpOpts () =
   /// "-s" option for specifying an input hexstring.
   static member OptInputHexString () =
     let cb opts (arg: string []) =
-      (BinDumpOpts.ToThis opts).InputHexStr <- ByteArray.ofHexString arg[0]
+      (BinDumpOpts.ToThis opts).InputHexStr <- ByteArray.ofHexString arg.[0]
       opts
     CmdOpts.New (descr = "Specify an input <hexstring> from command line",
                  extra = 1, callback = cb, short = "-s")
@@ -140,7 +131,7 @@ type BinDumpOpts () =
   static member OptArchMode () =
     let cb opts (arg: string []) =
       (BinDumpOpts.ToThis opts).ArchOperationMode <-
-        ArchOperationMode.ofString arg[0]
+        ArchOperationMode.ofString arg.[0]
       opts
     CmdOpts.New (
       descr = "Specify <operation mode> (e.g., thumb/arm) from cmdline",
@@ -223,7 +214,6 @@ module Cmd =
       CmdOpts.New (descr = "[Output Configuration]", dummy = true)
       CmdOpts.New (descr = "", dummy = true)
 
-      BinDumpOpts.OptATTSyntax ()
       BinDumpOpts.OptDumpSection ()
       BinDumpOpts.OptOnlyDisasm ()
       BinDumpOpts.OptShowAddr ()

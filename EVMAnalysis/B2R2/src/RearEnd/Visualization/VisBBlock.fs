@@ -24,44 +24,48 @@
 
 namespace B2R2.RearEnd.Visualization
 
-open B2R2.FrontEnd.BinLifter
-open B2R2.MiddleEnd.ControlFlowGraph
+open B2R2.MiddleEnd.BinEssence
 
 /// The main vertex type used for visualization.
-type VisBBlock (blk: IVisualizable, isDummy) =
+type VisBBlock (blk: BasicBlock, isDummy) =
+  inherit BasicBlock (blk.PPoint)
+
   let mutable layer = -1
 
   let mutable index = -1
 
   let pos = { X = 0.0; Y = 0.0 }
 
-  let [<Literal>] TSpanOffset = 4.0
+  let [<Literal>] tSpanOffset = 4.0
 
-  let [<Literal>] Padding = 4.0
+  let [<Literal>] padding = 4.0
 
-  let visualizableAsm =
-    let block = blk.Visualize ()
-    if block.Length = 0 then
-      [| [| { AsmWordKind = AsmWordKind.String
-              AsmWordValue = $"# fake block @ {blk.BlockAddress:x}" } |] |]
-    else block
+  let visBlock =
+    let block = blk.ToVisualBlock ()
+    if block.Length = 0 then VisualBlock.empty blk.PPoint.Address else block
 
-  let maxLine = visualizableAsm |> Array.maxBy (AsmLine.lineWidth)
+  let maxLine = visBlock |> Array.maxBy (VisualLine.lineWidth)
 
-  let maxLineWidth = AsmLine.lineWidth maxLine |> float
+  let maxLineWidth = VisualLine.lineWidth maxLine |> float
 
   /// This number (7.5) is empirically obtained with the current font. For some
   /// reasons, we cannot precisely determine the width of each text even though
   /// we are using a fixed-width font. *)
   let mutable width =
-    if isDummy then 0.0 else maxLineWidth * 7.5 + Padding * 2.0
+    if isDummy then 0.0 else maxLineWidth * 7.5 + padding * 2.0
 
-  let numLines = visualizableAsm |> Array.length
+  let numLines = visBlock |> Array.length
 
   /// This number (14), as in the width case, is empirically obtained with the
   /// current font.
   let height =
-    if isDummy then 0.0 else float numLines * 14.0 + TSpanOffset + Padding * 2.0
+    if isDummy then 0.0 else float numLines * 14.0 + tSpanOffset + padding * 2.0
+
+  override __.Range with get () = blk.Range
+
+  override __.IsFakeBlock () = blk.IsFakeBlock ()
+
+  override __.ToVisualBlock () = visBlock
 
   member __.IsDummy with get () = isDummy
 
@@ -79,7 +83,3 @@ type VisBBlock (blk: IVisualizable, isDummy) =
 
   /// X-Y coordinate in the visualized graph.
   member __.Coordinate with get () = pos
-
-  interface IVisualizable with
-    member _.BlockAddress with get() = blk.BlockAddress
-    member _.Visualize () = visualizableAsm

@@ -126,8 +126,6 @@ CLI
 CLRSSBSY
 /// Clear Task-Switched Flag in CR0.
 CLTS
-/// Cache Line Write Back.
-CLWB
 /// Complement Carry Flag.
 CMC
 /// Conditional Move (Move if above (CF = 0 and ZF = 0)).
@@ -280,8 +278,6 @@ ENDBR64
 ENTER
 /// Extract Packed Floating-Point Values.
 EXTRACTPS
-/// Extract Field from Register.
-EXTRQ
 /// Compute 2x-1.
 F2XM1
 /// Absolute Value.
@@ -338,8 +334,6 @@ FDIVR
 FDIVRP
 /// Free Floating-Point Register.
 FFREE
-/// Performs FFREE ST(i) and pop stack.
-FFREEP
 /// Add.
 FIADD
 /// Compare Integer.
@@ -392,7 +386,7 @@ FLDZ
 FMUL
 /// Multiply and pop the register stack.
 FMULP
-/// Clear FP exception flags without checking for error conditions.
+/// Clear floating-point exception flags without checking for error conditions.
 FNCLEX
 /// Initialize FPU without checking error conditions.
 FNINIT
@@ -516,17 +510,13 @@ INSB
 INSD
 /// Insert Scalar Single-Precision Floating-Point Value.
 INSERTPS
-/// Inserts Field from a source Register to a destination Register.
-INSERTQ
 /// Input from Port to String (word).
 INSW
 /// Call to Interrupt (Interrupt vector specified by immediate byte).
 INT
-/// Call to Interrupt Procedure (Debug trap).
-INT1
-/// Call to Interrupt (Interrupt 3-trap to debugger).
+/// Call to Interrupt (Interrupt 3—trap to debugger).
 INT3
-/// Call to Interrupt (InteInterrupt 4-if overflow flag is 1).
+/// Call to Interrupt (InteInterrupt 4—if overflow flag is 1).
 INTO
 /// Invalidate Internal Caches.
 INVD
@@ -546,42 +536,47 @@ IRETD
 IRETQ
 /// Interrupt return (16-bit operand size).
 IRETW
-/// Jump if Condition Is Met (Jump near if not below, CF = 0).
-JAE
-JNC
-JNB
+/// Jump if Condition Is Met (Jump short if above, CF = 0 and ZF = 0).
+JNBE
+JA
 /// Jump if Condition Is Met (Jump short if below, CF = 1).
 JC
 JNAE
 JB
+/// Jump if Condition Is Met (Jump short if below or equal, CF = 1 or ZF).
+JNA
+JBE
 /// Jump if Condition Is Met (Jump short if CX register is 0).
 JCXZ
 /// Jump if Condition Is Met (Jump short if ECX register is 0).
 JECXZ
-/// Jump if Condition Is Met (Jump near if not less, SF = OF).
-JGE
-JNL
+/// Jump if Condition Is Met (Jump short if RCX register is 0).
+JRCXZ
+/// Jump if Condition Is Met (Jump short if greater, ZF = 0 and SF = OF).
+JNLE
+JG
+/// Jump if Condition Is Met (Jump short if less, SF <> OF).
+JNGE
+JL
+/// Jump if Cond Is Met (Jump short if less or equal, ZF = 1 or SF <> OF).
+JNG
+JLE
 /// Far jmp.
 JMPFar
 /// Near jmp.
 JMPNear
-/// Jump if Condition Is Met (Jump short if below or equal, CF = 1 or ZF).
-JNA
-JBE
-/// Jump if Condition Is Met (Jump short if above, CF = 0 and ZF = 0).
-JNBE
-JA
-/// Jump if Cond Is Met (Jump short if less or equal, ZF = 1 or SF <> OF).
-JNG
-JLE
-/// Jump if Condition Is Met (Jump short if less, SF <> OF).
-JNGE
-JL
-/// Jump if Condition Is Met (Jump short if greater, ZF = 0 and SF = OF).
-JNLE
-JG
+/// Jump if Condition Is Met (Jump near if not below, CF = 0).
+JAE
+JNC
+JNB
+/// Jump if Condition Is Met (Jump near if not less, SF = OF).
+JGE
+JNL
 /// Jump if Condition Is Met (Jump near if not overflow, OF = 0).
 JNO
+/// Jump if Condition Is Met (Jump near if not parity, PF = 0).
+JPO
+JNP
 /// Jump if Condition Is Met (Jump near if not sign, SF = 0).
 JNS
 /// Jump if Condition Is Met (Jump near if not zero, ZF = 0).
@@ -592,11 +587,6 @@ JO
 /// Jump if Condition Is Met (Jump near if parity, PF = 1).
 JP
 JPE
-/// Jump if Condition Is Met (Jump near if not parity, PF = 0).
-JPO
-JNP
-/// Jump if Condition Is Met (Jump short if RCX register is 0).
-JRCXZ
 /// Jump if Condition Is Met (Jump short if sign, SF = 1).
 JS
 /// Jump if Condition Is Met (Jump short if zero, ZF = 1).
@@ -1400,10 +1390,8 @@ TZCNT
 UCOMISD
 /// Unordered Compare Scalar Single-Precision FPValues and Set EFLAGS.
 UCOMISS
-/// Undefined instruction (Raise invalid opcode exception).
-UD0
-/// Undefined Instruction (Raise invalid opcode exception).
-UD1
+/// Undefined instruction.
+UD
 /// Undefined Instruction (Raise invalid opcode exception).
 UD2
 /// Unpack and Interleave High Packed Double-Precision Floating-Point Values.
@@ -1414,14 +1402,6 @@ UNPCKHPS
 UNPCKLPD
 /// Unpack and Interleave Low Packed Single-Precision Floating-Point Values.
 UNPCKLPS
-/// Packed Single-Precision Floating-Point Fused Multiply-Add.
-V4FMADDPS
-/// Scalar Single-Precision Floating-Point Fused Multiply-Add.
-V4FMADDSS
-/// Packed Single-Precision Floating-Point Fused Multiply-Add and Negate.
-V4FNMADDPS
-/// Scalar Single-Precision Floating-Point Fused Multiply-Add and Negate.
-V4FNMADDSS
 /// Add Packed Double-Precision Floating-Point Values.
 VADDPD
 /// Add Packed Double-Precision Floating-Point Values.
@@ -1430,18 +1410,6 @@ VADDPS
 VADDSD
 /// Add Scalar Single-Precision Floating-Point Values.
 VADDSS
-/// Packed Double-FP Add/Subtract.
-VADDSUBPD
-/// Packed Single-FP Add/Subtract.
-VADDSUBPS
-/// Perform One Round of an AES Decryption Flow.
-VAESDEC
-/// Perform Last Round of an AES Decryption Flow.
-VAESDECLAST
-/// Perform One Round of an AES Encryption Flow.
-VAESENC
-/// Perform Last Round of an AES Encryption Flow.
-VAESENCLAST
 /// Perform dword alignment of two concatenated source vectors.
 VALIGND
 /// Perform qword alignment of two concatenated source vectors.
@@ -1458,40 +1426,12 @@ VANDPS
 VBLENDMPD
 /// Replace the VBLENDVPS instructions (using opmask as select control).
 VBLENDMPS
-/// Blend Packed Double-Precision Floats.
-VBLENDPD
-/// Blend Packed Single-Precision Floats.
-VBLENDPS
-/// Variable Blend Packed Double-Precision Floats.
-VBLENDVPD
-/// Variable Blend Packed Single-Precision Floats.
-VBLENDVPS
-/// Load with Broadcast Floating-Point Data.
-VBROADCASTF128
 /// Broadcast 128 bits of int data in mem to low and high 128-bits in ymm1.
 VBROADCASTI128
-/// Broadcast two dword elements.
-VBROADCASTI32X2
-/// Broadcast four dword elements.
-VBROADCASTI32X4
-/// Broadcast eight dword elements.
-VBROADCASTI32X8
-/// Broadcast two qword elements.
-VBROADCASTI64X2
-/// Broadcast four qword elements.
-VBROADCASTI64X4
 /// Broadcast low double-precision floating-point element.
 VBROADCASTSD
 /// Broadcast Floating-Point Data.
 VBROADCASTSS
-/// Compare Packed Double-Precision Floating-Point Values.
-VCMPPD
-/// Compare Packed Single-Precision Floating-Point Values.
-VCMPPS
-/// Compare Scalar Double-Precision Floating-Point Values.
-VCMPSD
-/// Scalar Single-Precision Floating-Point Values.
-VCMPSS
 /// Compare Scalar Ordered Double-Precision FP Values and Set EFLAGS.
 VCOMISD
 /// Compare Scalar Ordered Single-Precision FP Values and Set EFLAGS.
@@ -1500,16 +1440,12 @@ VCOMISS
 VCOMPRESSPD
 /// Compress packed SP elements of a vector.
 VCOMPRESSPS
+/// Compare Packed Double-Precision Floating-Point Values.
+VCMPPD
+/// Compare Packed Single-Precision Floating-Point Values.
+VCMPPS
 /// Convert two packed signed doubleword integers.
 VCVTDQ2PD
-/// Convert Packed Dword Integers to Packed Single-Precision FP Values.
-VCVTDQ2PS
-/// Convert Two Packed Single Data to One Packed BF16 Data.
-VCVTNE2PS2BF16
-/// Convert Packed Single Data to Packed BF16 Data.
-VCVTNEPS2BF16
-/// Convert Packed Double-Precision FP Values to Packed Doubleword Integers.
-VCVTPD2DQ
 /// Convert two packed double-precision floating-point values.
 VCVTPD2PS
 /// Convert Packed Double-Precision FP Values to Packed Quadword Integers.
@@ -1520,9 +1456,7 @@ VCVTPD2UDQ
 VCVTPD2UQQ
 /// Convert 16-bit FP values to Single-Precision FP values.
 VCVTPH2PS
-/// Conv Packed Single-Precision FP Values to Packed Signed DWord Int Values.
-VCVTPS2DQ
-/// Conv Packed Single-Precision FP Values to Packed Dbl-Precision FP Values.
+/// Convert Packed Single-Precision FP Values to Packed Dbl-Precision FP Values.
 VCVTPS2PD
 /// Convert Single-Precision FP value to 16-bit FP value.
 VCVTPS2PH
@@ -1552,16 +1486,12 @@ VCVTSS2SD
 VCVTSS2SI
 /// Convert Scalar Single-Precision FP Value to Unsigned Doubleword Integer.
 VCVTSS2USI
-/// Conv with Trunc Packed Double-Precision FP Val to Packed Dword Integers.
-VCVTTPD2DQ
 /// Convert with Truncation Packed DP FP Values to Packed QWord Integers.
 VCVTTPD2QQ
 /// Convert with Truncation Packed DP FP Values to Packed Unsigned DWord Int.
 VCVTTPD2UDQ
 /// Convert with Truncation Packed DP FP Values to Packed Unsigned QWord Int.
 VCVTTPD2UQQ
-/// Conv with Trunc Packed Single-Precision FP Val to Packed Dword Integers.
-VCVTTPS2DQ
 /// Convert with Truncation Packed SP FP Values to Packed Signed QWord Int.
 VCVTTPS2QQ
 /// Convert with Truncation Packed SP FP Values to Packed Unsigned DWord Int.
@@ -1584,10 +1514,6 @@ VCVTUDQ2PS
 VCVTUQQ2PD
 /// Convert Packed Unsigned QWord Integers to Packed SP FP Values.
 VCVTUQQ2PS
-/// Convert an signed integer to the low DP FP elem and merge to a vector.
-VCVTUSI2SD
-/// Convert an signed integer to the low SP FP elem and merge to a vector.
-VCVTUSI2SS
 /// Convert an unsigned integer to the low DP FP elem and merge to a vector.
 VCVTUSI2USD
 /// Convert an unsigned integer to the low SP FP elem and merge to a vector.
@@ -1602,12 +1528,6 @@ VDIVPS
 VDIVSD
 /// Divide Scalar Single-Precision Floating-Point Values.
 VDIVSS
-/// Dot Product of BF16 Pairs Accumulated into Packed Single Precision.
-VDPBF16PS
-/// Packed Double-Precision Dot Products.
-VDPPD
-/// Packed Single-Precision Dot Products.
-VDPPS
 /// Verify a Segment for Reading.
 VERR
 /// Verify a Segment for Writing.
@@ -1624,8 +1544,6 @@ VEXP2SS
 VEXPANDPD
 /// Load Sparse Packed Single-Precision FP Values from Dense Memory.
 VEXPANDPS
-/// Extract Packed Floating-Point Values.
-VEXTRACTF128
 /// Extract a vector from a full-length vector with 32-bit granular update.
 VEXTRACTF32X4
 /// Extract a vector from a full-length vector with 32-bit granular update.
@@ -1634,8 +1552,6 @@ VEXTRACTF32X8
 VEXTRACTF64X2
 /// Extract a vector from a full-length vector with 64-bit granular update.
 VEXTRACTF64X4
-/// Extract packed Integer Values.
-VEXTRACTI128
 /// Extract a vector from a full-length vector with 32-bit granular update.
 VEXTRACTI32X4
 /// Extract a vector from a full-length vector with 32-bit granular update.
@@ -1644,8 +1560,6 @@ VEXTRACTI32X8
 VEXTRACTI64X2
 /// Extract a vector from a full-length vector with 64-bit granular update.
 VEXTRACTI64X4
-/// Extract From Packed Single-Precision Floats.
-VEXTRACTPS
 /// Fix Up Special Packed Float64 Values.
 VFIXUPIMMPD
 /// Fix Up Special Packed Float32 Values.
@@ -1654,16 +1568,12 @@ VFIXUPIMMPS
 VFIXUPIMMSD
 /// Fix Up Special Scalar Float32 Value.
 VFIXUPIMMSS
-/// Fused Multiply-Add of Packed Double-Precision Floating-Point Values.
-VFMADD132PD
-/// Fused Multiply-Add of Packed Single-Precision Floating-Point Values.
-VFMADD132PS
 /// Fused Multiply-Add of Scalar Double-Precision Floating-Point Values.
 VFMADD132SD
 /// Fused Multiply-Add of Scalar Single-Precision Floating-Point Values.
 VFMADD132SS
 /// Fused Multiply-Add of Packed Double-Precision Floating-Point Values.
-VFMADD213PD
+VFMADD132PD
 /// Fused Multiply-Add of Packed Single-Precision Floating-Point Values.
 VFMADD213PS
 /// Fused Multiply-Add of Scalar Double-Precision Floating-Point Values.
@@ -1672,116 +1582,24 @@ VFMADD213SD
 VFMADD213SS
 /// Fused Multiply-Add of Packed Double-Precision Floating-Point Value.
 VFMADD231PD
-/// Fused Multiply-Add of Packed Single-Precision Floating-Point Values.
-VFMADD231PS
 /// Fused Multiply-Add of Scalar Double-Precision Floating-Point Values.
 VFMADD231SD
 /// Fused Multiply-Add of Scalar Single-Precision Floating-Point Values.
 VFMADD231SS
-/// Multiply and Add Packed Double-Precision Floating-Point(Only AMD).
-VFMADDPD
-/// Multiply and Add Packed Single-Precision Floating-Point(Only AMD).
-VFMADDPS
-/// Multiply and Add Scalar Double-Precision Floating-Point(Only AMD).
-VFMADDSD
-/// Multiply and Add Scalar Single-Precision Floating-Point(Only AMD).
-VFMADDSS
-/// Fused Multiply-Alternating Add/Sub of Packed Double-Precision FP Values.
-VFMADDSUB132PD
-/// Fused Multiply-Alternating Add/Sub of Packed Single-Precision FP Values.
-VFMADDSUB132PS
-/// Fused Multiply-Alternating Add/Sub of Packed Double-Precision FP Values.
-VFMADDSUB213PD
-/// Fused Multiply-Alternating Add/Sub of Packed Single-Precision FP Values.
-VFMADDSUB213PS
-/// Fused Multiply-Alternating Add/Sub of Packed Double-Precision FP Values.
-VFMADDSUB231PD
-/// Fused Multiply-Alternating Add/Sub of Packed Single-Precision FP Values.
-VFMADDSUB231PS
-/// Fused Multiply-Subtract of Packed Double-Precision Floating-Point Values.
-VFMSUB132PD
-/// Fused Multiply-Subtract of Packed Single-Precision Floating-Point Values.
-VFMSUB132PS
-/// Fused Multiply-Subtract of Scalar Double-Precision Floating-Point Values.
-VFMSUB132SD
 /// Fused Multiply-Subtract of Scalar Single-Precision Floating-Point Values.
 VFMSUB132SS
-/// Fused Multiply-Subtract of Packed Double-Precision Floating-Point Values.
-VFMSUB213PD
-/// Fused Multiply-Subtract of Packed Single-Precision Floating-Point Values.
-VFMSUB213PS
-/// Fused Multiply-Subtract of Scalar Double-Precision Floating-Point Values.
-VFMSUB213SD
-/// Fused Multiply-Subtract of Scalar Single-Precision Floating-Point Values.
-VFMSUB213SS
-/// Fused Multiply-Subtract of Packed Double-Precision Floating-Point Values.
-VFMSUB231PD
-/// Fused Multiply-Subtract of Packed Single-Precision Floating-Point Values.
-VFMSUB231PS
 /// Fused Multiply-Subtract of Scalar Double-Precision Floating-Point Values.
 VFMSUB231SD
-/// Fused Multiply-Subtract of Scalar Single-Precision Floating-Point Values.
-VFMSUB231SS
-/// Fused Multiply-Alternating Sub/Add of Packed Double-Precision FP Values.
-VFMSUBADD132PD
-/// Fused Multiply-Alternating Sub/Add of Packed Single-Precision FP Values.
-VFMSUBADD132PS
-/// Fused Multiply-Alternating Sub/Add of Packed Double-Precision FP Values.
-VFMSUBADD213PD
-/// Fused Multiply-Alternating Sub/Add of Packed Single-Precision FP Values.
-VFMSUBADD213PS
-/// Fused Multiply-Alternating Sub/Add of Packed Double-Precision FP Values.
-VFMSUBADD231PD
-/// Fused Multiply-Alternating Sub/Add of Packed Single-Precision FP Values.
-VFMSUBADD231PS
 /// Fused Negative Multiply-Add of Packed Double-Precision FP Values.
 VFNMADD132PD
-/// Fused Negative Mul-Add of Packed Single-Precision Floating-Point Values.
-VFNMADD132PS
-/// Fused Negative Multiply-Add of Scalar Double-Precision FP Values.
-VFNMADD132SD
-/// Fused Negative Mul-Add of Scalar Single-Precision Floating-Point Values.
-VFNMADD132SS
-/// Fused Negative Multiply-Add of Packed Double-Precision FP Values.
-VFNMADD213PD
-/// Fused Negative Mul-Add of Packed Single-Precision Floating-Point Values.
-VFNMADD213PS
-/// Fused Negative Multiply-Add of Scalar Double-Precision FP Values.
-VFNMADD213SD
-/// Fused Negative Mul-Add of Scalar Single-Precision Floating-Point Values.
-VFNMADD213SS
 /// Fused Negative Multiply-Add of Packed Double-Precision FP Values.
 VFNMADD231PD
-/// Fused Negative Mul-Add of Packed Single-Precision Floating-Point Values.
-VFNMADD231PS
+/// Fused Negative Multiply-Add of Scalar Double-Precision FP Values.
+VFNMADD132SD
+/// Fused Negative Multiply-Add of Scalar Double-Precision FP Values.
+VFNMADD213SD
 /// Fused Negative Multiply-Add of Scalar Double-Precision FP Values.
 VFNMADD231SD
-/// Fused Negative Mul-Add of Scalar Single-Precision Floating-Point Values.
-VFNMADD231SS
-/// Fused Negative Multiply-Subtract of Packed Double-Precision FP Values.
-VFNMSUB132PD
-/// Fused Negative Multiply-Subtract of Packed Single-Precision FP Values.
-VFNMSUB132PS
-/// Fused Negative Multiply-Subtract of Scalar Double-Precision FP Values.
-VFNMSUB132SD
-/// Fused Negative Multiply-Subtract of Scalar Single-Precision FP Values.
-VFNMSUB132SS
-/// Fused Negative Multiply-Subtract of Packed Double-Precision FP Values.
-VFNMSUB213PD
-/// Fused Negative Multiply-Subtract of Packed Single-Precision FP Values.
-VFNMSUB213PS
-/// Fused Negative Multiply-Subtract of Scalar Double-Precision FP Values.
-VFNMSUB213SD
-/// Fused Negative Multiply-Subtract of Scalar Single-Precision FP Values.
-VFNMSUB213SS
-/// Fused Negative Multiply-Subtract of Packed Double-Precision FP Values.
-VFNMSUB231PD
-/// Fused Negative Multiply-Subtract of Packed Single-Precision FP Values.
-VFNMSUB231PS
-/// Fused Negative Multiply-Subtract of Scalar Double-Precision FP Values.
-VFNMSUB231SD
-/// Fused Negative Multiply-Subtract of Scalar Single-Precision FP Values.
-VFNMSUB231SS
 /// Tests Types Of a Packed Float64 Values.
 VFPCLASSPD
 /// Tests Types Of a Packed Float32 Values.
@@ -1790,30 +1608,8 @@ VFPCLASSPS
 VFPCLASSSD
 /// Tests Types Of a Scalar Float32 Values.
 VFPCLASSSS
-/// Gather Packed DP FP Values Using Signed Dword/Qword Indices.
-VGATHERDPD
 /// Gather Packed SP FP values Using Signed Dword/Qword Indices.
 VGATHERDPS
-/// Sparse prefetch of packed DP FP vector with T0 hint using dword indices.
-VGATHERPF0DPD
-/// Sparse prefetch of packed SP FP vector with T0 hint using dword indices.
-VGATHERPF0DPS
-/// Sparse prefetch of packed DP FP vector with T0 hint using qword indices.
-VGATHERPF0QPD
-/// Sparse prefetch of packed SP FP vector with T0 hint using qword indices.
-VGATHERPF0QPS
-/// Sparse prefetch of packed DP FP vector with T1 hint using dword indices.
-VGATHERPF1DPD
-/// Sparse prefetch of packed SP FP vector with T1 hint using dword indices.
-VGATHERPF1DPS
-/// Sparse prefetch of packed DP FP vector with T1 hint using qword indices.
-VGATHERPF1QPD
-/// Sparse prefetch of packed SP FP vector with T1 hint using qword indices.
-VGATHERPF1QPS
-/// Gather Packed DP FP Values Using Signed Dword/Qword Indices.
-VGATHERQPD
-/// Gather Packed SP FP values Using Signed Dword/Qword Indices.
-VGATHERQPS
 /// Convert Exponents of Packed DP FP Values to DP FP Values.
 VGETEXPPD
 /// Convert Exponents of Packed SP FP Values to SP FP Values.
@@ -1830,20 +1626,6 @@ VGETMANTPS
 VGETMANTSD
 /// Extract Float32 Vector of Normalized Mantissa from Float32 Vector.
 VGETMANTSS
-/// Galois Field Affine Transformation Inverse.
-VGF2P8AFFINEINVQB
-/// Galois Field Affine Transformation.
-VGF2P8AFFINEQB
-/// Galois Field Multiply Bytes.
-VGF2P8MULB
-/// Packed Double-FP Horizontal Add.
-VHADDPD
-/// Packed Single-FP Horizontal Add.
-VHADDPS
-/// Packed Double-FP Horizontal Subtract.
-VHSUBPD
-/// Packed Single-FP Horizontal Subtract.
-VHSUBPS
 /// Insert Packed Floating-Point Values.
 VINSERTF128
 /// Insert Packed Floating-Point Values.
@@ -1860,38 +1642,22 @@ VINSERTI32X8
 VINSERTI64X2
 /// Insert 256 bits of packed quadword integer values.
 VINSERTI64X4
-/// Insert Into Packed Single-Precision Floats.
-VINSERTPS
 /// Load Unaligned Integer 128 Bits.
 VLDDQU
-/// Store Selected Bytes of Double Quadword.
-VMASKMOVDQU
-/// Conditional SIMD Packed Loads and Stores.
-VMASKMOVPD
-/// Conditional SIMD Packed Loads and Stores.
-VMASKMOVPS
-/// Return Maximum Packed Double-Precision Floating-Point Values.
-VMAXPD
 /// Maximum of Packed Single-Precision Floating-Point Values.
 VMAXPS
 /// Return Maximum Scalar Double-Precision Floating-Point Value.
 VMAXSD
 /// Return Maximum Scalar Single-Precision Floating-Point Value.
 VMAXSS
+/// Return Minimum Scalar Single-Precision Floating-Point Value.
+VMINSS
 /// Call to VM Monitor.
 VMCALL
 /// Clear Virtual-Machine Control Structure.
 VMCLEAR
 /// Invoke VM function.
 VMFUNC
-/// Return Minimum Packed Double-Precision Floating-Point Values.
-VMINPD
-/// Return Minimum Packed Single-Precision Floating-Point Values.
-VMINPS
-/// Return Minimum Scalar Double-Precision Floating-Point Value.
-VMINSD
-/// Return Minimum Scalar Single-Precision Floating-Point Value.
-VMINSS
 /// Launch Virtual Machine.
 VMLAUNCH
 /// Move Aligned Packed Double-Precision Floating-Point Values.
@@ -1936,8 +1702,6 @@ VMOVMSKPD
 VMOVMSKPS
 /// Load Double Quadword Non-Temporal Aligned Hint.
 VMOVNTDQ
-/// Load Double Quadword Non-temporal Aligned.
-VMOVNTDQA
 /// Store Packed Double-Precision FP Values Using Non-Temporal Hint.
 VMOVNTPD
 /// Store Packed Single-Precision FP Values Using Non-Temporal Hint.
@@ -1956,8 +1720,6 @@ VMOVSS
 VMOVUPD
 /// Move Unaligned Packed Single-Precision Floating-Point Values.
 VMOVUPS
-/// Compute Multiple Packed Sums of Absolute Difference.
-VMPSADBW
 /// Load Pointer to Virtual-Machine Control Structure.
 VMPTRLD
 /// Store Pointer to Virtual-Machine Control Structure.
@@ -1984,20 +1746,10 @@ VMXON
 VORPD
 /// Bitwise Logical OR of Single-Precision Floating-Point Values.
 VORPS
-/// Compute Intersection Between dwords.
-VP2INTERSECTD
-/// Compute Intersection Between qwords.
-VP2INTERSECTQ
-/// Dot Product of Signed Words with Dword Accumulation.
-VP4DPWSSD
-/// Dot Product of Signed Words with Dword Accumulation and Saturation.
-VP4DPWSSDS
 /// Packed Absolute Value (byte).
 VPABSB
 /// Packed Absolute Value (dword).
 VPABSD
-/// Packed Absolute Value (qword).
-VPABSQ
 /// Packed Absolute Value (word).
 VPABSW
 /// Pack with Signed Saturation.
@@ -2028,18 +1780,12 @@ VPADDW
 VPALIGNR
 /// Logical AND.
 VPAND
-/// Logical AND.
-VPANDD
 /// Logical AND NOT.
 VPANDN
-/// Logical AND.
-VPANDQ
 /// Average Packed Integers (byte).
 VPAVGB
 /// Average Packed Integers (word).
 VPAVGW
-/// Blend Packed Dwords.
-VPBLENDD
 /// Blend Byte/Word Vectors Using an Opmask Control.
 VPBLENDMB
 /// Blend Int32/Int64 Vectors Using an OpMask Control.
@@ -2048,26 +1794,16 @@ VPBLENDMD
 VPBLENDMQ
 /// Blend word elements using opmask as select control.
 VPBLENDMW
-/// Variable Blend Packed Bytes.
-VPBLENDVB
-/// Blend Packed Words.
-VPBLENDW
 /// Broadcast Integer Data.
 VPBROADCASTB
 /// Broadcast from general-purpose register to vector register.
 VPBROADCASTD
 /// Broadcast Mask to Vector Register.
 VPBROADCASTM
-/// Broadcast low byte value in k1.
-VPBROADCASTMB2Q
-/// Broadcast low word value in k1.
-VPBROADCASTMW2D
 /// Broadcast from general-purpose register to vector register.
 VPBROADCASTQ
 /// Broadcast from general-purpose register to vector register.
 VPBROADCASTW
-/// Carry-Less Multiplication Quadword.
-VPCLMULQDQ
 /// Compare packed signed bytes using specified primitive.
 VPCMPB
 /// Compare packed signed dwords using specified primitive.
@@ -2098,14 +1834,6 @@ VPCMPISTRI
 VPCMPISTRM
 /// Compare packed signed quadwords using specified primitive.
 VPCMPQ
-/// Compare packed unsigned bytes using specified primitive.
-VPCMPUB
-/// Compare packed unsigned dwords using specified primitive.
-VPCMPUD
-/// Compare packed unsigned quadwords using specified primitive.
-VPCMPUQ
-/// Compare packed unsigned words using specified primitive.
-VPCMPUW
 /// Compare packed signed words using specified primitive.
 VPCMPW
 /// Compare packed unsigned bytes using specified primitive.
@@ -2116,34 +1844,14 @@ VPCMUD
 VPCMUQ
 /// Compare packed unsigned words using specified primitive.
 VPCMUW
-/// Store Sparse Packed Byte Integer Values into Dense Memory/Register.
-VPCOMPRESSB
 /// Store Sparse Packed Doubleword Integer Values into Dense Memory/Register.
 VPCOMPRESSD
 /// Store Sparse Packed Quadword Integer Values into Dense Memory/Register.
 VPCOMPRESSQ
-/// Store Sparse Packed Word Integer Values into Dense Memory/Register.
-VPCOMPRESSW
 /// Detect conflicts within a vector of packed 32/64-bit integers.
 VPCONFLICTD
 /// Detect conflicts within a vector of packed 64-bit integers.
 VPCONFLICTQ
-/// Multiply and Add Unsigned and Signed Bytes.
-VPDPBUSD
-/// Multiply and Add Unsigned and Signed Bytes with Saturation.
-VPDPBUSDS
-/// Multiply and Add Signed Word Integers.
-VPDPWSSD
-/// Multiply and Add Signed Word Integers with Saturation.
-VPDPWSSDS
-/// Permute Floating-Point Values.
-VPERM2F128
-/// Permute Integer Values.
-VPERM2I128
-/// Permute packed bytes elements.
-VPERMB
-/// Permute Packed Doublewords/Words Elements.
-VPERMD
 /// Full Permute of Bytes from Two Tables Overwriting the Index.
 VPERMI2B
 /// Full permute of two tables of dword elements overwriting the index vector.
@@ -2156,18 +1864,6 @@ VPERMI2PS
 VPERMI2Q
 /// Full Permute From Two Tables Overwriting the Index.
 VPERMI2W
-/// Permute Double-Precision Floating-Point Values.
-VPERMILPD
-/// Permute Single-Precision Floating-Point Values.
-VPERMILPS
-/// Permute Double-Precision Floating-Point Elements.
-VPERMPD
-/// Permute Single-Precision Floating-Point Elements.
-VPERMPS
-/// Qwords Element Permutation.
-VPERMQ
-/// Full permute of two tables of byte elements overwriting one source table.
-VPERMT2B
 /// Full permute of two tables of dword elements overwriting one source table.
 VPERMT2D
 /// Full permute of two tables of DP elements overwriting one source table.
@@ -2176,34 +1872,16 @@ VPERMT2PD
 VPERMT2PS
 /// Full permute of two tables of qword elements overwriting one source table.
 VPERMT2Q
-/// Full permute of two tables of word elements overwriting one source table.
-VPERMT2W
 /// Permute packed word elements.
 VPERMW
-/// Load Sparse Packed Byte Integer Values from Dense Memory / Register.
-VPEXPANDB
 /// Load Sparse Packed Doubleword Integer Values from Dense Memory / Register.
 VPEXPANDD
 /// Load Sparse Packed Quadword Integer Values from Dense Memory / Register.
 VPEXPANDQ
-/// Load Sparse Packed Word Integer Values from Dense Memory / Register.
-VPEXPANDW
-/// Extract Byte.
-VPEXTRB
-/// Extract Dword.
-VPEXTRD
-/// Extract Qword.
-VPEXTRQ
 /// Extract Word.
 VPEXTRW
 /// Gather packed dword values using signed Dword/Qword indices.
 VPGATHERDD
-/// Gather Packed Qword Values Using Signed Dword/Qword Indices.
-VPGATHERDQ
-/// Gather Packed Dword Values Using Signed Dword/Qword Indices.
-VPGATHERQD
-/// Gather Packed Qword Values Using Signed Dword/Qword Indices.
-VPGATHERQQ
 /// Packed Horizontal Add (32-bit).
 VPHADDD
 /// Packed Horizontal Add and Saturate (16-bit).
@@ -2214,7 +1892,7 @@ VPHADDW
 VPHMINPOSUW
 /// Packed Horizontal Subtract (32-bit).
 VPHSUBD
-/// Packed Horizontal Subtract and Saturate (16-bit).
+/// Packed Horizontal Subtract and Saturate (16-bit)
 VPHSUBSW
 /// Packed Horizontal Subtract (16-bit).
 VPHSUBW
@@ -2222,26 +1900,16 @@ VPHSUBW
 VPINSRB
 /// Insert Dword.
 VPINSRD
-/// Insert Qword.
-VPINSRQ
 /// Insert Word.
 VPINSRW
+/// Insert Qword.
+VPINSRQ
 /// Count the number of leading zero bits of packed dword elements.
 VPLZCNTD
 /// Count the number of leading zero bits of packed qword elements.
 VPLZCNTQ
-/// Packed Multiply of Unsigned 52-bit and Add High 52-bit Products.
-VPMADD52HUQ
-/// Packed Multiply of Unsigned 52-bit and Add Low 52-bit Products.
-VPMADD52LUQ
-/// Multiply and Add Packed Signed and Unsigned Bytes.
-VPMADDUBSW
 /// Multiply and Add Packed Integers.
 VPMADDWD
-/// Conditional SIMD Integer Packed Loads and Stores.
-VPMASKMOVD
-/// Conditional SIMD Integer Packed Loads and Stores.
-VPMASKMOVQ
 /// Maximum of Packed Signed Integers (byte).
 VPMAXSB
 /// Maximum of Packed Signed Integers (dword).
@@ -2278,8 +1946,6 @@ VPMINUW
 VPMOVB2D
 /// Convert a Vector Register to a Mask.
 VPMOVB2M
-/// Convert dword vector register to mask register.
-VPMOVD2M
 /// Down Convert DWord to Byte.
 VPMOVDB
 /// Down Convert DWord to Word.
@@ -2294,7 +1960,7 @@ VPMOVM2Q
 VPMOVM2W
 /// Move Byte Mask.
 VPMOVMSKB
-/// Convert qword vector register to mask register.
+/// Convert a Vector Register to a Mask.
 VPMOVQ2M
 /// Down Convert QWord to Byte.
 VPMOVQB
@@ -2332,9 +1998,9 @@ VPMOVUSDB
 VPMOVUSDW
 /// Down Convert QWord to Byte.
 VPMOVUSQB
-/// Down Convert QWord to DWord.
+/// Down Convert QWord to DWord
 VPMOVUSQD
-/// Down Convert QWord to Word.
+/// Down Convert QWord to Dword.
 VPMOVUSQW
 /// Down Convert Word to Byte.
 VPMOVUSWB
@@ -2368,24 +2034,10 @@ VPMULLD
 VPMULLQ
 /// Multiply Packed Signed Integers and Store Low Result.
 VPMULLW
-/// Select Packed Unaligned Bytes from Quadword Sources.
-VPMULTISHIFTQB
 /// Multiply Packed Unsigned Doubleword Integers.
 VPMULUDQ
-/// Return the Count of Number of Bits Set to 1 in byte.
-VPOPCNTB
-/// Return the Count of Number of Bits Set to 1 in dword.
-VPOPCNTD
-/// Return the Count of Number of Bits Set to 1 in qword.
-VPOPCNTQ
-/// Return the Count of Number of Bits Set to 1 in word.
-VPOPCNTW
 /// Bitwise Logical OR.
 VPOR
-/// Bitwise Logical OR.
-VPORD
-/// Bitwise Logical OR.
-VPORQ
 /// Rotate dword elem left by a constant shift count with conditional update.
 VPROLD
 /// Rotate qword elem left by a constant shift count with conditional update.
@@ -2402,10 +2054,6 @@ VPRORQ
 VPRORRD
 /// Rotate qword element right by shift counts specified.
 VPRORRQ
-/// Rotate dword element right by shift counts specified.
-VPRORVD
-/// Rotate qword element right by shift counts specified.
-VPRORVQ
 /// Compute Sum of Absolute Differences.
 VPSADBW
 /// Scatter dword elements in a vector to memory using dword indices.
@@ -2416,34 +2064,8 @@ VPSCATTERDQ
 VPSCATTERQD
 /// Scatter qword elements in a vector to memory using qword indices.
 VPSCATTERQQ
-/// Concatenate and Shift Packed Data Left Logical.
-VPSHLDD
-/// Concatenate and Shift Packed Data Left Logical.
-VPSHLDQ
-/// Concatenate and Variable Shift Packed Data Left Logical.
-VPSHLDVD
-/// Concatenate and Variable Shift Packed Data Left Logical.
-VPSHLDVQ
-/// Concatenate and Variable Shift Packed Data Left Logical.
-VPSHLDVW
-/// Concatenate and Shift Packed Data Left Logical.
-VPSHLDW
-/// Concatenate and Shift Packed Data Right Logical.
-VPSHRDD
-/// Concatenate and Shift Packed Data Right Logical.
-VPSHRDQ
-/// Concatenate and Variable Shift Packed Data Right Logical.
-VPSHRDVD
-/// Concatenate and Variable Shift Packed Data Right Logical.
-VPSHRDVQ
-/// Concatenate and Variable Shift Packed Data Right Logical.
-VPSHRDVW
-/// Concatenate and Shift Packed Data Right Logical.
-VPSHRDW
 /// Packed Shuffle Bytes.
 VPSHUFB
-/// Shuffle Bits from Quadword Elements Using Byte Indexes into Mask.
-VPSHUFBITQMB
 /// Shuffle Packed Doublewords.
 VPSHUFD
 /// Shuffle Packed High Words.
@@ -2463,10 +2085,6 @@ VPSLLDQ
 /// Shift Packed Data Left Logical (quadword).
 VPSLLQ
 /// Variable Bit Shift Left Logical.
-VPSLLVD
-/// Variable Bit Shift Left Logical.
-VPSLLVQ
-/// Variable Bit Shift Left Logical.
 VPSLLVW
 /// Shift Packed Data Left Logical (word).
 VPSLLW
@@ -2474,8 +2092,6 @@ VPSLLW
 VPSRAD
 /// Shift qwords right by a constant shift count and shifting in sign bits.
 VPSRAQ
-/// Variable Bit Shift Right Arithmetic.
-VPSRAVD
 /// Shift qwords right by shift counts in a vector and shifting in sign bits.
 VPSRAVQ
 /// Variable Bit Shift Right Arithmetic.
@@ -2488,10 +2104,6 @@ VPSRLD
 VPSRLDQ
 /// Shift Packed Data Right Logical (quadword).
 VPSRLQ
-/// Variable Bit Shift Right Logical.
-VPSRLVD
-/// Variable Bit Shift Right Logical.
-VPSRLVQ
 /// Variable Bit Shift Right Logical.
 VPSRLVW
 /// Shift Packed Data Right Logical (word).
@@ -2518,8 +2130,6 @@ VPTERLOGD
 VPTERLOGQ
 /// Bitwise Ternary Logic.
 VPTERNLOGD
-/// Bitwise Ternary Logic.
-VPTERNLOGQ
 /// Logical Compare.
 VPTEST
 /// Perform bitwise AND of byte elems of two vecs and write results to opmask.
@@ -2584,10 +2194,6 @@ VRCP28PS
 VRCP28SD
 /// Computes the reciprocal approximation of the low float32 value.
 VRCP28SS
-/// Compute reciprocals of packed single-precision floating-point values.
-VRCPPS
-/// Compute Reciprocal of Scalar Single-Precision Floating-Point Values.
-VRCPSS
 /// Perform Reduction Transformation on Packed Float64 Values.
 VREDUCEPD
 /// Perform Reduction Transformation on Packed Float32 Values.
@@ -2604,14 +2210,6 @@ VRNDSCALEPS
 VRNDSCALESD
 /// Round Scalar Float32 Value To Include A Given Number Of Fraction Bits.
 VRNDSCALESS
-/// Round Packed Double-Precision Values.
-VROUNDPD
-/// Round Packed Single-Precision Values.
-VROUNDPS
-/// Round Scalar Double-Precision Value.
-VROUNDSD
-/// Round Scalar Single-Precision Value.
-VROUNDSS
 /// Compute Approximate Reciprocals of Square Roots of Packed Float64 Values.
 VRSQRT14PD
 /// Compute Approximate Reciprocals of Square Roots of Packed Float32 Values.
@@ -2628,18 +2226,6 @@ VRSQRT28PS
 VRSQRT28SD
 /// Computes the reciprocal square root of the low float32 value.
 VRSQRT28SS
-/// Compute Reciprocals of Square Roots of Packed Single-Precision FP Values.
-VRSQRTPS
-/// Compute Reciprocal of Square Root of Scalar Single-Precision FP Value.
-VRSQRTSS
-/// Scale Packed Float64 Values With Float64 Values.
-VSCALEFPD
-/// Scale Packed Float32 Values With Float32 Values.
-VSCALEFPS
-/// Scale Scalar Float64 Values With Float64 Values.
-VSCALEFSD
-/// Scale Scalar Float32 Value With Float32 Value.
-VSCALEFSS
 /// Multiply packed DP FP elements of a vector by powers.
 VSCALEPD
 /// Multiply packed SP FP elements of a vector by powers.
@@ -2650,34 +2236,10 @@ VSCALESD
 VSCALESS
 /// Scatter SP/DP FP elements in a vector to memory using dword indices.
 VSCATTERDD
-/// Scatter packed double with signed dword indices.
-VSCATTERDPD
-/// Scatter packed single with signed dword indices.
-VSCATTERDPS
 /// Scatter SP/DP FP elements in a vector to memory using dword indices.
 VSCATTERDQ
-/// Sparse prefetch packed DP FP with T0 hint to write using dword indices.
-VSCATTERPF0DPD
-/// Sparse prefetch packed SP FP with T0 hint to write using dword indices.
-VSCATTERPF0DPS
-/// Sparse prefetch packed DP FP with T0 hint to write using qword indices.
-VSCATTERPF0QPD
-/// Sparse prefetch packed SP FP with T0 hint to write using qword indices.
-VSCATTERPF0QPS
-/// Sparse prefetch packed DP FP with T1 hint to write using dword indices.
-VSCATTERPF1DPD
-/// Sparse prefetch packed SP FP with T1 hint to write using dword indices.
-VSCATTERPF1DPS
-/// Sparse prefetch packed DP FP with T1 hint to write using qword indices.
-VSCATTERPF1QPD
-/// Sparse prefetch packed SP FP with T1 hint to write using qword indices.
-VSCATTERPF1QPS
 /// Scatter SP/DP FP elements in a vector to memory using qword indices.
 VSCATTERQD
-/// Scatter packed double with signed qword indices.
-VSCATTERQPD
-/// Scatter packed single with signed qword indices.
-VSCATTERQPS
 /// Scatter SP/DP FP elements in a vector to memory using qword indices.
 VSCATTERQQ
 /// Shuffle 128-bit lanes of a vector with 32 bit granular conditional update.
@@ -2708,10 +2270,6 @@ VSUBPS
 VSUBSD
 /// Subtract Scalar Single-Precision Floating-Point Values.
 VSUBSS
-/// Packed Bit Test.
-VTESTPD
-/// Packed Bit Test.
-VTESTPS
 /// Unordered Compare Scalar Double-Precision FP Values and Set EFLAGS.
 VUCOMISD
 /// Unordered Compare Scalar Single-Precision FPValues and Set EFLAGS.

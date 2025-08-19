@@ -24,12 +24,10 @@
 
 namespace B2R2.BinIR
 
-/// Representation of symbolic value used to represent a label.
+/// Representation of symbolic data.
 type Symbol = string * int
 
 module Symbol =
-  let inline getName (s: Symbol) = fst s
-
-  let inline getNumber (s: Symbol) = snd s
+  let getName (s: Symbol) = fst s
 
   let toString (s: Symbol) = fst s + "_" + (snd s).ToString ()

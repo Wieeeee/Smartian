@@ -27,8 +27,9 @@ namespace B2R2.RearEnd.BinExplorer
 open System
 open System.Text.RegularExpressions
 open B2R2
-open B2R2.FrontEnd
-open B2R2.MiddleEnd
+open B2R2.FrontEnd.BinInterface
+open B2R2.MiddleEnd.BinEssence
+open B2R2.RearEnd
 
 type PrintFormat =
   | Hexadecimal
@@ -92,14 +93,14 @@ type CmdPrint () =
     | UnknownSize -> Error ("[*] Invalid size letter given.")
     | sz -> Ok (sz, count, fmt)
 
-  let regexFormat = Regex (@"(\d+)([duxs])([bhwg]?)")
+  let regexFormat = new Regex (@"(\d+)([duxs])([bhwg]?)")
 
   let parseFormat fmt =
     let m = regexFormat.Match (fmt)
     if m.Success then
-      convertCount m.Groups[1].Value
-      |> Result.bind (convertFmtLetter m.Groups[2].Value)
-      |> Result.bind (convertSize m.Groups[3].Value)
+      convertCount m.Groups.[1].Value
+      |> Result.bind (convertFmtLetter m.Groups.[2].Value)
+      |> Result.bind (convertSize m.Groups.[3].Value)
     else
       Error ("[*] Invalid format string is given.")
 
@@ -110,51 +111,51 @@ type CmdPrint () =
   let hexPrint sz (i: uint64) =
     i.ToString ("x" + (sz * 2).ToString ())
 
-  let print (hdl: BinHandle) sz fmt addr =
+  let print handler sz fmt addr =
     match fmt with
     | Hexadecimal ->
-      hdl.ReadUInt (addr=addr, size=sz) |> hexPrint sz
+      BinHandle.ReadUInt (handler, addr=addr, size=sz) |> hexPrint sz
     | UnsignedDecimal ->
-      hdl.ReadUInt(addr=addr, size=sz).ToString ()
+      BinHandle.ReadUInt(handler, addr=addr, size=sz).ToString ()
     | Decimal ->
-      hdl.ReadInt(addr=addr, size=sz).ToString ()
+      BinHandle.ReadInt(handler, addr=addr, size=sz).ToString ()
     | _ -> failwith "This is impossible"
 
-  let getAddressPrefix (hdl: BinHandle) (addr: uint64) =
-    let hexWidth = WordSize.toByteWidth hdl.File.ISA.WordSize * 2
+  let getAddressPrefix handler (addr: uint64) =
+    let hexWidth = WordSize.toByteWidth handler.ISA.WordSize * 2
     addr.ToString ("x" + hexWidth.ToString ()) + ": "
 
-  let rec iter hdl sz fmt addr endAddr acc =
+  let rec iter handler sz fmt addr endAddr acc =
     if addr >= endAddr then List.rev acc |> List.toArray
     else
-      let addrstr = getAddressPrefix hdl addr
+      let addrstr = getAddressPrefix handler addr
       let acc =
-        try (addrstr + print hdl sz fmt addr) :: acc
+        try (addrstr + print handler sz fmt addr) :: acc
         with _ -> (addrstr + "(invalid)") :: acc
-      iter hdl sz fmt (addr + uint64 sz) endAddr acc
+      iter handler sz fmt (addr + uint64 sz) endAddr acc
 
-  let rec printStrings (hdl: BinHandle) addr cnt acc =
+  let rec printStrings handler addr cnt acc =
     if cnt <= 0 then List.rev acc |> List.toArray
     else
       let s =
-        try hdl.ReadASCII (addr=addr) |> Some with _ -> None
+        try BinHandle.ReadASCII (handler, addr=addr) |> Some with _ -> None
       match s with
-      | None -> printStrings hdl addr 0 acc
+      | None -> printStrings handler addr 0 acc
       | Some s ->
-        let addrstr = getAddressPrefix hdl addr
+        let addrstr = getAddressPrefix handler addr
         let len = String.length s |> uint64
-        printStrings hdl (addr + len + 1UL) (cnt - 1) ((addrstr + s) :: acc)
+        printStrings handler (addr + len + 1UL) (cnt - 1) ((addrstr + s) :: acc)
 
-  let validateRequest (brew: BinaryBrew<_, _>) = function
+  let validateRequest (binEssence: BinEssence) = function
     | Ok (_, count, ASCII, addr) ->
-      let hdl = brew.BinHandle
-      printStrings hdl addr count []
+      let handler = binEssence.BinHandle
+      printStrings handler addr count []
     | Ok (sz, count, fmt, addr) ->
-      let hdl = brew.BinHandle
+      let handler = binEssence.BinHandle
       let sz = PrintSize.ToInt sz
       let endAddr = addr + uint64 (sz * count)
       if addr > endAddr then [| "[*] Invalid address range given."|]
-      else iter hdl sz fmt addr endAddr []
+      else iter handler sz fmt addr endAddr []
     | Error str -> [| str |]
 
   override __.CmdName = "print"
@@ -180,12 +181,12 @@ type CmdPrint () =
 
   override __.SubCommands = []
 
-  override __.CallBack _ brew args =
+  override __.CallBack _ binEssence args =
     match args with
     | fmt :: addr :: _ ->
       parseFormat fmt
       |> Result.bind (parseAddr addr)
-      |> validateRequest brew
+      |> validateRequest binEssence
     | _ -> [| __.CmdHelp |]
     |> Array.map OutputNormal
 

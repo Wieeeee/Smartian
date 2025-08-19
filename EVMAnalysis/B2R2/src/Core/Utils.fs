@@ -25,35 +25,39 @@
 module B2R2.Utils
 
 open System
-open System.Diagnostics
 
-[<StackTraceHidden>]
+let assertEqual a b exn = if a = b then () else raise exn
+
+let assertByCond condition exn = if condition then () else raise exn
+
 let futureFeature () =
-  let trace = StackTrace (true)
+  let trace = Diagnostics.StackTrace (true)
   printfn "FATAL ERROR: NOT IMPLEMENTED FEATURE."
   trace.ToString () |> printfn "%s"
   raise <| NotImplementedException ()
 
-[<StackTraceHidden>]
 let impossible () =
-  let trace = StackTrace (true)
+  let trace = Diagnostics.StackTrace (true)
   printfn "FATAL ERROR: THIS IS INVALID AND SHOULD NEVER HAPPEN."
   trace.ToString () |> printfn "%s"
   raise <| InvalidOperationException ()
 
-let fatalExit (msg: string) =
-  Console.Error.WriteLine msg
-  exit 1
+let inline tap (f: 'a -> unit) (v: 'a) : 'a =
+  f v; v
+
+let inline curry f a b = f (a, b)
+
+let inline uncurry f (a, b) = f a b
 
 let inline (===) a b = LanguagePrimitives.PhysicalEquality a b
 
-let inline tupleResultToOpt result =
+let inline tupleToOpt result =
   match result with
   | false, _ -> None
   | true, a -> Some a
 
-let inline fstOfTriple (a, _, _) = a
+let inline tripleFst (a, _, _) = a
 
-let inline sndOfTriple (_, a, _) = a
+let inline tripleSnd (_, a, _) = a
 
-let inline thdOfTriple (_, _, a) = a
+let inline tripleThd (_, _, a) = a

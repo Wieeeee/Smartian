@@ -26,6 +26,8 @@ namespace B2R2.RearEnd
 
 open B2R2
 
+module CS = ColoredSegment
+
 module HexDumper =
   let internal padSpace chuckSize length =
     let m = length % chuckSize
@@ -37,31 +39,29 @@ module HexDumper =
     | 8 | 16 | 24 -> "  " + s
     | _ ->  " " + s
 
-  let internal colorHexDumper addrStr chuckSize (bytes: byte[]) =
+  let internal colorHexDumper addrStr chuckSize (bytes: byte []) =
     let padding =
       padSpace chuckSize bytes.Length
       |> Array.map (fun pad -> ColoredSegment (NoColor, pad))
     let coloredHex =
-      Array.append (bytes |> Array.map ColoredSegment.hexOfByte) padding
+      Array.append (bytes |> Array.map CS.byteToHex) padding
       |> Array.mapi (fun idx (color, hex) -> color, addSpace idx hex)
-    let coloredAscii = bytes |> Array.map ColoredSegment.asciiOfByte
-    [| [| ColoredSegment (NoColor, addrStr + ": ") |]
-       coloredHex
-       [| ColoredSegment (NoColor, " | ") |]
-       coloredAscii |]
-    |> Array.concat
+    let coloredAscii = bytes |> Array.map CS.byteToAscii
+    Array.append [| ColoredSegment (NoColor, " | ") |] coloredAscii
+    |> Array.append coloredHex
+    |> Array.append [| ColoredSegment (NoColor, addrStr + ": ") |]
     |> List.ofArray
     |> ColoredString.compile
     |> OutputColored
 
-  let internal regularHexDumper addrStr chuckSize (bytes: byte[]) =
+  let internal regularHexDumper addrStr chuckSize (bytes: byte []) =
     let padding = padSpace chuckSize (bytes.Length)
     let hex =
       Array.append (bytes |> Array.map (fun b -> b.ToString ("X2"))) padding
-      |> Array.mapi addSpace
-      |> Array.fold (+) ""
+      |> Array.mapi (fun idx s -> addSpace idx s)
+      |> Array.fold (fun arr s -> arr + s) ""
     let ascii =
-      bytes |> Array.fold (fun arr b -> arr + Byte.getRepresentation b) ""
+      bytes |> Array.fold (fun arr b -> arr + CS.getRepresentation b) ""
     addrStr + ": " + hex + " | " + ascii
     |> OutputNormal
 

@@ -26,21 +26,19 @@ namespace B2R2.RearEnd.BinExplorer
 
 open System
 open B2R2
-open B2R2.FrontEnd
 open B2R2.FrontEnd.BinFile
+open B2R2.FrontEnd.BinInterface
 
 type CmdSearch () =
   inherit Cmd ()
 
-  let toResult (idx: uint64) = $"Found @ {idx:x}"
-
-  let search (hdl: BinHandle) pattern =
-    hdl.File.GetSegments (Permission.Readable)
-    |> Seq.collect (fun s ->
-      hdl.ReadBytes (s.Address, int s.Size)
-      |> ByteArray.findIdxs 0UL pattern
-      |> List.map (fun idx -> idx + s.Address))
-    |> Seq.map toResult
+  let search hdl pattern =
+    hdl.FileInfo.GetSegments (Permission.Readable)
+    |> Seq.map (fun s -> BinHandle.ReadBytes (hdl, s.Address, int s.Size)
+                         |> ByteArray.findIdxs 0UL pattern
+                         |> List.map (fun idx -> idx + s.Address))
+    |> Seq.concat
+    |> Seq.map (fun idx -> "Found @ " + String.u64ToHexNoPrefix idx)
     |> Seq.toList
 
   override __.CmdName = "search"
@@ -73,10 +71,10 @@ type CmdSearch () =
     | c -> [| "Unknown type " + c |]
 
   override __.CallBack _ ess args =
-    let res =
-      match args with
-      | []
-      | _ :: [] -> [| __.CmdHelp |]
-      | t :: pattern :: _ ->
-        t.ToLowerInvariant () |> __.CmdHandle ess.BinHandle pattern
-    Array.map OutputNormal res
+    match args with
+    | []
+    | _ :: [] -> [| __.CmdHelp |]
+    | t :: pattern :: _ -> t.ToLower () |> __.CmdHandle ess.BinHandle pattern
+    |> Array.map OutputNormal
+
+// vim: set tw=80 sts=2 sw=2:

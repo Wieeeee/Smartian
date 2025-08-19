@@ -26,10 +26,9 @@ namespace B2R2.FrontEnd.BinLifter.MIPS
 
 open B2R2
 open B2R2.BinIR.LowUIR
-open B2R2.FrontEnd.BinLifter
 
-type RegExprs (wordSize) =
-  let var sz t name = AST.var sz t name
+type internal RegExprs (wordSize) =
+  let var sz t name = AST.var sz t name (MIPSRegisterSet.singleton t)
 
   (* Registers *)
   let regType = WordSize.toRegType wordSize
@@ -103,19 +102,12 @@ type RegExprs (wordSize) =
   member val HI = var regType (Register.toRegID Register.HI) "HI" with get
   member val LO = var regType (Register.toRegID Register.LO) "LO" with get
   member val PC = AST.pcvar regType "PC" with get
-  member val NextPC = var regType (Register.toRegID Register.NPC) "nPC" with get
-  member val LLBit =
-    var 1<rt> (Register.toRegID Register.LLBit) "LLBit" with get
-  member val FCSR = var 32<rt> (Register.toRegID Register.FCSR) "FCSR" with get
-  member val FIR = var 32<rt> (Register.toRegID Register.FIR) "FIR" with get
 
   member __.GetRegVar (name) =
     match name with
     | R.HI  -> __.HI
     | R.LO  -> __.LO
     | R.PC  -> __.PC
-    | R.NPC  -> __.NextPC
-    | R.LLBit -> __.LLBit
     | R.R0  -> __.R0
     | R.R1  -> __.R1
     | R.R2  -> __.R2
@@ -180,8 +172,6 @@ type RegExprs (wordSize) =
     | R.F29 -> __.F29
     | R.F30 -> __.F30
     | R.F31 -> __.F31
-    | R.FCSR -> __.FCSR
-    | R.FIR -> __.FIR
-    | _ -> raise UnhandledRegExprException
+    | _ -> raise B2R2.FrontEnd.BinLifter.UnhandledRegExprException
 
 // vim: set tw=80 sts=2 sw=2:

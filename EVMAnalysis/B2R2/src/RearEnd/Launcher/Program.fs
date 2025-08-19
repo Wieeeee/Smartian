@@ -29,11 +29,11 @@ open B2R2
 open B2R2.RearEnd
 
 let showUsage () =
-  Printer.PrintToConsole """
+  Printer.printToConsole """
          ''''''''''
       .;'          ';.
      ;' o      o     ';           888888b.           8888888b.
- .. ,,                ,, ..       888  "88b          888   "88b
+ .. ,,                ,, ..       888  "88b          8b888   Y8
 ;''cl                  l:MMO      888  .88P  .oPYo.  888    888 .oPYo.
 l  c.dooooooooooooooood.:MMM      8888888K.      `8  888   d88P     `8
 :  cdMMMMMMMMMMMMMMMMMMd:MMk      888  "Y88b    oP'  8888888P"     oP'
@@ -48,7 +48,7 @@ This is the B2R2 launcher, which is a .NET tool that can invoke
 various tools provided by our framework. To know more about B2R2,
 please visit our official website: https://b2r2.org/.
 
-Usage: b2r2 [app name]
+Usage: dotnet b2r2 [app name]
 
 [Available Applications]
 
@@ -58,7 +58,7 @@ Usage: b2r2 [app name]
   You can read various file format information using this app. To
   learn more about the tool, type the following command:
 
-  $ b2r2 file --help
+  $ dotnet b2r2 file --help
 
 - dump (a.k.a. disasm, bindump)
 
@@ -66,7 +66,7 @@ Usage: b2r2 [app name]
   this app is more powerful and versatile. To learn more about the
   tool, type the following command:
 
-  $ b2r2 dump --help
+  $ dotnet b2r2 dump --help
 
 - explore (a.k.a. binexplorer, analyze)
 
@@ -74,7 +74,7 @@ Usage: b2r2 [app name]
   GUI as well as its own CLI terminal. To learn more about the tool,
   type the following command:
 
-  $ b2r2 explore --help
+  $ dotnet b2r2 explore --help
 
 - repl
 
@@ -82,24 +82,24 @@ Usage: b2r2 [app name]
   as binary assembly languages. To learn more about the tool type the
   following command:
 
-  $ b2r2 repl --help
+  $ dotnet b2r2 repl --help
 
 - asm (a.k.a. assembler)
 
   This is a simple cross-platform assembler. To learn more about the
   tool, type the following command:
 
-  $ b2r2 asm --help
+  $ dotnet b2r2 asm --help
 """
 
 let printMyVersion () =
   let asm = Assembly.GetEntryAssembly ()
   let attr = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute> ()
   attr.InformationalVersion.ToString ()
-  |> Printer.PrintToConsole
+  |> Printer.printToConsole
 
 let handleCommands (cmd: string) (rest: string []) =
-  match cmd.ToLowerInvariant () with
+  match cmd.ToLower () with
   | "help" | "--help" | "-h" -> showUsage (); 0
   | "fileviewer" | "file" | "fileview" | "peek" -> FileViewer.Program.main rest
   | "bindump" | "disasm" | "dump" | "disas" | "dis" -> BinDump.Program.main rest
@@ -112,4 +112,4 @@ let handleCommands (cmd: string) (rest: string []) =
 [<EntryPoint>]
 let main argv =
   if argv.Length = 0 then showUsage (); 1
-  else handleCommands argv[0] argv[1..]
+  else handleCommands argv.[0] argv.[1..]

@@ -26,6 +26,14 @@ namespace B2R2
 
 open System
 
+[<AutoOpen>]
+module BitVectorConstants =
+  /// BigInteger zero.
+  let bigZero = 0I
+
+  /// BigInteger one.
+  let bigOne = 1I
+
 /// A helper module for BitVector.
 [<AutoOpen>]
 module internal BitVectorHelper =
@@ -39,15 +47,15 @@ module internal BitVectorHelper =
     (UInt64.MaxValue >>> (64 - int len)) &&& n
 
   let inline adaptBig (len: RegType) (n: bigint) =
-    ((1I <<< int len) - 1I) &&& n
+    ((bigOne <<< int len) - bigOne) &&& n
 
   let inline isSmallPositive (len: RegType) (n: uint64) =
     (n >>> (int len - 1)) &&& 1UL = 0UL
 
   let inline isBigPositive (len: RegType) (n: bigint) =
-    (n >>> (int len - 1)) &&& 1I = 0I
+    (n >>> (int len - 1)) &&& bigOne = bigZero
 
-  let inline neg (len: RegType) (n: bigint) = (1I <<< int len) - n
+  let inline neg (len: RegType) (n: bigint) = (bigOne <<< int len) - n
 
   let inline toFloat32 (n: uint64) =
     n |> int32 |> BitConverter.Int32BitsToSingle
@@ -79,7 +87,7 @@ module internal BitVectorHelper =
 ///
 /// N.B. Num becomes zero when the Length becomes greater than 64. We
 /// intentionally do not sync Num and BigNum.
-[<AbstractClass; AllowNullLiteral>]
+[<AbstractClass>]
 type BitVector internal (len) =
   /// BitVector length.
   member __.Length with get(): RegType = len
@@ -170,7 +178,7 @@ type BitVector internal (len) =
   abstract Cast: RegType -> BitVector
 
   /// Extract a sub-BitVector of size (RegType) starting from the index (int).
-  abstract Extract: RegType * int -> BitVector
+  abstract Extract: RegType -> int -> BitVector
 
   /// BitVector concatenation.
   abstract Concat: BitVector -> BitVector
@@ -236,7 +244,7 @@ type BitVector internal (len) =
   abstract FCast: RegType -> BitVector
 
   /// Integer to float conversion.
-  abstract Itof: RegType * bool -> BitVector
+  abstract Itof: RegType -> BitVector
 
   /// Floating point to integer conversion with truncation.
   abstract FtoiTrunc: RegType -> BitVector
@@ -292,14 +300,16 @@ type BitVector internal (len) =
   abstract IsNegative: unit -> bool
 
   /// Return zero (0) of the given bit length.
-  static member Zero t =
+  [<CompiledName("Zero")>]
+  static member zero t =
     if t <= 64<rt> then BitVectorSmall (0UL, t) :> BitVector
-    else BitVectorBig (0I, t) :> BitVector
+    else BitVectorBig (bigZero, t) :> BitVector
 
   /// Return one (1) of the given bit length.
-  static member One t =
+  [<CompiledName("One")>]
+  static member one t =
     if t <= 64<rt> then BitVectorSmall (1UL, t) :> BitVector
-    else BitVectorBig (1I, t) :> BitVector
+    else BitVectorBig (bigOne, t) :> BitVector
 
   /// True value.
   static member T = BitVectorSmall (1UL, 1<rt>) :> BitVector
@@ -308,23 +318,28 @@ type BitVector internal (len) =
   static member F = BitVectorSmall (0UL, 1<rt>) :> BitVector
 
   /// Return a smaller BitVector.
-  static member Min (bv1: BitVector, bv2) =
+  [<CompiledName("Min")>]
+  static member min (bv1: BitVector) bv2 =
     if bv1.Lt bv2 = BitVector.T then bv1 else bv2
 
   /// Return a larger BitVector.
-  static member Max (bv1: BitVector, bv2) =
+  [<CompiledName("Max")>]
+  static member max (bv1: BitVector) bv2 =
     if bv1.Gt bv2 = BitVector.T then bv1 else bv2
 
   /// Return a smaller BitVector (with signed comparison).
-  static member SMin (bv1: BitVector, bv2) =
+  [<CompiledName("SMin")>]
+  static member smin (bv1: BitVector) bv2 =
     if bv1.SLt bv2 = BitVector.T then bv1 else bv2
 
   /// Return a larger BitVector (with signed comparison).
-  static member SMax (bv1: BitVector, bv2) =
+  [<CompiledName("SMax")>]
+  static member smax (bv1: BitVector) bv2 =
     if bv1.SGt bv2 = BitVector.T then bv1 else bv2
 
   /// Get a BitVector from an unsigned integer.
-  static member inline OfUInt64 (i: uint64) typ =
+  [<CompiledName("OfUInt64")>]
+  static member inline ofUInt64 (i: uint64) typ =
 #if DEBUG
     if typ <= 0<rt> then raise ArithTypeMismatchException else ()
 #endif
@@ -334,7 +349,8 @@ type BitVector internal (len) =
     else BitVectorBig (bigint i, typ) :> BitVector
 
   /// Get a BitVector from a signed integer.
-  static member inline OfInt64 (i: int64) typ =
+  [<CompiledName("OfInt64")>]
+  static member inline ofInt64 (i: int64) typ =
 #if DEBUG
     if typ <= 0<rt> then raise ArithTypeMismatchException else ()
 #endif
@@ -343,34 +359,38 @@ type BitVector internal (len) =
       BitVectorSmall (uint64 i &&& mask, typ) :> BitVector
     else
       if i < 0L then
-        BitVectorBig ((1I <<< int typ) - (- i |> bigint), typ) :> BitVector
+        BitVectorBig ((bigOne <<< int typ) - (- i |> bigint), typ) :> BitVector
       else BitVectorBig (bigint i, typ) :> BitVector
 
   /// Get a BitVector from an unsigned integer.
-  static member inline OfUInt32 (i: uint32) typ =
-    BitVector.OfUInt64 (uint64 i) typ
+  [<CompiledName("OfUInt32")>]
+  static member inline ofUInt32 (i: uint32) typ =
+    BitVector.ofUInt64 (uint64 i) typ
 
   /// Get a BitVector from a signed integer.
-  static member inline OfInt32 (i: int32) typ =
-    BitVector.OfInt64 (int64 i) typ
+  [<CompiledName("OfInt32")>]
+  static member inline ofInt32 (i: int32) typ =
+    BitVector.ofInt64 (int64 i) typ
 
   /// Get a BitVector from a bigint. We assume that the given RegType (typ) is
   /// big enough to hold the given bigint. Otherwise, the resulting BitVector
   /// may contain an unexpected value.
-  static member OfBInt (i: bigint) typ =
+  [<CompiledName("OfBInt")>]
+  static member ofBInt (i: bigint) typ =
 #if DEBUG
     if typ <= 0<rt> then nSizeErr typ else ()
 #endif
-    if typ <= 64<rt> then BitVector.OfUInt64 (uint64 i) typ
+    if typ <= 64<rt> then BitVector.ofUInt64 (uint64 i) typ
     else
       if i.Sign < 0 then
-        BitVectorBig ((1I <<< int typ) + i, typ) :> BitVector
+        BitVectorBig ((bigOne <<< int typ) + i, typ) :> BitVector
       else BitVectorBig (i, typ) :> BitVector
 
   /// Get a BitVector from a byte array (in little endian).
-  static member OfArr (arr: byte []) =
+  [<CompiledName("OfArr")>]
+  static member ofArr (arr: byte []) =
     match arr.Length with
-    | 1 -> BitVectorSmall (uint64 arr[0], 8<rt>) :> BitVector
+    | 1 -> BitVectorSmall (uint64 arr.[0], 8<rt>) :> BitVector
     | 2 ->
       let n = BitConverter.ToUInt16 (arr, 0) |> uint64
       BitVectorSmall (n, 16<rt>) :> BitVector
@@ -402,275 +422,348 @@ type BitVector internal (len) =
       else nSizeErr (sz * 8)
 
   /// Get a uint64 value from a BitVector.
-  static member ToUInt64 (bv: BitVector) =
+  [<CompiledName("ToUInt64")>]
+  static member toUInt64 (bv: BitVector) =
     bv.SmallValue ()
 
   /// Get an int64 value from a BitVector.
-  static member ToInt64 (bv: BitVector) =
+  [<CompiledName("ToInt64")>]
+  static member toInt64 (bv: BitVector) =
     bv.SmallValue () |> int64
 
   /// Get a uint32 value from a BitVector.
-  static member ToUInt32 (bv: BitVector) =
+  [<CompiledName("ToUInt32")>]
+  static member toUInt32 (bv: BitVector) =
     bv.SmallValue () |> uint32
 
   /// Get an int32 value from a BitVector.
-  static member ToInt32 (bv: BitVector) =
+  [<CompiledName("ToInt32")>]
+  static member toInt32 (bv: BitVector) =
     bv.SmallValue () |> int32
 
   /// Get a numeric value (bigint) from a BitVector.
-  static member GetValue (bv: BitVector) =
+  [<CompiledName("GetValue")>]
+  static member getValue (bv: BitVector) =
     bv.BigValue ()
 
   /// Get the type (length of the BitVector).
-  static member GetType (bv: BitVector) = bv.Length
+  [<CompiledName("GetType")>]
+  static member getType (bv: BitVector) = bv.Length
 
   /// Get the string representation of a BitVector without appended type info.
-  static member ValToString (n: BitVector) = n.ValToString ()
+  [<CompiledName("ValToString")>]
+  static member valToString (n: BitVector) = n.ValToString ()
 
   /// Get the string representation of a BitVector.
-  static member ToString (n: BitVector) = n.ToString ()
+  [<CompiledName("ToString")>]
+  static member toString (n: BitVector) = n.ToString ()
 
   /// Bitvector of unsigned 8-bit maxvalue.
-  static member MaxUInt8 = BitVector.OfUInt64 0xFFUL 8<rt>
+  static member maxUInt8 = BitVector.ofUInt64 0xFFUL 8<rt>
 
   /// Bitvector of unsigned 16-bit maxvalue.
-  static member MaxUInt16 = BitVector.OfUInt64 0xFFFFUL 16<rt>
+  static member maxUInt16 = BitVector.ofUInt64 0xFFFFUL 16<rt>
 
   /// Bitvector of unsigned 32-bit maxvalue.
-  static member MaxUInt32 = BitVector.OfUInt64 0xFFFFFFFFUL 32<rt>
+  static member maxUInt32 = BitVector.ofUInt64 0xFFFFFFFFUL 32<rt>
 
   /// Bitvector of unsigned 64-bit maxvalue.
-  static member MaxUInt64 = BitVector.OfUInt64 0xFFFFFFFFFFFFFFFFUL 64<rt>
+  static member maxUInt64 = BitVector.ofUInt64 0xFFFFFFFFFFFFFFFFUL 64<rt>
 
   /// Check if the given BitVector is zero.
-  static member IsZero (bv: BitVector) =
+  [<CompiledName("IsZero")>]
+  static member isZero (bv: BitVector) =
     bv.IsZero ()
 
   /// Check if the given BitVector is one.
-  static member IsOne (bv: BitVector) =
+  [<CompiledName("IsOne")>]
+  static member isOne (bv: BitVector) =
     bv.IsOne ()
 
   /// Check if the given BitVector is "false".
-  static member IsFalse (bv: BitVector) =
+  [<CompiledName("IsFalse")>]
+  static member isFalse (bv: BitVector) =
     bv = BitVector.F
 
   /// Check if the given BitVector is "true".
-  static member IsTrue (bv: BitVector) =
+  [<CompiledName("IsTrue")>]
+  static member isTrue (bv: BitVector) =
     bv = BitVector.T
 
   /// Check if the given BitVector represents the specified number.
-  static member IsNum (bv: BitVector) (n: uint64) =
+  [<CompiledName("IsNum")>]
+  static member isNum (bv: BitVector) (n: uint64) =
     if bv.Length <= 64<rt> then bv.SmallValue () = n
     else bigint n = bv.BigValue ()
 
   /// BitVector representing a unsigned maximum integer for the given RegType.
-  static member UnsignedMax rt =
+  [<CompiledName("UnsignedMax")>]
+  static member unsignedMax rt =
 #if DEBUG
     if rt <= 0<rt> then nSizeErr rt else ()
 #endif
     if rt <= 64<rt> then
       BitVectorSmall (UInt64.MaxValue >>> (64 - int rt), rt) :> BitVector
-    else BitVectorBig ((1I <<< int rt) - 1I, rt) :> BitVector
+    else BitVectorBig ((bigOne <<< int rt) - bigOne, rt) :> BitVector
 
   /// BitVector representing a unsigned minimum integer for the given RegType.
-  static member UnsignedMin rt =
+  [<CompiledName("UnsignedMin")>]
+  static member unsignedMin rt =
 #if DEBUG
     if rt <= 0<rt> then nSizeErr rt else ()
 #endif
     if rt <= 64<rt> then BitVectorSmall (0UL, rt) :> BitVector
-    else BitVectorBig (0I, rt) :> BitVector
+    else BitVectorBig (bigZero, rt) :> BitVector
 
   /// BitVector representing a signed maximum integer for the given RegType.
-  static member SignedMax rt =
+  [<CompiledName("SignedMax")>]
+  static member signedMax rt =
 #if DEBUG
     if rt <= 0<rt> then nSizeErr rt else ()
 #endif
     if rt <= 64<rt> then
       BitVectorSmall (UInt64.MaxValue >>> (65 - int rt), rt) :> BitVector
-    else BitVectorBig ((1I <<< (int rt - 1)) - 1I, rt) :> BitVector
+    else BitVectorBig ((bigOne <<< (int rt - 1)) - bigOne, rt) :> BitVector
 
   /// BitVector representing a signed minimum integer for the given RegType.
-  static member SignedMin rt =
+  [<CompiledName("SignedMin")>]
+  static member signedMin rt =
 #if DEBUG
     if rt <= 0<rt> then nSizeErr rt else ()
 #endif
     if rt <= 64<rt> then BitVectorSmall (1UL <<< (int rt - 1), rt) :> BitVector
-    else BitVectorBig (1I <<< (int rt - 1), rt) :> BitVector
+    else BitVectorBig (bigOne <<< (int rt - 1), rt) :> BitVector
 
   /// Does the bitvector represent an unsigned max value?
-  static member IsUnsignedMax (bv: BitVector) =
-    BitVector.UnsignedMax bv.Length = bv
+  [<CompiledName("IsUnsignedMax")>]
+  static member isUnsignedMax (bv: BitVector) =
+    BitVector.unsignedMax bv.Length = bv
 
   /// Does the bitvector represent a signed max value?
-  static member IsSignedMax (bv: BitVector) =
-    BitVector.SignedMax bv.Length = bv
+  [<CompiledName("IsSignedMax")>]
+  static member isSignedMax (bv: BitVector) =
+    BitVector.signedMax bv.Length = bv
 
   /// Does the bitvector represent a signed min value?
-  static member IsSignedMin (bv: BitVector) =
-    BitVector.SignedMin bv.Length = bv
+  [<CompiledName("IsSignedMin")>]
+  static member isSignedMin (bv: BitVector) =
+    BitVector.signedMin bv.Length = bv
 
   /// Is the bitvector positive?
-  static member IsPositive (bv: BitVector) = bv.IsPositive ()
+  [<CompiledName("IsPositive")>]
+  static member isPositive (bv: BitVector) = bv.IsPositive ()
 
   /// Is the bitvector negative?
-  static member IsNegative (bv: BitVector) = bv.IsNegative ()
+  [<CompiledName("IsNegative")>]
+  static member isNegative (bv: BitVector) = bv.IsNegative ()
 
   /// BitVector addition.
-  static member inline Add (v1: BitVector, v2: BitVector) = v1.Add v2
+  [<CompiledName("Add")>]
+  static member inline add (v1: BitVector) (v2: BitVector) = v1.Add v2
 
   /// BitVector subtraction.
-  static member inline Sub (v1: BitVector, v2: BitVector) = v1.Sub v2
+  [<CompiledName("Sub")>]
+  static member inline sub (v1: BitVector) (v2: BitVector) = v1.Sub v2
 
   /// BitVector multiplication.
-  static member inline Mul (v1: BitVector, v2: BitVector) = v1.Mul v2
+  [<CompiledName("Mul")>]
+  static member inline mul (v1: BitVector) (v2: BitVector) = v1.Mul v2
 
   /// BitVector signed division.
-  static member inline SDiv (v1: BitVector, v2: BitVector) = v1.SDiv v2
+  [<CompiledName("SDiv")>]
+  static member inline sdiv (v1: BitVector) (v2: BitVector) = v1.SDiv v2
 
   /// BitVector unsigned division.
-  static member inline Div (v1: BitVector, v2: BitVector) = v1.Div v2
+  [<CompiledName("Div")>]
+  static member inline div (v1: BitVector) (v2: BitVector) = v1.Div v2
 
   /// BitVector signed modulo.
-  static member inline SModulo (v1: BitVector, v2: BitVector) = v1.SMod v2
+  [<CompiledName("SMod")>]
+  static member inline smodulo (v1: BitVector) (v2: BitVector) = v1.SMod v2
 
   /// BitVector unsigned modulo.
-  static member inline Modulo (v1: BitVector, v2: BitVector) = v1.Mod v2
+  [<CompiledName("Mod")>]
+  static member inline modulo (v1: BitVector) (v2: BitVector) = v1.Mod v2
 
   /// BitVector bitwise AND.
-  static member inline BAnd (v1: BitVector, v2: BitVector) = v1.And v2
+  [<CompiledName("And")>]
+  static member inline band (v1: BitVector) (v2: BitVector) = v1.And v2
 
   /// BitVector bitwise OR.
-  static member inline BOr (v1: BitVector, v2: BitVector) = v1.Or v2
+  [<CompiledName("Or")>]
+  static member inline bor (v1: BitVector) (v2: BitVector) = v1.Or v2
 
   /// BitVector bitwise XOR.
-  static member inline BXor (v1: BitVector, v2: BitVector) = v1.Xor v2
+  [<CompiledName("Xor")>]
+  static member inline bxor (v1: BitVector) (v2: BitVector) = v1.Xor v2
 
   /// BitVector logical shift-left.
-  static member inline Shl (v1: BitVector, v2: BitVector) = v1.Shl v2
+  [<CompiledName("Shl")>]
+  static member inline shl (v1: BitVector) (v2: BitVector) = v1.Shl v2
 
   /// BitVector logical shift-right.
-  static member inline Shr (v1: BitVector, v2: BitVector) = v1.Shr v2
+  [<CompiledName("Shr")>]
+  static member inline shr (v1: BitVector) (v2: BitVector) = v1.Shr v2
 
   /// BitVector arithmetic shift-right.
-  static member inline Sar (v1: BitVector, v2: BitVector) = v1.Sar v2
+  [<CompiledName("Sar")>]
+  static member inline sar (v1: BitVector) (v2: BitVector) = v1.Sar v2
 
   /// BitVector bitwise NOT.
-  static member inline BNot (v1: BitVector) = v1.Not ()
+  [<CompiledName("Not")>]
+  static member inline bnot (v1: BitVector) = v1.Not ()
 
   /// BitVector negation.
-  static member inline Neg (v1: BitVector) = v1.Neg ()
+  [<CompiledName("Neg")>]
+  static member inline neg (v1: BitVector) = v1.Neg ()
 
   /// BitVector type cast.
-  static member inline Cast (v1: BitVector, targetLen) = v1.Cast targetLen
+  [<CompiledName("Cast")>]
+  static member inline cast (v1: BitVector) targetLen = v1.Cast targetLen
 
   /// BitVector extraction.
-  static member inline Extract (v1: BitVector, rt, pos) = v1.Extract (rt, pos)
+  [<CompiledName("Extract")>]
+  static member inline extract (v1: BitVector) rt pos = v1.Extract rt pos
 
   /// BitVector concatenation.
-  static member inline Concat (v1: BitVector, v2: BitVector) = v1.Concat v2
+  [<CompiledName("Concat")>]
+  static member inline concat (v1: BitVector) (v2: BitVector) = v1.Concat v2
 
   /// BitVector sign-extension.
-  static member inline SExt (v1: BitVector, targetLen) = v1.SExt targetLen
+  [<CompiledName("SExt")>]
+  static member inline sext (v1: BitVector) targetLen = v1.SExt targetLen
 
   /// BitVector zero-extension.
-  static member inline ZExt (v1: BitVector, targetLen) = v1.ZExt targetLen
+  [<CompiledName("ZExt")>]
+  static member inline zext (v1: BitVector) targetLen = v1.ZExt targetLen
 
   /// BitVector equal.
-  static member inline Eq (v1: BitVector, v2: BitVector) = v1.Eq v2
+  [<CompiledName("Eq")>]
+  static member inline eq (v1: BitVector) (v2: BitVector) = v1.Eq v2
 
   /// BitVector not equal.
-  static member inline Neq (v1: BitVector, v2: BitVector) = v1.Neq v2
+  [<CompiledName("Neq")>]
+  static member inline neq (v1: BitVector) (v2: BitVector) = v1.Neq v2
 
   /// BitVector greater than.
-  static member inline Gt (v1: BitVector, v2: BitVector) = v1.Gt v2
+  [<CompiledName("Gt")>]
+  static member inline gt (v1: BitVector) (v2: BitVector) = v1.Gt v2
 
   /// BitVector greater than or equal.
-  static member inline Ge (v1: BitVector, v2: BitVector) = v1.Ge v2
+  [<CompiledName("Ge")>]
+  static member inline ge (v1: BitVector) (v2: BitVector) = v1.Ge v2
 
   /// BitVector signed greater than.
-  static member inline SGt (v1: BitVector, v2: BitVector) = v1.SGt v2
+  [<CompiledName("SGt")>]
+  static member inline sgt (v1: BitVector) (v2: BitVector) = v1.SGt v2
 
   /// BitVector signed greater than or equal.
-  static member inline SGe (v1: BitVector, v2: BitVector) = v1.SGe v2
+  [<CompiledName("SGe")>]
+  static member inline sge (v1: BitVector) (v2: BitVector) = v1.SGe v2
 
   /// BitVector less than.
-  static member inline Lt (v1: BitVector, v2: BitVector) = v1.Lt v2
+  [<CompiledName("Lt")>]
+  static member inline lt (v1: BitVector) (v2: BitVector) = v1.Lt v2
 
   /// BitVector less than or equal.
-  static member inline Le (v1: BitVector, v2: BitVector) = v1.Le v2
+  [<CompiledName("Le")>]
+  static member inline le (v1: BitVector) (v2: BitVector) = v1.Le v2
 
   /// BitVector signed less than.
-  static member inline SLt (v1: BitVector, v2: BitVector) = v1.SLt v2
+  [<CompiledName("SLt")>]
+  static member inline slt (v1: BitVector) (v2: BitVector) = v1.SLt v2
 
   /// BitVector signed less than or equal.
-  static member inline SLe (v1: BitVector, v2: BitVector) = v1.SLe v2
+  [<CompiledName("SLe")>]
+  static member inline sle (v1: BitVector) (v2: BitVector) = v1.SLe v2
 
   /// BitVector absolute value.
-  static member inline Abs (v1: BitVector) = v1.Abs ()
+  [<CompiledName("Abs")>]
+  static member inline abs (v1: BitVector) = v1.Abs ()
 
   /// BitVector floating point addition.
-  static member inline FAdd (v1: BitVector, v2: BitVector) = v1.FAdd v2
+  [<CompiledName("FAdd")>]
+  static member inline fadd (v1: BitVector) (v2: BitVector) = v1.FAdd v2
 
   /// BitVector floating point subtraction.
-  static member inline FSub (v1: BitVector, v2: BitVector) = v1.FSub v2
+  [<CompiledName("FSub")>]
+  static member inline fsub (v1: BitVector) (v2: BitVector) = v1.FSub v2
 
   /// BitVector floating point multiplication.
-  static member inline FMul (v1: BitVector, v2: BitVector) = v1.FMul v2
+  [<CompiledName("FMul")>]
+  static member inline fmul (v1: BitVector) (v2: BitVector) = v1.FMul v2
 
   /// BitVector floating point division.
-  static member inline FDiv (v1: BitVector, v2: BitVector) = v1.FDiv v2
+  [<CompiledName("FDiv")>]
+  static member inline fdiv (v1: BitVector) (v2: BitVector) = v1.FDiv v2
 
   /// BitVector floating point logarithm.
-  static member inline FLog (v1: BitVector, v2: BitVector) = v1.FLog v2
+  [<CompiledName("FLog")>]
+  static member inline flog (v1: BitVector) (v2: BitVector) = v1.FLog v2
 
   /// BitVector floating point power.
-  static member inline FPow (v1: BitVector, v2: BitVector) = v1.FPow v2
+  [<CompiledName("FPow")>]
+  static member inline fpow (v1: BitVector) (v2: BitVector) = v1.FPow v2
 
   /// BitVector floating point casting.
-  static member inline FCast (v1: BitVector, rt) = v1.FCast rt
+  [<CompiledName("FCast")>]
+  static member inline fcast (v1: BitVector) rt = v1.FCast rt
 
   /// BitVector integer to float conversion.
-  static member inline Itof (v1: BitVector, rt, isSigned) =
-    v1.Itof (rt, isSigned)
+  [<CompiledName("Itof")>]
+  static member inline itof (v1: BitVector) rt = v1.Itof rt
 
   /// BitVector float to integer conversion with truncation.
-  static member inline FtoiTrunc (v1: BitVector, rt) = v1.FtoiTrunc rt
+  [<CompiledName("FToITrunc")>]
+  static member inline ftoitrunc (v1: BitVector) rt = v1.FtoiTrunc rt
 
   /// BitVector float to integer conversion with round.
-  static member inline FtoiRound (v1: BitVector, rt) = v1.FtoiRound rt
+  [<CompiledName("FToIRound")>]
+  static member inline ftoiround (v1: BitVector) rt = v1.FtoiRound rt
 
   /// BitVector float to integer conversion with flooring.
-  static member inline FtoiFloor (v1: BitVector, rt) = v1.FtoiFloor rt
+  [<CompiledName("FToIFloor")>]
+  static member inline ftoifloor (v1: BitVector) rt = v1.FtoiFloor rt
 
   /// BitVector float to integer conversion with ceiling.
-  static member inline FtoiCeil (v1: BitVector, rt) = v1.FtoiCeil rt
+  [<CompiledName("FToICeil")>]
+  static member inline ftoiceil (v1: BitVector) rt = v1.FtoiCeil rt
 
   /// BitVector square root.
-  static member inline FSqrt (v1: BitVector) = v1.FSqrt ()
+  [<CompiledName("FSqrt")>]
+  static member inline fsqrt (v1: BitVector) = v1.FSqrt ()
 
   /// BitVector tangent.
-  static member inline FTan (v1: BitVector) = v1.FTan ()
+  [<CompiledName("FTan")>]
+  static member inline ftan (v1: BitVector) = v1.FTan ()
 
   /// BitVector sine.
-  static member inline FSin (v1: BitVector) = v1.FSin ()
+  [<CompiledName("FSin")>]
+  static member inline fsin (v1: BitVector) = v1.FSin ()
 
   /// BitVector cosine.
-  static member inline FCos (v1: BitVector) = v1.FCos ()
+  [<CompiledName("FCos")>]
+  static member inline fcos (v1: BitVector) = v1.FCos ()
 
   /// BitVector arc tangent.
-  static member inline FAtan (v1: BitVector) = v1.FATan ()
+  [<CompiledName("FATan")>]
+  static member inline fatan (v1: BitVector) = v1.FATan ()
 
   /// BitVector floating point greater than.
-  static member inline FGt (v1: BitVector, v2: BitVector) = v1.FGt v2
+  [<CompiledName("FGt")>]
+  static member inline fgt (v1: BitVector) (v2: BitVector) = v1.FGt v2
 
   /// BitVector floating point greater than or equal.
-  static member inline FGe (v1: BitVector, v2: BitVector) = v1.FGe v2
+  [<CompiledName("FGe")>]
+  static member inline fge (v1: BitVector) (v2: BitVector) = v1.FGe v2
 
   /// BitVector floating point less than.
-  static member inline FLt (v1: BitVector, v2: BitVector) = v1.FLt v2
+  [<CompiledName("FLt")>]
+  static member inline flt (v1: BitVector) (v2: BitVector) = v1.FLt v2
 
   /// BitVector floating point less than or equal.
-  static member inline FLe (v1: BitVector, v2: BitVector) = v1.FLe v2
+  [<CompiledName("FLe")>]
+  static member inline fle (v1: BitVector) (v2: BitVector) = v1.FLe v2
 
   /// BitVector addition.
   static member inline (+) (v1: BitVector, v2: uint64) = v1.Add v2
@@ -751,7 +844,7 @@ and BitVectorSmall (n, len) =
 
   member __.Value with get(): uint64 = n
 
-  override __.ValToString () = HexString.ofUInt64 n
+  override __.ValToString () = String.u64ToHex n
 
   override __.Equals obj =
     match obj with
@@ -762,7 +855,7 @@ and BitVectorSmall (n, len) =
 #if DEBUG
     if len <> rhs.Length then raise ArithTypeMismatchException else ()
 #endif
-    let shifter = BitVector.OfInt32 1 len
+    let shifter = BitVector.ofInt32 1 len
     let v1 = __.Shr shifter
     let v2 = rhs.Shr shifter
     v1.Eq v2
@@ -876,28 +969,25 @@ and BitVectorSmall (n, len) =
   override __.Shr (rhs: BitVector) =
     if len <> rhs.Length then raise ArithTypeMismatchException else ()
     let v1 = n
-    let v2 = rhs.SmallValue ()
+    let v2 = rhs.SmallValue () |> uint16 |> int
     (* In .NET, 1UL >>> 63 = 0, but 1UL >>> 64 = 1 *)
-    if v2 >= 64UL then BitVectorSmall (0UL, len) :> BitVector
-    else BitVectorSmall (v1 >>> (int v2), len) :> BitVector
+    BitVectorSmall (v1 >>> (min v2 63), len) :> BitVector
 
   override __.Sar (rhs: BitVector) =
     if len <> rhs.Length then raise ArithTypeMismatchException else ()
     let v1 = n
-    let v2 = rhs.SmallValue ()
+    let v2 = rhs.SmallValue () |> uint16 |> int
     (* In .NET, 1UL >>> 63 = 0, but 1UL >>> 64 = 1 *)
-    if v2 >= 64UL then
-      BitVectorSmall (UInt64.MaxValue |> adaptSmall len, len) :> BitVector
+    let res = v1 >>> (min v2 63)
+    if len = 1<rt> then
+      if v2 = 0 then __ :> BitVector else BitVector.zero len
+    elif isSmallPositive len v1 then BitVectorSmall (res, len) :> BitVector
     else
-      let res = v1 >>> (int v2)
-      if len = 1<rt> then __ :> BitVector
-      elif isSmallPositive len v1 then BitVectorSmall (res, len) :> BitVector
-      else
-        let pad =
-          (UInt64.MaxValue >>> (64 - int len))
-          - (if int len <= int v2 then 0UL
-             else UInt64.MaxValue >>> (64 - (int len - int v2)))
-        BitVectorSmall (res ||| pad, len) :> BitVector
+      let pad =
+        (UInt64.MaxValue >>> (64 - int len))
+        - (if int len <= v2 then 0UL
+           else UInt64.MaxValue >>> (64 - (int len - v2)))
+      BitVectorSmall (res ||| pad, len) :> BitVector
 
   override __.Not () =
     BitVectorSmall ((~~~ n) |> adaptSmall len, len) :> BitVector
@@ -911,7 +1001,7 @@ and BitVectorSmall (n, len) =
     else
       BitVectorBig (adaptBig targetLen (__.BigValue ()), targetLen) :> BitVector
 
-  override __.Extract (targetLen, pos) =
+  override __.Extract targetLen pos =
     if len < targetLen then raise ArithTypeMismatchException
     elif len = targetLen then __ :> BitVector
     else
@@ -942,7 +1032,7 @@ and BitVectorSmall (n, len) =
       let n' = adaptBig targetLen (__.BigValue ())
       if isSmallPositive len n then BitVectorBig (n', targetLen) :> BitVector
       else
-        let mask = (1I <<< int targetLen) - (1I <<< int len)
+        let mask = (bigOne <<< int targetLen) - (bigOne <<< int len)
         BitVectorBig (n' + mask, targetLen) :> BitVector
 
   override __.ZExt targetLen =
@@ -1143,20 +1233,13 @@ and BitVectorSmall (n, len) =
       BitVectorBig (__.SmallValue () |> encodeBigFloat, targetLen) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
-  override __.Itof (targetLen, isSigned) =
+  override __.Itof targetLen =
+    let mask = UInt64.MaxValue - (UInt64.MaxValue >>> (64 - int len))
+    let signedFloat = (n + mask) |> int64 |> float
+    let u64 = BitConverter.DoubleToInt64Bits signedFloat |> uint64
     match targetLen with
-    | 32<rt> ->
-      let fpv = if isSigned then n |> int64 |> float32 else n |> float32
-      let u64 = BitConverter.SingleToInt32Bits fpv |> uint64
-      BitVectorSmall (u64, targetLen) :> BitVector
-    | 64<rt> ->
-      let fpv = if isSigned then n |> int64 |> float else n |> float
-      let u64 = BitConverter.DoubleToInt64Bits fpv |> uint64
-      BitVectorSmall (u64, targetLen) :> BitVector
-    | 80<rt> ->
-      let fpv = if isSigned then n |> int64 |> float else n |> float
-      let u64 = BitConverter.DoubleToInt64Bits fpv |> uint64
-      BitVectorBig (bigint u64, targetLen) :> BitVector
+    | 32<rt> | 64<rt> -> BitVectorSmall (u64, targetLen) :> BitVector
+    | 80<rt> -> BitVectorBig (bigint u64, targetLen) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
   override __.FtoiTrunc targetLen =
@@ -1323,7 +1406,7 @@ and BitVectorBig (n, len) =
   member __.Value with get(): bigint = n
 
   override __.ValToString () =
-    if n = 0I then "0x0"
+    if n = bigZero then "0x0"
     else "0x" + n.ToString("x").TrimStart('0')
 
   override __.Equals obj =
@@ -1336,7 +1419,7 @@ and BitVectorBig (n, len) =
     if len <> rhs.Length then raise ArithTypeMismatchException else ()
 #endif
     if len = 80<rt> then
-      let shifter = BitVector.OfInt32 12 80<rt>
+      let shifter = BitVector.ofInt32 12 80<rt>
       let v1 = __.Shr shifter
       let v2 = rhs.Shr shifter
       v1.Eq v2
@@ -1458,27 +1541,24 @@ and BitVectorBig (n, len) =
     if len <> rhs.Length then raise ArithTypeMismatchException else ()
     let v1 = n
     let v2 = rhs.SmallValue () |> uint16 |> int
-    if v2 >= int len then BitVectorBig ((1I <<< int len) - 1I, len) :> BitVector
+    let res = v1 >>> v2
+    if isBigPositive len v1 then BitVectorBig (res, len) :> BitVector
     else
-      let res = v1 >>> v2
-      if isBigPositive len v1 then BitVectorBig (res, len) :> BitVector
-      else
-        let pad =
-          ((1I <<< int len) - 1I) - ((1I <<< (int len - v2)))
-        BitVectorBig (res ||| pad, len) :> BitVector
+      let pad = ((bigOne <<< int len) - bigOne) - ((bigOne <<< (int len - v2)))
+      BitVectorBig (res ||| pad, len) :> BitVector
 
   override __.Not () =
-    BitVectorBig ((1I <<< (int len)) - 1I - n, len) :> BitVector
+    BitVectorBig ((bigOne <<< (int len)) - bigOne - n, len) :> BitVector
 
   override __.Neg () =
-    BitVectorBig (adaptBig len ((1I <<< (int len)) - n), len) :> BitVector
+    BitVectorBig (adaptBig len ((bigOne <<< (int len)) - n), len) :> BitVector
 
   override __.Cast targetLen =
     if targetLen <= 64<rt> then
       BitVectorSmall (adaptSmall targetLen (uint64 n), targetLen) :> BitVector
     else BitVectorBig (adaptBig targetLen n, targetLen) :> BitVector
 
-  override __.Extract (targetLen, pos) =
+  override __.Extract targetLen pos =
     if len < targetLen then raise ArithTypeMismatchException
     elif len = targetLen then __ :> BitVector
     elif targetLen <= 64<rt> then
@@ -1501,7 +1581,7 @@ and BitVectorBig (n, len) =
       if isBigPositive len n then
         BitVectorBig (n', targetLen) :> BitVector
       else
-        let mask = (1I <<< int targetLen) - (1I <<< int len)
+        let mask = (bigOne <<< int targetLen) - (bigOne <<< int len)
         BitVectorBig (n' + mask, targetLen) :> BitVector
 
   override __.ZExt targetLen =
@@ -1584,7 +1664,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = v1 + v2 |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1595,7 +1675,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = v1 - v2 |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1606,7 +1686,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = v1 * v2 |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1617,7 +1697,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = v1 / v2 |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1628,7 +1708,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = Math.Log (v2, v1) |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1639,7 +1719,7 @@ and BitVectorBig (n, len) =
       let v1 = __.BigValue () |> toBigFloat
       let v2 = rhs.BigValue () |> toBigFloat
       let n = Math.Pow (v1, v2) |> BitConverter.DoubleToInt64Bits |> uint64
-      if n = 0UL then BitVector.Zero len
+      if n = 0UL then BitVector.zero len
       else BitVectorBig (encodeBigFloat n, len) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
@@ -1656,18 +1736,13 @@ and BitVectorBig (n, len) =
     | 80<rt>, 80<rt> -> __ :> BitVector
     | _ -> raise ArithTypeMismatchException
 
-  override __.Itof (targetLen, _) =
+  override __.Itof targetLen =
     let v = if isBigPositive len n then n else - n
+    let signedFloat = float v
+    let u64 = BitConverter.DoubleToInt64Bits signedFloat |> uint64
     match targetLen with
-    | 32<rt> ->
-      let u64 = BitConverter.SingleToInt32Bits (float32 v) |> uint64
-      BitVectorSmall (u64, targetLen) :> BitVector
-    | 64<rt> ->
-      let u64 = BitConverter.DoubleToInt64Bits (float v) |> uint64
-      BitVectorSmall (u64, targetLen) :> BitVector
-    | 80<rt> ->
-      let u64 = BitConverter.DoubleToInt64Bits (float v) |> uint64
-      BitVectorBig (bigint u64, targetLen) :> BitVector
+    | 32<rt> | 64<rt> -> BitVectorSmall (u64, targetLen) :> BitVector
+    | 80<rt> -> BitVectorBig (bigint u64, targetLen) :> BitVector
     | _ -> raise ArithTypeMismatchException
 
   override __.FtoiTrunc targetLen =

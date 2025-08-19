@@ -1,25 +1,24 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="RegisterSet.Tests.fs" />
     <Compile Include="AddrRange.Tests.fs" />
     <Compile Include="LRUCache.Tests.fs" />
     <Compile Include="IntervalTree.Tests.fs" />
     <Compile Include="BitVector.Tests.fs" />
     <Compile Include="ByteArray.Tests.fs" />
     <Compile Include="LEB128.Tests.fs" />
-    <Compile Include="SortedList.Tests.fs" />
     <Compile Include="BinReader.Tests.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.1.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.1.2" />
   </ItemGroup>
 
   <ItemGroup>

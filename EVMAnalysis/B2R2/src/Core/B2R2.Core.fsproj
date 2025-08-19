@@ -1,9 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>b2r2-240x240.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>B2R2 core library.</Description>
+    <RepositoryUrl>https://github.com/B2R2-org/B2R2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <OtherFlags>$(OtherFlags)--warnon:3390</OtherFlags>
   </PropertyGroup>
 
@@ -13,9 +14,6 @@
     <Compile Include="Errors.fs" />
     <Compile Include="Utils.fsi" />
     <Compile Include="Utils.fs" />
-    <Compile Include="HexString.fs" />
-    <Compile Include="Color.fs" />
-    <Compile Include="ColoredSegment.fs" />
     <Compile Include="ColoredString.fs" />
     <Compile Include="OutString.fs" />
     <Compile Include="Printer.fs" />
@@ -26,7 +24,6 @@
     <Compile Include="Endian.fs" />
     <Compile Include="OS.fs" />
     <Compile Include="ISA.fs" />
-    <Compile Include="ArchOperationMode.fs" />
     <Compile Include="FileFormat.fs" />
     <Compile Include="Syscalls.fs" />
     <Compile Include="Addr.fs" />
@@ -44,16 +41,11 @@
     <Compile Include="IntervalMap.fs" />
     <Compile Include="IntervalSet.fs" />
     <Compile Include="RandomAccessQueue.fs" />
-    <Compile Include="DoublyLinkedKeyValue.fs" />
     <Compile Include="LRUCache.fs" />
-    <Compile Include="PersistentQueue.fs" />
-    <Compile Include="UniqueQueue.fs" />
     <Compile Include="BinReader.fs" />
-    <Compile Include="Agent.fs" />
     <Compile Include="Logger.fs" />
     <Compile Include="Attribution.fs" />
-    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="" />
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath=""/>
     <None Include="..\..\assets\b2r2-240x240.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 </Project>

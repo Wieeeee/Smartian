@@ -61,7 +61,7 @@ type TMS320C6000Instruction (addr, numBytes, insInfo) =
 
   override __.IsExit () = Utils.futureFeature ()
 
-  override __.IsTerminator () =
+  override __.IsBBLEnd () =
     __.IsDirectBranch () ||
     __.IsIndirectBranch ()
 
@@ -70,37 +70,31 @@ type TMS320C6000Instruction (addr, numBytes, insInfo) =
   override __.IndirectTrampolineAddr (_addr: byref<Addr>) =
     Utils.futureFeature ()
 
-  override __.Immediate (_v: byref<int64>) = Utils.futureFeature ()
-
   override __.GetNextInstrAddrs () = Utils.futureFeature ()
 
   override __.InterruptNum (_num: byref<int64>) = Utils.futureFeature ()
 
   override __.IsNop () = Utils.futureFeature ()
 
-  override __.Translate _ctxt = Utils.futureFeature ()
+  override __.Translate ctxt = Utils.futureFeature ()
 
-  override __.TranslateToList _ctxt = Utils.futureFeature ()
-
-  override __.Disasm (showAddr, _) =
+  override __.Disasm (showAddr, _resolveSymbol, _fileInfo) =
     let builder =
       DisasmStringBuilder (showAddr, false, WordSize.Bit32, addr, numBytes)
     Disasm.disasm __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Disasm () =
     let builder =
       DisasmStringBuilder (false, false, WordSize.Bit32, addr, numBytes)
     Disasm.disasm __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Decompose (showAddr) =
     let builder =
       DisasmWordBuilder (showAddr, false, WordSize.Bit32, addr, numBytes, 8)
     Disasm.disasm __.Info builder
-    builder.ToArray ()
-
-  override __.IsInlinedAssembly () = false
+    builder.Finalize ()
 
   override __.Equals (_) = Utils.futureFeature ()
   override __.GetHashCode () = Utils.futureFeature ()

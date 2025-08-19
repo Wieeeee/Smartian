@@ -25,30 +25,39 @@
 namespace B2R2.Peripheral.Assembly
 
 open B2R2
-open B2R2.FrontEnd
+open B2R2.FrontEnd.BinLifter
+open B2R2.FrontEnd.BinInterface
 
-type AsmInterface (isa: ISA, startAddress) =
+type AsmInterface (hdl: BinHandle, startAddress) =
+
   let asmParser =
-    match isa.Arch with
+    match hdl.ISA.Arch with
     | Architecture.IntelX64
     | Architecture.IntelX86 ->
-      Intel.IntelAsmParser (isa, startAddress) :> AsmParser
+      Intel.IntelAsmParser (hdl.ISA, startAddress) :> AsmParser
+    | Architecture.MIPS1
+    | Architecture.MIPS2
+    | Architecture.MIPS3
     | Architecture.MIPS32
+    | Architecture.MIPS32R2
+    | Architecture.MIPS32R6
+    | Architecture.MIPS4
+    | Architecture.MIPS5
     | Architecture.MIPS64
     | _ -> raise InvalidISAException
-  let ctxt = GroundWork.CreateTranslationContext isa
-  let regFactory = GroundWork.CreateRegisterFactory isa
-  let uirParser = LowUIR.LowUIRParser (isa, regFactory)
+
+  let uirParser = LowUIR.LowUIRParser (hdl.ISA, hdl.RegisterBay)
+
+  new (isa: ISA, startAddress) =
+    AsmInterface (BinHandle.Init (isa), startAddress)
 
   /// Parse the given assembly input, and assemble a list of byte arrays, where
   /// each array corresponds to a binary instruction.
   member __.AssembleBin asm = asmParser.Assemble asm
-
-  member __.Parser with get() = asmParser.Parser
 
   /// Parse the given string input, and lift it to an array of LowUIR
   /// statements. If the given string represents LowUIR instructions, then we
   /// simply parse the assembly instructions and return the corresponding AST.
   member __.LiftLowUIR isFromLowUIR asm =
     if isFromLowUIR then uirParser.Parse asm
-    else asmParser.Lift ctxt asm startAddress
+    else asmParser.Lift hdl asm startAddress

@@ -27,9 +27,9 @@ namespace B2R2
 open B2R2.FingerTree
 
 /// An element for our interval map.
-type IntervalMapElem<'T> (k, v) =
+type IntervalMapElem<'a> (k, v) =
   member val Key: AddrRange = k
-  member val Val: 'T = v
+  member val Val: 'a = v
   member __.Min = __.Key.Min
   member __.Max = __.Key.Max
   override __.ToString () = __.Key.ToString ()
@@ -38,18 +38,18 @@ type IntervalMapElem<'T> (k, v) =
       InterMonoid<Addr> (Ordered(Key(__.Key.Min)), Priority(Prio(__.Key.Max)))
 
 /// Interval-tree-based map, which maps an interval of type (AddrRange) to an
-/// IntervalMapElement ('T).
-type IntervalMap<'T> =
+/// IntervalMapElement ('a).
+type IntervalMap<'a> =
   private
-    IntervalMap of FingerTree<InterMonoid<Addr>, IntervalMapElem<'T>>
+    IntervalMap of FingerTree<InterMonoid<Addr>, IntervalMapElem<'a>>
 
 /// Helper module for IntervalMap.
 module IntervalMap =
 
   /// Empty interval tree.
-  let empty: IntervalMap<'T> = IntervalMap Empty
+  let empty: IntervalMap<'a> = IntervalMap Empty
 
-  let isEmpty (m: IntervalMap<'T>) = m = IntervalMap Empty
+  let isEmpty (m: IntervalMap<'a>) = m = IntervalMap Empty
 
   /// Add an item to the interval tree.
   let add (i: AddrRange) v (IntervalMap m) =
@@ -64,25 +64,25 @@ module IntervalMap =
   let findAll (range: AddrRange) (IntervalMap m) =
     let il = range.Min
     let ih = range.Max
-    let dropMatcher (e: InterMonoid<Addr>) = Prio il <= e.GetMax ()
+    let dropMatcher (e: InterMonoid<Addr>) = Prio il < e.GetMax ()
     let rec matches xs =
       let v = Op.DropUntil dropMatcher xs
       match Op.ViewL v with
       | Nil -> []
       | Cons (x, xs) -> x :: matches xs
-    Op.TakeUntil (fun (elt: InterMonoid<Addr>) -> Key ih < elt.GetMin ()) m
+    Op.TakeUntil (fun (elt: InterMonoid<Addr>) -> Key ih <= elt.GetMin ()) m
     |> matches
 
   /// Find exactly matching interval.
-  let tryFind range (m: IntervalMap<'T>) =
+  let tryFind range (m: IntervalMap<'a>) =
     findAll range m
-    |> List.tryFind (fun (elt: IntervalMapElem<'T>) -> elt.Key = range)
+    |> List.tryFind (fun (elt: IntervalMapElem<'a>) -> elt.Key = range)
     |> Option.map (fun v -> v.Val)
 
   /// Find an interval that has the same low bound (Min) as the given address.
   let tryFindByMin (addr: Addr) (IntervalMap m) =
     let comp (elt: InterMonoid<Addr>) = Key addr <= elt.GetMin ()
-    if Prio addr <= ((m :> IMeasured<_>).Measurement).GetMax () then
+    if Prio addr < ((m :> IMeasured<_>).Measurement).GetMax () then
       let z = (m.Monoid :> IMonoid<InterMonoid<Addr>>).Zero
       let _, x, _ = Op.SplitTree comp z m
       if x.Min = addr then Some (x.Val) else None
@@ -93,30 +93,30 @@ module IntervalMap =
   let includeRange (range: AddrRange) (IntervalMap m) =
     let il = range.Min
     let ih = range.Max
-    if Prio il <= ((m :> IMeasured<_>).Measurement).GetMax () then
+    if Prio il < ((m :> IMeasured<_>).Measurement).GetMax () then
       let z = (m.Monoid :> IMonoid<InterMonoid<Addr>>).Zero
       let _, x, _ =
-        Op.SplitTree (fun (e: InterMonoid<Addr>) -> Prio il <= e.GetMax()) z m
-      x.Min <= ih
+        Op.SplitTree (fun (e: InterMonoid<Addr>) -> Prio il < e.GetMax()) z m
+      x.Min < ih
     else false
 
   /// Check whether the given address exists in the interval tree.
   let containsAddr addr m = includeRange (AddrRange (addr, addr)) m
 
   /// Check whether the exact range exists in the interval tree.
-  let contains (range: AddrRange) (m: IntervalMap<'T>) =
+  let contains (range: AddrRange) (m: IntervalMap<'a>) =
     match tryFind range m with
     | None -> false
     | _ -> true
 
   /// Replace the exactly matched interval from the map to the given one.
-  let replace (i: AddrRange) (v: 'T) (IntervalMap m) =
+  let replace (i: AddrRange) (v: 'a) (IntervalMap m) =
     let l, r =
       Op.Split (fun (e: InterMonoid<Addr>) -> Key i.Min <= e.GetMin ()) m
     let rec replaceLoop l r =
       match Op.ViewL r with
       | Nil -> raise InvalidAddrRangeException
-      | Cons (x: IntervalMapElem<'T>, xs)
+      | Cons (x: IntervalMapElem<'a>, xs)
         when x.Min = i.Min && x.Max = i.Max ->
         Op.Concat l (Op.Cons (IntervalMapElem (i, v)) xs)
       | Cons (x, xs) ->
@@ -126,7 +126,7 @@ module IntervalMap =
 
   /// Add a new mapping to the IntervalMap when there is no exactly matching
   /// interval. If there is, replace the mapping with the new value.
-  let addOrReplace (i: AddrRange) (v: 'T) m =
+  let addOrReplace (i: AddrRange) (v: 'a) m =
     if contains i m then replace i v m
     else add i v m
 
@@ -137,7 +137,7 @@ module IntervalMap =
     let rec rmLoop l r =
       match Op.ViewL r with
       | Nil -> raise InvalidAddrRangeException
-      | Cons (x: IntervalMapElem<'T>, xs)
+      | Cons (x: IntervalMapElem<'a>, xs)
         when x.Min = i.Min && x.Max = i.Max ->
         Op.Concat l xs
       | Cons (x, xs) ->
@@ -147,7 +147,7 @@ module IntervalMap =
 
   /// Fold the map.
   let fold fn acc (IntervalMap m) =
-    foldl (fun acc (elt: IntervalMapElem<'T>) -> fn acc elt.Key elt.Val) acc m
+    foldl (fun acc (elt: IntervalMapElem<'a>) -> fn acc elt.Key elt.Val) acc m
 
   /// Iterate the map.
   let iter fn m = fold (fun _ range elt -> fn range elt) () m

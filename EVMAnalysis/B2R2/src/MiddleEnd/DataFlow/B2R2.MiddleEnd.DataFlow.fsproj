@@ -1,43 +1,42 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>b2r2-240x240.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>B2R2 data-flow engine.</Description>
+    <RepositoryUrl>https://github.com/B2R2-org/B2R2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Constants.fs" />
-    <Compile Include="VarPoint.fs" />
-    <Compile Include="ConstantDomain.fs" />
-    <Compile Include="StackPointerDomain.fs" />
-    <Compile Include="UntouchedValueDomain.fs" />
-    <Compile Include="VarDefDomain.fs" />
-    <Compile Include="IDataFlowAnalysis.fs" />
-    <Compile Include="WorklistDataFlowState.fs" />
-    <Compile Include="WorklistDataFlowAnalysis.fs" />
-    <Compile Include="ReachingDefinitionAnalysis.fs" />
-    <Compile Include="DataFlowChain.fs" />
-    <Compile Include="VarBasedDataFlowState.fs" />
-    <Compile Include="VarBasedDataFlowAnalysis.fs" />
+    <Compile Include="DataFlowAnalysis.fs" />
+    <Compile Include="ReachingDefinitions.fs" />
+    <Compile Include="SSAReachingDefinitions.fs" />
+    <Compile Include="Utils.fs" />
+    <Compile Include="Chains.fs" />
+    <Compile Include="CPState.fs" />
     <Compile Include="ConstantPropagation.fs" />
+    <Compile Include="SCCPValue.fs" />
+    <Compile Include="SCCPTransfer.fs" />
+    <Compile Include="SparseConditionalConstantPropagation.fs" />
+    <Compile Include="StackValue.fs" />
+    <Compile Include="StackTransfer.fs" />
     <Compile Include="StackPointerPropagation.fs" />
-    <Compile Include="UntouchedValueAnalysis.fs" />
-    <Compile Include="SSAEdges.fs" />
-    <Compile Include="SSAVarBasedDataFlowState.fs" />
-    <Compile Include="SSAVarBasedDataFlowAnalysis.fs" />
-    <Compile Include="SSAConstantPropagation.fs" />
-    <Compile Include="SSAStackPointerPropagation.fs" />
-    <Compile Include="SSAUntouchedValueAnalysis.fs" />
-    <None Include="..\..\..\LICENSE.md" Pack="true" PackagePath="" />
+    <Compile Include="CopyValue.fs" />
+    <Compile Include="CopyTransfer.fs" />
+    <Compile Include="ConstantCopyPropagation.fs" />
+    <Compile Include="UVPropValue.fs" />
+    <Compile Include="UVPropTransfer.fs" />
+    <Compile Include="UntouchedValuePropagation.fs" />
+    <None Include="..\..\..\LICENSE.md" Pack="true" PackagePath=""/>
     <None Include="..\..\..\assets\b2r2-240x240.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\B2R2.Core.fsproj" />
     <ProjectReference Include="..\BinGraph\B2R2.MiddleEnd.BinGraph.fsproj" />
-    <ProjectReference Include="..\ControlFlowGraph\B2R2.MiddleEnd.ControlFlowGraph.fsproj" />
+    <ProjectReference Include="..\BinEssence\B2R2.MiddleEnd.BinEssence.fsproj" />
+    <ProjectReference Include="..\Lens\B2R2.MiddleEnd.Lens.fsproj" />
   </ItemGroup>
 
 </Project>

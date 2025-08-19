@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Peripheral\Assembly\ARM32\B2R2.Peripheral.Assembly.ARM32.fsproj" />
+    <ProjectReference Include="..\..\Peripheral\Assembly\Intel\B2R2.Peripheral.Assembly.Intel.fsproj" />
+    <ProjectReference Include="..\..\Peripheral\Assembly\LowUIR\B2R2.Peripheral.Assembly.LowUIR.fsproj" />
+    <ProjectReference Include="..\..\Peripheral\Assembly\MIPS\B2R2.Peripheral.Assembly.MIPS.fsproj" />
     <ProjectReference Include="..\..\Peripheral\Assembly\AsmInterface\B2R2.Peripheral.Assembly.AsmInterface.fsproj" />
     <ProjectReference Include="..\..\BinIR\B2R2.BinIR.fsproj" />
     <ProjectReference Include="..\..\FrontEnd\BinLifter\Intel\B2R2.FrontEnd.BinLifter.Intel.fsproj" />
@@ -19,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="B2R2.FsReadLine" Version="0.2.0" />
+    <PackageReference Include="B2R2.FsReadLine" Version="0.1.5" />
   </ItemGroup>
 
 </Project>

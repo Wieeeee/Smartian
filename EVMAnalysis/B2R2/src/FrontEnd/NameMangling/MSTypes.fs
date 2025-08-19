@@ -367,7 +367,7 @@ type InterpHelperString = string
 /// Indicates the dimension(length) of the array.
 type ArrayLength = int
 
-/// AST for Microsoft mangled expressions.
+/// AST for microsoft mangled expressions.
 type MSExpr =
   /// A name without type information.
   | Name of string

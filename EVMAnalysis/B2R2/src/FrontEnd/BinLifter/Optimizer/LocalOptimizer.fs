@@ -30,7 +30,7 @@ open B2R2.BinIR.LowUIR
 module private Localizer =
   let rec breakByMark acc (stmts: Stmt []) idx =
     if idx < stmts.Length then
-      match stmts[idx].S with
+      match stmts.[idx].S with
       | ISMark (_)
       | LMark (_) ->
         let left, right = Array.splitAt idx stmts
@@ -40,18 +40,19 @@ module private Localizer =
     else List.rev (stmts :: acc) |> List.toArray
 
   let breakIntoBlocks (stmts: Stmt []) =
-    if Array.isEmpty stmts then [| stmts |]
+    if Array.length stmts = 0 then [| stmts |]
     else breakByMark [] stmts 1
 
 /// Intra-block local IR optimizer.
 type LocalOptimizer =
   /// Remove unnecessary IEMark to ease the analysis.
   static member private TrimIEMark (stmts: Stmt []) =
-    let last = stmts[stmts.Length - 1].S
-    let secondLast = stmts[stmts.Length - 2].S
+    let last = stmts.[stmts.Length - 1].S
+    let secondLast = stmts.[stmts.Length - 2].S
     match secondLast, last with
     | InterJmp _, IEMark _
-    | InterCJmp _, IEMark _ ->
+    | InterCJmp _, IEMark _
+    | SideEffect _, IEMark _ ->
       Array.sub stmts 0 (stmts.Length - 1)
     | _ -> stmts
 
@@ -59,5 +60,7 @@ type LocalOptimizer =
   static member Optimize stmts =
     LocalOptimizer.TrimIEMark stmts
     |> breakIntoBlocks
-    |> Array.collect
-      (ConstantFolding.optimize >> DeadCodeElimination.optimize)
+    |> Array.map (fun stmts ->
+      ConstantFolding.optimize stmts
+      |> DeadCodeElimination.optimize)
+    |> Array.concat

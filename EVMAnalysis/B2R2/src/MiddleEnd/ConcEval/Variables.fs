@@ -1,3 +1,4 @@
+
 (*
   B2R2 - the Next-Generation Reversing Platform
 
@@ -27,28 +28,19 @@ namespace B2R2.MiddleEnd.ConcEval
 open System.Collections.Generic
 open B2R2
 
-type Variables (vars) =
-  let vars: Dictionary<int, BitVector> = vars
+type Variables<'Key when 'Key: equality> () =
+  let vars = Dictionary<'Key, BitVector> ()
 
-  new () = Variables (Dictionary ())
+  member __.TryGet k = vars.TryGetValue (k)
 
-  member __.TryGet k =
-    match vars.TryGetValue k with
-    | true, v -> Ok v
-    | false, _ -> Error ErrorCase.InvalidRegister
+  member __.Get k = vars.[k]
 
-  member __.Get k = vars[k]
+  member __.Set k v = vars.[k] <- v
 
-  member __.Set k v = vars[k] <- v
+  member __.Unset k = vars.Remove k |> ignore
 
-  member __.Unset k =
-    vars.Remove k |> ignore
+  member __.Clear () = vars.Clear ()
 
-  member __.Count () =
-    vars.Count
+  member __.Count () = vars.Count
 
-  member __.ToArray () =
-    vars |> Seq.map (fun (KeyValue (k, v))  -> k, v) |> Seq.toArray
-
-  member __.Clone () =
-    Variables (Dictionary (vars))
+  member __.ToSeq () = vars |> Seq.map (fun (KeyValue (k,v)) -> k, v)

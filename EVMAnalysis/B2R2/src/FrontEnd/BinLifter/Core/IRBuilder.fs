@@ -65,16 +65,9 @@ type IRBuilder =
   member __.Append stmt = __.Add (stmt)
 
   /// <summary>
-  ///   Create an array of IR statements from the buffer. This function will
-  ///   clear up the buffer and initialize the tempvar count, too.
+  ///   Create an array of IR statements from the buffer.
   /// </summary>
   /// <returns>
-  ///   Returns an array of IR statements.
+  ///   Returns a list of IR statements.
   /// </returns>
-  member __.ToStmts () =
-#if EMULATION
-    __.TempVarCount <- 0
-#endif
-    let stmts = __.ToArray ()
-    __.Clear ()
-    stmts
+  member __.ToStmts () = __.ToArray ()

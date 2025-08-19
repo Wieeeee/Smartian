@@ -1,8 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,16 +37,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FrontEnd\Core\B2R2.FrontEnd.Core.fsproj" />
+    <ProjectReference Include="..\..\FrontEnd\BinInterface\B2R2.FrontEnd.BinInterface.fsproj" />
     <ProjectReference Include="..\..\FrontEnd\NameMangling\B2R2.FrontEnd.NameMangling.fsproj" />
-    <ProjectReference Include="..\..\MiddleEnd\Core\B2R2.MiddleEnd.Core.fsproj" />
+    <ProjectReference Include="..\..\MiddleEnd\BinGraph\B2R2.MiddleEnd.BinGraph.fsproj" />
+    <ProjectReference Include="..\..\MiddleEnd\DataFlow\B2R2.MiddleEnd.DataFlow.fsproj" />
+    <ProjectReference Include="..\..\MiddleEnd\Reclaimer\B2R2.MiddleEnd.Reclaimer.fsproj" />
     <ProjectReference Include="..\Core\B2R2.RearEnd.Core.fsproj" />
     <ProjectReference Include="..\ROP\B2R2.RearEnd.ROP.fsproj" />
     <ProjectReference Include="..\Visualization\B2R2.RearEnd.Visualization.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="B2R2.FsReadLine" Version="0.2.0" />
+    <PackageReference Include="B2R2.FsReadLine" Version="0.1.5" />
     <PackageReference Include="FParsec" Version="1.1.1" />
   </ItemGroup>
 

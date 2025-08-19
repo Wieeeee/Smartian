@@ -25,50 +25,49 @@
 namespace B2R2.RearEnd.BinExplorer
 
 open B2R2
-open B2R2.FrontEnd
 open B2R2.FrontEnd.BinFile
-open B2R2.MiddleEnd
+open B2R2.FrontEnd.BinInterface
+open B2R2.MiddleEnd.BinEssence
+open B2R2.RearEnd
 
 type CmdList () =
   inherit Cmd ()
 
-  let createFuncString (hdl: BinHandle) (addr, name) =
-    Addr.toString hdl.File.ISA.WordSize addr + ": " + name
+  let createFuncString hdl (addr, name) =
+    Addr.toString hdl.ISA.WordSize addr + ": " + name
 
-  let listFunctions (brew: BinaryBrew<_, _>) =
-    brew.Functions.Sequence
-    |> Seq.map (fun c -> c.EntryPoint, c.Name)
+  let listFunctions ess =
+    ess.CalleeMap.InternalCallees
+    |> Seq.map (fun c -> Option.get c.Addr, c.CalleeID)
     |> Seq.sortBy fst
-    |> Seq.map (createFuncString brew.BinHandle)
+    |> Seq.map (createFuncString ess.BinHandle)
     |> Seq.toArray
 
-  let createSegmentString wordSize (seg: Segment) =
+  let createSegmentString handler (seg: Segment) =
     "- "
-    + Addr.toString wordSize seg.Address
+    + Addr.toString handler.ISA.WordSize seg.Address
     + ":"
-    + Addr.toString wordSize (seg.Address + uint64 seg.Size)
+    + Addr.toString handler.ISA.WordSize (seg.Address + seg.Size)
     + " (" + seg.Size.ToString () + ") ("
-    + Permission.toString seg.Permission + ")"
+    + FileInfo.PermissionToString seg.Permission + ")"
 
-  let listSegments (hdl: BinHandle) =
-    let wordSize = hdl.File.ISA.WordSize
-    hdl.File.GetSegments ()
-    |> Seq.map (createSegmentString wordSize)
+  let listSegments (handler: BinHandle) =
+    handler.FileInfo.GetSegments ()
+    |> Seq.map (createSegmentString handler)
     |> Seq.toArray
 
-  let createSectionString wordSize (idx: int) (sec: Section) =
+  let createSectionString handler (idx: int) (sec: Section) =
     idx.ToString ("D2")
     + ". "
-    + Addr.toString wordSize sec.Address
+    + Addr.toString handler.ISA.WordSize sec.Address
     + ":"
-    + Addr.toString wordSize (sec.Address + uint64 sec.Size)
+    + Addr.toString handler.ISA.WordSize (sec.Address + sec.Size)
     + " (" + sec.Size.ToString ("D6") + ")"
     + " [" + sec.Name + "] "
 
-  let listSections (hdl: BinHandle) =
-    let wordSize = hdl.File.ISA.WordSize
-    hdl.File.GetSections ()
-    |> Seq.mapi (createSectionString wordSize)
+  let listSections (handler: BinHandle) =
+    handler.FileInfo.GetSections ()
+    |> Seq.mapi (createSectionString handler)
     |> Seq.toArray
 
   override __.CmdName = "list"
@@ -86,14 +85,14 @@ type CmdList () =
 
   override __.SubCommands = [ "functions"; "segments"; ]
 
-  override __.CallBack _ brew args =
+  override __.CallBack _ (ess: BinEssence) args =
     match args with
     | "functions" :: _
-    | "funcs" :: _ -> listFunctions brew
+    | "funcs" :: _ -> listFunctions ess
     | "segments" :: _
-    | "segs" :: _ -> listSegments brew.BinHandle
+    | "segs" :: _ -> listSegments ess.BinHandle
     | "sections" :: _
-    | "secs" :: _ -> listSections brew.BinHandle
+    | "secs" :: _ -> listSections ess.BinHandle
     | _ -> [| "[*] Unknown list cmd is given." |]
     |> Array.map OutputNormal
 

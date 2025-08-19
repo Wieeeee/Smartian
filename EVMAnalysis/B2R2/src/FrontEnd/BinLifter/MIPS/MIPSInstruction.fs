@@ -39,18 +39,14 @@ type MIPSInstruction (addr, numBytes, insInfo, wordSize) =
     match __.Info.Opcode with
     | Opcode.B | Opcode.BAL | Opcode.BEQ | Opcode.BGEZ | Opcode.BGEZAL
     | Opcode.BGTZ | Opcode.BLEZ | Opcode.BLTZ | Opcode.BNE
-    | Opcode.JALR | Opcode.JALRHB | Opcode.JR | Opcode.JRHB
-    | Opcode.J | Opcode.JAL | Opcode.BC1F | Opcode.BC1T -> true
+    | Opcode.JALR | Opcode.JALRHB | Opcode.JR | Opcode.JRHB -> true
     | _ -> false
 
   override __.IsModeChanging () = false
 
   member __.HasConcJmpTarget () =
     match __.Info.Operands with
-    | OneOperand (OpAddr _)
-    | TwoOperands (_, OpAddr _)
-    | ThreeOperands (_, _, OpAddr _)
-    | OneOperand (OpImm _) -> true
+    | OneOperand (OpAddr _) -> true
     | _ -> false
 
   override __.IsDirectBranch () =
@@ -62,43 +58,29 @@ type MIPSInstruction (addr, numBytes, insInfo, wordSize) =
   override __.IsCondBranch () =
     match __.Info.Opcode with
     | Opcode.BEQ | Opcode.BLTZ | Opcode.BLEZ | Opcode.BGTZ | Opcode.BGEZ
-    | Opcode.BGEZAL | Opcode.BNE | Opcode.BC1F | Opcode.BC1T -> true
+    | Opcode.BGEZAL | Opcode.BNE -> true
     | _ -> false
 
   override __.IsCJmpOnTrue () =
     match __.Info.Opcode with
     | Opcode.BEQ | Opcode.BLTZ | Opcode.BLEZ | Opcode.BGTZ | Opcode.BGEZ
-    | Opcode.BGEZAL | Opcode.BC1F | Opcode.BC1T -> true
+    | Opcode.BGEZAL -> true
     | _ -> false
 
   override __.IsCall () =
     match __.Info.Opcode with
-    | Opcode.BAL | Opcode.BGEZAL | Opcode.JALR | Opcode.JALRHB | Opcode.JAL ->
-      true
+    | Opcode.JR | Opcode.JALR | Opcode.JALRHB -> true
     | _ -> false
 
-  override __.IsRET () =
-    match __.Info.Opcode with
-    | Opcode.JR ->
-      match __.Info.Operands with
-      | OneOperand (OpReg (Register.R31)) -> true
-      | _ -> false
-    | _ -> false
+  override __.IsRET () = false // XXX
 
-  override __.IsInterrupt () =
-    match __.Info.Opcode with
-    | Opcode.SYSCALL | Opcode.WAIT -> true
-    | _ -> false
+  override __.IsInterrupt () = Utils.futureFeature ()
 
-  override __.IsExit () =
-    match __.Info.Opcode with
-    | Opcode.DERET | Opcode.ERET | Opcode.ERETNC -> true
-    | _ -> false
+  override __.IsExit () = Utils.futureFeature ()
 
-  override __.IsTerminator () =
-       __.IsBranch ()
-    || __.IsInterrupt ()
-    || __.IsExit ()
+  override __.IsBBLEnd () = // FIXME
+    __.IsDirectBranch () ||
+    __.IsIndirectBranch ()
 
   override __.DirectBranchTarget (addr: byref<Addr>) =
     if __.IsBranch () then
@@ -106,35 +88,12 @@ type MIPSInstruction (addr, numBytes, insInfo, wordSize) =
       | OneOperand (OpAddr (Relative offset)) ->
         addr <- (int64 __.Address + offset) |> uint64
         true
-      | TwoOperands (_, OpAddr (Relative offset)) ->
-        addr <- (int64 __.Address + offset) |> uint64
-        true
-      | ThreeOperands (_, _,OpAddr (Relative offset)) ->
-        addr <- (int64 __.Address + offset) |> uint64
-        true
-      | OneOperand (OpImm (imm)) ->
-        addr <- imm
-        true
       | _ -> false
     else false
 
   override __.IndirectTrampolineAddr (_addr: byref<Addr>) =
-    if __.IsIndirectBranch () then Utils.futureFeature ()
+    if __.IsBranch () then Utils.futureFeature ()
     else false
-
-  override __.Immediate (v: byref<int64>) =
-    match __.Info.Operands with
-    | OneOperand (OpImm (c))
-    | TwoOperands (OpImm (c), _)
-    | TwoOperands (_, OpImm (c))
-    | ThreeOperands (OpImm (c), _, _)
-    | ThreeOperands (_, OpImm (c), _)
-    | ThreeOperands (_, _, OpImm (c))
-    | FourOperands (OpImm (c), _, _, _)
-    | FourOperands (_, OpImm (c), _, _)
-    | FourOperands (_, _, OpImm (c), _)
-    | FourOperands (_, _, _, OpImm (c)) -> v <- int64 c; true
-    | _ -> false
 
   override __.GetNextInstrAddrs () = Utils.futureFeature ()
 
@@ -144,30 +103,25 @@ type MIPSInstruction (addr, numBytes, insInfo, wordSize) =
     __.Info.Opcode = Opcode.NOP
 
   override __.Translate ctxt =
-    (Lifter.translate __.Info numBytes ctxt).ToStmts ()
+    Lifter.translate __.Info ctxt
 
-  override __.TranslateToList ctxt =
-    Lifter.translate __.Info numBytes ctxt
-
-  override __.Disasm (showAddr, _) =
+  override __.Disasm (showAddr, _resolveSymbol, _fileInfo) =
     let builder =
       DisasmStringBuilder (showAddr, false, wordSize, addr, numBytes)
     Disasm.disasm wordSize __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Disasm () =
     let builder =
       DisasmStringBuilder (false, false, wordSize, addr, numBytes)
     Disasm.disasm wordSize __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Decompose (showAddr) =
     let builder =
       DisasmWordBuilder (showAddr, false, wordSize, addr, numBytes, 8)
     Disasm.disasm wordSize __.Info builder
-    builder.ToArray ()
-
-  override __.IsInlinedAssembly () = false
+    builder.Finalize ()
 
   override __.Equals (_) = Utils.futureFeature ()
   override __.GetHashCode () = Utils.futureFeature ()

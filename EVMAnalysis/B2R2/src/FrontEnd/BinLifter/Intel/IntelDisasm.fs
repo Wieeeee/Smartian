@@ -22,12 +22,10 @@
   SOFTWARE.
 *)
 
-module B2R2.FrontEnd.BinLifter.Intel.Disasm
+module internal B2R2.FrontEnd.BinLifter.Intel.Disasm
 
 open B2R2
 open B2R2.FrontEnd.BinLifter
-
-type Disasm = delegate of INameReadable * DisasmBuilder * InsInfo -> unit
 
 let opCodeToString = function
   | Opcode.AAA -> "aaa"
@@ -35,21 +33,11 @@ let opCodeToString = function
   | Opcode.AAM -> "aam"
   | Opcode.AAS -> "aas"
   | Opcode.ADC -> "adc"
-  | Opcode.ADCX -> "adcx"
   | Opcode.ADD -> "add"
   | Opcode.ADDPD -> "addpd"
   | Opcode.ADDPS -> "addps"
   | Opcode.ADDSD -> "addsd"
   | Opcode.ADDSS -> "addss"
-  | Opcode.ADDSUBPD -> "addsubpd"
-  | Opcode.ADDSUBPS -> "addsubps"
-  | Opcode.ADOX -> "adox"
-  | Opcode.AESDEC -> "aesdec"
-  | Opcode.AESDECLAST -> "aesdeclast"
-  | Opcode.AESENC -> "aesenc"
-  | Opcode.AESENCLAST -> "aesenclast"
-  | Opcode.AESIMC -> "aesimc"
-  | Opcode.AESKEYGENASSIST -> "aeskeygenassist"
   | Opcode.AND -> "and"
   | Opcode.ANDN -> "andn"
   | Opcode.ANDNPD -> "andnpd"
@@ -57,18 +45,7 @@ let opCodeToString = function
   | Opcode.ANDPD -> "andpd"
   | Opcode.ANDPS -> "andps"
   | Opcode.ARPL -> "arpl"
-  | Opcode.BEXTR -> "bextr"
-  | Opcode.BLENDPD -> "blendpd"
-  | Opcode.BLENDPS -> "blendps"
-  | Opcode.BLENDVPD -> "blendvpd"
-  | Opcode.BLENDVPS -> "blendvps"
-  | Opcode.BLSI -> "blsi"
-  | Opcode.BLSMSK -> "blsmsk"
-  | Opcode.BLSR -> "blsr"
   | Opcode.BNDCL -> "bndcl"
-  | Opcode.BNDCN -> "bndcn"
-  | Opcode.BNDCU -> "bndcu"
-  | Opcode.BNDLDX -> "bndldx"
   | Opcode.BNDMK -> "bndmk"
   | Opcode.BNDMOV -> "bndmov"
   | Opcode.BNDSTX -> "bndstx"
@@ -80,7 +57,6 @@ let opCodeToString = function
   | Opcode.BTC -> "btc"
   | Opcode.BTR -> "btr"
   | Opcode.BTS -> "bts"
-  | Opcode.BZHI -> "bzhi"
   | Opcode.CALLFar | Opcode.CALLNear -> "call"
   | Opcode.CBW -> "cbw"
   | Opcode.CDQ -> "cdq"
@@ -89,22 +65,18 @@ let opCodeToString = function
   | Opcode.CLC -> "clc"
   | Opcode.CLD -> "cld"
   | Opcode.CLFLUSH -> "clflush"
-  | Opcode.CLFLUSHOPT -> "clflushopt"
   | Opcode.CLI -> "cli"
   | Opcode.CLRSSBSY -> "clrssbsy"
   | Opcode.CLTS -> "clts"
-  | Opcode.CLWB -> "clwb"
   | Opcode.CMC -> "cmc"
   | Opcode.CMOVA -> "cmova"
   | Opcode.CMOVAE -> "cmovae"
   | Opcode.CMOVB -> "cmovb"
   | Opcode.CMOVBE -> "cmovbe"
-  | Opcode.CMOVC -> "cmovc"
   | Opcode.CMOVG -> "cmovg"
   | Opcode.CMOVGE -> "cmovge"
   | Opcode.CMOVL -> "cmovl"
   | Opcode.CMOVLE -> "cmovle"
-  | Opcode.CMOVNC -> "cmovnc"
   | Opcode.CMOVNO -> "cmovno"
   | Opcode.CMOVNP -> "cmovnp"
   | Opcode.CMOVNS -> "cmovns"
@@ -161,16 +133,10 @@ let opCodeToString = function
   | Opcode.DIVPS -> "divps"
   | Opcode.DIVSD -> "divsd"
   | Opcode.DIVSS -> "divss"
-  | Opcode.DPPD -> "dppd"
-  | Opcode.DPPS -> "dpps"
   | Opcode.EMMS -> "emms"
-  | Opcode.ENCLS -> "encls"
-  | Opcode.ENCLU -> "enclu"
   | Opcode.ENDBR32 -> "endbr32"
   | Opcode.ENDBR64 -> "endbr64"
   | Opcode.ENTER -> "enter"
-  | Opcode.EXTRACTPS -> "extractps"
-  | Opcode.EXTRQ -> "extrq"
   | Opcode.F2XM1 -> "f2xm1"
   | Opcode.FABS -> "fabs"
   | Opcode.FADD -> "fadd"
@@ -199,7 +165,6 @@ let opCodeToString = function
   | Opcode.FDIVR -> "fdivr"
   | Opcode.FDIVRP -> "fdivrp"
   | Opcode.FFREE -> "ffree"
-  | Opcode.FFREEP -> "ffreep"
   | Opcode.FIADD -> "fiadd"
   | Opcode.FICOM -> "ficom"
   | Opcode.FICOMP -> "ficomp"
@@ -226,12 +191,8 @@ let opCodeToString = function
   | Opcode.FLDZ -> "fldz"
   | Opcode.FMUL -> "fmul"
   | Opcode.FMULP -> "fmulp"
-  | Opcode.FNCLEX -> "fnclex"
-  | Opcode.FNINIT -> "fninit"
   | Opcode.FNOP -> "fnop"
-  | Opcode.FNSAVE -> "fnsave"
   | Opcode.FNSTCW -> "fnstcw"
-  | Opcode.FNSTENV -> "fnstenv"
   | Opcode.FNSTSW -> "fnstsw"
   | Opcode.FPATAN -> "fpatan"
   | Opcode.FPREM -> "fprem"
@@ -245,7 +206,6 @@ let opCodeToString = function
   | Opcode.FSINCOS -> "fsincos"
   | Opcode.FSQRT -> "fsqrt"
   | Opcode.FST -> "fst"
-  | Opcode.FSTCW -> "fstcw"
   | Opcode.FSTENV -> "fstenv"
   | Opcode.FSTP -> "fstp"
   | Opcode.FSTSW -> "fstsw"
@@ -259,7 +219,6 @@ let opCodeToString = function
   | Opcode.FUCOMIP -> "fucomip"
   | Opcode.FUCOMP -> "fucomp"
   | Opcode.FUCOMPP -> "fucompp"
-  | Opcode.FWAIT -> "fwait"
   | Opcode.FXAM -> "fxam"
   | Opcode.FXCH -> "fxch"
   | Opcode.FXRSTOR -> "fxrstor"
@@ -270,14 +229,7 @@ let opCodeToString = function
   | Opcode.FYL2X -> "fyl2x"
   | Opcode.FYL2XP1 -> "fyl2xp1"
   | Opcode.GETSEC -> "getsec"
-  | Opcode.GF2P8AFFINEINVQB -> "gf2p8affineinvqb"
-  | Opcode.GF2P8AFFINEQB -> "gf2p8affineqb"
-  | Opcode.GF2P8MULB -> "gf2p8mulb"
-  | Opcode.HADDPD -> "haddpd"
-  | Opcode.HADDPS -> "haddps"
   | Opcode.HLT -> "hlt"
-  | Opcode.HSUBPD -> "hsubpd"
-  | Opcode.HSUBPS -> "hsubps"
   | Opcode.IDIV -> "idiv"
   | Opcode.IMUL -> "imul"
   | Opcode.IN -> "in"
@@ -287,93 +239,35 @@ let opCodeToString = function
   | Opcode.INS -> "ins"
   | Opcode.INSB -> "insb"
   | Opcode.INSD -> "insd"
-  | Opcode.INSERTPS -> "insertps"
-  | Opcode.INSERTQ -> "insertq"
   | Opcode.INSW -> "insw"
   | Opcode.INT -> "int"
-  | Opcode.INT1 -> "int1" (* ICEBP *)
   | Opcode.INT3 -> "int3"
   | Opcode.INTO -> "into"
   | Opcode.INVD -> "invd"
-  | Opcode.INVEPT -> "invept"
   | Opcode.INVLPG -> "invlpg"
-  | Opcode.INVPCID -> "invpcid"
-  | Opcode.INVVPID -> "invvpid"
-  | Opcode.IRET -> "iret"
   | Opcode.IRETD -> "iretd"
   | Opcode.IRETQ -> "iretq"
   | Opcode.IRETW -> "iretw"
-  | Opcode.JNB -> "jnb"
+  | Opcode.JA -> "ja"
   | Opcode.JB -> "jb"
+  | Opcode.JBE -> "jbe"
   | Opcode.JCXZ -> "jcxz"
   | Opcode.JECXZ -> "jecxz"
-  | Opcode.JNL -> "jnl"
-  | Opcode.JMPFar | Opcode.JMPNear -> "jmp"
-  | Opcode.JBE -> "jbe"
-  | Opcode.JA -> "ja"
-  | Opcode.JLE -> "jle"
-  | Opcode.JL -> "jl"
   | Opcode.JG -> "jg"
+  | Opcode.JL -> "jl"
+  | Opcode.JLE -> "jle"
+  | Opcode.JMPFar | Opcode.JMPNear -> "jmp"
+  | Opcode.JNB -> "jnb"
+  | Opcode.JNL -> "jnl"
   | Opcode.JNO -> "jno"
+  | Opcode.JNP -> "jnp"
   | Opcode.JNS -> "jns"
   | Opcode.JNZ -> "jnz"
   | Opcode.JO -> "jo"
   | Opcode.JP -> "jp"
-  | Opcode.JNP -> "jnp"
   | Opcode.JRCXZ -> "jrcxz"
   | Opcode.JS -> "js"
   | Opcode.JZ -> "jz"
-  | Opcode.KADDB -> "kaddb"
-  | Opcode.KADDD -> "kaddd"
-  | Opcode.KADDQ -> "kaddq"
-  | Opcode.KADDW -> "kaddw"
-  | Opcode.KANDB -> "kandb"
-  | Opcode.KANDD -> "kandd"
-  | Opcode.KANDNB -> "kandnb"
-  | Opcode.KANDND -> "kandnd"
-  | Opcode.KANDNQ -> "kandnq"
-  | Opcode.KANDNW -> "kandnw"
-  | Opcode.KANDQ -> "kandq"
-  | Opcode.KANDW -> "kandw"
-  | Opcode.KMOVB -> "kmovb"
-  | Opcode.KMOVD -> "kmovd"
-  | Opcode.KMOVQ -> "kmovq"
-  | Opcode.KMOVW -> "kmovw"
-  | Opcode.KNOTB -> "knotb"
-  | Opcode.KNOTD -> "knotd"
-  | Opcode.KNOTQ -> "knotq"
-  | Opcode.KNOTW -> "knotw"
-  | Opcode.KORB -> "korb"
-  | Opcode.KORD -> "kord"
-  | Opcode.KORQ -> "korq"
-  | Opcode.KORTESTB -> "kortestb"
-  | Opcode.KORTESTD -> "kortestd"
-  | Opcode.KORTESTQ -> "kortestq"
-  | Opcode.KORTESTW -> "kortestw"
-  | Opcode.KORW -> "korw"
-  | Opcode.KSHIFTLB -> "kshiftlb"
-  | Opcode.KSHIFTLD -> "kshiftld"
-  | Opcode.KSHIFTLQ -> "kshiftlq"
-  | Opcode.KSHIFTLW -> "kshiftlw"
-  | Opcode.KSHIFTRB -> "kshiftrb"
-  | Opcode.KSHIFTRD -> "kshiftrd"
-  | Opcode.KSHIFTRQ -> "kshiftrq"
-  | Opcode.KSHIFTRW -> "kshiftrw"
-  | Opcode.KTESTB -> "ktestb"
-  | Opcode.KTESTD -> "ktestd"
-  | Opcode.KTESTQ -> "ktestq"
-  | Opcode.KTESTW -> "ktestw"
-  | Opcode.KUNPCKBW -> "kunpckbw"
-  | Opcode.KUNPCKDQ -> "kunpckdq"
-  | Opcode.KUNPCKWD -> "kunpckwd"
-  | Opcode.KXNORB -> "kxnorb"
-  | Opcode.KXNORD -> "kxnord"
-  | Opcode.KXNORQ -> "kxnorq"
-  | Opcode.KXNORW -> "kxnorw"
-  | Opcode.KXORB -> "kxorb"
-  | Opcode.KXORD -> "kxord"
-  | Opcode.KXORQ -> "kxorq"
-  | Opcode.KXORW -> "kxorw"
   | Opcode.LAHF -> "lahf"
   | Opcode.LAR -> "lar"
   | Opcode.LDDQU -> "lddqu"
@@ -389,7 +283,6 @@ let opCodeToString = function
   | Opcode.LIDT -> "lidt"
   | Opcode.LLDT -> "lldt"
   | Opcode.LMSW -> "lmsw"
-  | Opcode.LOCK -> "lock"
   | Opcode.LODSB -> "lodsb"
   | Opcode.LODSD -> "lodsd"
   | Opcode.LODSQ -> "lodsq"
@@ -401,8 +294,6 @@ let opCodeToString = function
   | Opcode.LSS -> "lss"
   | Opcode.LTR -> "ltr"
   | Opcode.LZCNT -> "lzcnt"
-  | Opcode.MASKMOVDQU -> "maskmovdqu"
-  | Opcode.MASKMOVQ -> "maskmovq"
   | Opcode.MAXPD -> "maxpd"
   | Opcode.MAXPS -> "maxps"
   | Opcode.MAXSD -> "maxsd"
@@ -431,7 +322,6 @@ let opCodeToString = function
   | Opcode.MOVMSKPD -> "movmskpd"
   | Opcode.MOVMSKPS -> "movmskps"
   | Opcode.MOVNTDQ -> "movntdq"
-  | Opcode.MOVNTDQA -> "movntdqa"
   | Opcode.MOVNTI -> "movnti"
   | Opcode.MOVNTPD -> "movntpd"
   | Opcode.MOVNTPS -> "movntps"
@@ -450,7 +340,6 @@ let opCodeToString = function
   | Opcode.MOVUPD -> "movupd"
   | Opcode.MOVUPS -> "movups"
   | Opcode.MOVZX -> "movzx"
-  | Opcode.MPSADBW -> "mpsadbw"
   | Opcode.MUL -> "mul"
   | Opcode.MULPD -> "mulpd"
   | Opcode.MULPS -> "mulps"
@@ -490,9 +379,6 @@ let opCodeToString = function
   | Opcode.PAUSE -> "pause"
   | Opcode.PAVGB -> "pavgb"
   | Opcode.PAVGW -> "pavgw"
-  | Opcode.PBLENDVB -> "pblendvb"
-  | Opcode.PBLENDW -> "pblendw"
-  | Opcode.PCLMULQDQ -> "pclmulqdq"
   | Opcode.PCMPEQB -> "pcmpeqb"
   | Opcode.PCMPEQD -> "pcmpeqd"
   | Opcode.PCMPEQQ -> "pcmpeqq"
@@ -505,11 +391,7 @@ let opCodeToString = function
   | Opcode.PCMPGTW -> "pcmpgtw"
   | Opcode.PCMPISTRI -> "pcmpistri"
   | Opcode.PCMPISTRM -> "pcmpistrm"
-  | Opcode.PDEP -> "pdep"
   | Opcode.PEXT -> "pext"
-  | Opcode.PEXTRB -> "pextrb"
-  | Opcode.PEXTRD -> "pextrd"
-  | Opcode.PEXTRQ -> "pextrq"
   | Opcode.PEXTRW -> "pextrw"
   | Opcode.PHADDD -> "phaddd"
   | Opcode.PHADDSW -> "phaddsw"
@@ -519,10 +401,7 @@ let opCodeToString = function
   | Opcode.PHSUBSW -> "phsubsw"
   | Opcode.PHSUBW -> "phsubw"
   | Opcode.PINSRB -> "pinsrb"
-  | Opcode.PINSRD -> "pinsrd"
-  | Opcode.PINSRQ -> "pinsrq"
   | Opcode.PINSRW -> "pinsrw"
-  | Opcode.PMADDUBSW -> "pmaddubsw"
   | Opcode.PMADDWD -> "pmaddwd"
   | Opcode.PMAXSB -> "pmaxsb"
   | Opcode.PMAXSD -> "pmaxsd"
@@ -628,20 +507,12 @@ let opCodeToString = function
   | Opcode.RDSSPQ -> "rdsspq"
   | Opcode.RDTSC -> "rdtsc"
   | Opcode.RDTSCP -> "rdtscp"
-  | Opcode.REP -> "rep"
-  | Opcode.REPE -> "repe"
-  | Opcode.REPNE -> "repne"
-  | Opcode.REPNZ -> "repnz"
-  | Opcode.REPZ -> "repz"
   | Opcode.RETFar | Opcode.RETFarImm
   | Opcode.RETNear | Opcode.RETNearImm -> "ret"
   | Opcode.ROL -> "rol"
   | Opcode.ROR -> "ror"
   | Opcode.RORX -> "rorx"
-  | Opcode.ROUNDPD -> "roundpd"
-  | Opcode.ROUNDPS -> "roundps"
   | Opcode.ROUNDSD -> "roundsd"
-  | Opcode.ROUNDSS -> "roundss"
   | Opcode.RSM -> "rsm"
   | Opcode.RSQRTPS -> "rsqrtps"
   | Opcode.RSQRTSS -> "rsqrtss"
@@ -674,13 +545,6 @@ let opCodeToString = function
   | Opcode.SETZ -> "setz"
   | Opcode.SFENCE -> "sfence"
   | Opcode.SGDT -> "sgdt"
-  | Opcode.SHA1MSG1 -> "sha1msg1"
-  | Opcode.SHA1MSG2 -> "sha1msg2"
-  | Opcode.SHA1NEXTE -> "sha1nexte"
-  | Opcode.SHA1RNDS4 -> "sha1rnds4"
-  | Opcode.SHA256MSG1 -> "sha256msg1"
-  | Opcode.SHA256MSG2 -> "sha256msg2"
-  | Opcode.SHA256RNDS2 -> "sha256rnds2"
   | Opcode.SHL -> "shl"
   | Opcode.SHLD -> "shld"
   | Opcode.SHLX -> "shlx"
@@ -720,251 +584,75 @@ let opCodeToString = function
   | Opcode.TZCNT -> "tzcnt"
   | Opcode.UCOMISD -> "ucomisd"
   | Opcode.UCOMISS -> "ucomiss"
-  | Opcode.UD0 -> "ud0"
-  | Opcode.UD1 -> "ud1"
   | Opcode.UD2 -> "ud2"
   | Opcode.UNPCKHPD -> "unpckhpd"
   | Opcode.UNPCKHPS -> "unpckhps"
   | Opcode.UNPCKLPD -> "unpcklpd"
   | Opcode.UNPCKLPS -> "unpcklps"
-  | Opcode.V4FMADDPS -> "v4fmaddps"
-  | Opcode.V4FMADDSS -> "v4fmaddss"
-  | Opcode.V4FNMADDPS -> "v4fnmaddps"
-  | Opcode.V4FNMADDSS -> "v4fnmaddss"
   | Opcode.VADDPD -> "vaddpd"
   | Opcode.VADDPS -> "vaddps"
   | Opcode.VADDSD -> "vaddsd"
   | Opcode.VADDSS -> "vaddss"
-  | Opcode.VADDSUBPD -> "vaddsubpd"
-  | Opcode.VADDSUBPS -> "vaddsubps"
-  | Opcode.VAESDEC -> "vaesdec"
-  | Opcode.VAESDECLAST -> "vaesdeclast"
-  | Opcode.VAESENC -> "vaesenc"
-  | Opcode.VAESENCLAST -> "vaesenclast"
-  | Opcode.VALIGND -> "valignd"
-  | Opcode.VALIGNQ -> "valignq"
   | Opcode.VANDNPD -> "vandnpd"
   | Opcode.VANDNPS -> "vandnps"
   | Opcode.VANDPD -> "vandpd"
   | Opcode.VANDPS -> "vandps"
-  | Opcode.VBLENDMPD -> "vblendmpd"
-  | Opcode.VBLENDMPS -> "vblendmps"
-  | Opcode.VBLENDPD -> "vblendpd"
-  | Opcode.VBLENDPS -> "vblendps"
-  | Opcode.VBLENDVPD -> "vblendvpd"
-  | Opcode.VBLENDVPS -> "vblendvps"
-  | Opcode.VBROADCASTF128 -> "vbroadcastf128"
   | Opcode.VBROADCASTI128 -> "vbroadcasti128"
-  | Opcode.VBROADCASTI32X2 -> "vbroadcasti32x2"
-  | Opcode.VBROADCASTI32X4 -> "vbroadcasti32x4"
-  | Opcode.VBROADCASTI32X8 -> "vbroadcasti32x8"
-  | Opcode.VBROADCASTI64X2 -> "vbroadcasti64x2"
-  | Opcode.VBROADCASTI64X4 -> "vbroadcasti64x4"
   | Opcode.VBROADCASTSD -> "vbroadcastsd"
   | Opcode.VBROADCASTSS -> "vbroadcastss"
   | Opcode.VCMPPD -> "vcmppd"
   | Opcode.VCMPPS -> "vcmpps"
-  | Opcode.VCMPSD -> "vcmpsd"
-  | Opcode.VCMPSS -> "vcmpss"
   | Opcode.VCOMISD -> "vcomisd"
   | Opcode.VCOMISS -> "vcomiss"
-  | Opcode.VCOMPRESSPD -> "vcompresspd"
-  | Opcode.VCOMPRESSPS -> "vcompressps"
   | Opcode.VCVTDQ2PD -> "vcvtdq2pd"
-  | Opcode.VCVTDQ2PS -> "vcvtdq2ps"
-  | Opcode.VCVTNE2PS2BF16 -> "vcvtne2ps2bf16"
-  | Opcode.VCVTNEPS2BF16 -> "vcvtneps2bf16"
-  | Opcode.VCVTPD2DQ -> "vcvtpd2dq"
   | Opcode.VCVTPD2PS -> "vcvtpd2ps"
-  | Opcode.VCVTPD2QQ -> "vcvtpd2qq"
-  | Opcode.VCVTPD2UDQ -> "vcvtpd2udq"
-  | Opcode.VCVTPD2UQQ -> "vcvtpd2uqq"
-  | Opcode.VCVTPH2PS -> "vcvtph2ps"
-  | Opcode.VCVTPS2DQ -> "vcvtps2dq"
   | Opcode.VCVTPS2PD -> "vcvtps2pd"
-  | Opcode.VCVTPS2PH -> "vcvtps2ph"
-  | Opcode.VCVTPS2QQ -> "vcvtps2qq"
-  | Opcode.VCVTPS2UDQ -> "vcvtps2udq"
-  | Opcode.VCVTPS2UQQ -> "vcvtps2uqq"
-  | Opcode.VCVTQQ2PD -> "vcvtqq2pd"
-  | Opcode.VCVTQQ2PS -> "vcvtqq2ps"
   | Opcode.VCVTSD2SI -> "vcvtsd2si"
   | Opcode.VCVTSD2SS -> "vcvtsd2ss"
-  | Opcode.VCVTSD2USI -> "vcvtsd2usi"
   | Opcode.VCVTSI2SD -> "vcvtsi2sd"
   | Opcode.VCVTSI2SS -> "vcvtsi2ss"
   | Opcode.VCVTSS2SD -> "vcvtss2sd"
   | Opcode.VCVTSS2SI -> "vcvtss2si"
-  | Opcode.VCVTSS2USI -> "vcvtss2usi"
-  | Opcode.VCVTTPD2DQ -> "vcvttpd2dq"
-  | Opcode.VCVTTPD2QQ -> "vcvttpd2qq"
-  | Opcode.VCVTTPD2UDQ -> "vcvttpd2udq"
-  | Opcode.VCVTTPD2UQQ -> "vcvttpd2uqq"
-  | Opcode.VCVTTPS2DQ -> "vcvttps2dq"
-  | Opcode.VCVTTPS2QQ -> "vcvttps2qq"
-  | Opcode.VCVTTPS2UDQ -> "vcvttps2udq"
-  | Opcode.VCVTTPS2UQQ -> "vcvttps2uqq"
   | Opcode.VCVTTSD2SI -> "vcvttsd2si"
-  | Opcode.VCVTTSD2USI -> "vcvttsd2usi"
   | Opcode.VCVTTSS2SI -> "vcvttss2si"
-  | Opcode.VCVTTSS2USI -> "vcvttss2usi"
-  | Opcode.VCVTUDQ2PD -> "vcvtudq2pd"
-  | Opcode.VCVTUDQ2PS -> "vcvtudq2ps"
-  | Opcode.VCVTUQQ2PD -> "vcvtuqq2pd"
-  | Opcode.VCVTUQQ2PS -> "vcvtuqq2ps"
-  | Opcode.VCVTUSI2SD -> "vcvtusi2sd"
-  | Opcode.VCVTUSI2SS -> "vcvtusi2ss"
-  | Opcode.VCVTUSI2USD -> "vcvtusi2usd"
-  | Opcode.VCVTUSI2USS -> "vcvtusi2uss"
-  | Opcode.VDBPSADBW -> "vdbpsadbw"
   | Opcode.VDIVPD -> "vdivpd"
   | Opcode.VDIVPS -> "vdivps"
   | Opcode.VDIVSD -> "vdivsd"
   | Opcode.VDIVSS -> "vdivss"
-  | Opcode.VDPBF16PS -> "vdpbf16ps"
-  | Opcode.VDPPD -> "vdppd"
-  | Opcode.VDPPS -> "vdpps"
   | Opcode.VERR -> "verr"
   | Opcode.VERW -> "verw"
-  | Opcode.VEXP2PD -> "vexp2pd"
-  | Opcode.VEXP2PS -> "vexp2ps"
-  | Opcode.VEXP2SD -> "vexp2sd"
-  | Opcode.VEXP2SS -> "vexp2ss"
-  | Opcode.VEXPANDPD -> "vexpandpd"
-  | Opcode.VEXPANDPS -> "vexpandps"
-  | Opcode.VEXTRACTF128 -> "vextractf128"
-  | Opcode.VEXTRACTF32X4 -> "vextractf32x4"
   | Opcode.VEXTRACTF32X8 -> "vextractf32x8"
   | Opcode.VEXTRACTF64X2 -> "vextractf64x2"
   | Opcode.VEXTRACTF64X4 -> "vextractf64x4"
-  | Opcode.VEXTRACTI128 -> "vextracti128"
-  | Opcode.VEXTRACTI32X4 -> "vextracti32x4"
-  | Opcode.VEXTRACTI32X8 -> "vextracti32x8"
-  | Opcode.VEXTRACTI64X2 -> "vextracti64x2"
   | Opcode.VEXTRACTI64X4 -> "vextracti64x4"
-  | Opcode.VEXTRACTPS -> "vextractps"
-  | Opcode.VFIXUPIMMPD -> "vfixupimmpd"
-  | Opcode.VFIXUPIMMPS -> "vfixupimmps"
-  | Opcode.VFIXUPIMMSD -> "vfixupimmsd"
-  | Opcode.VFIXUPIMMSS -> "vfixupimmss"
   | Opcode.VFMADD132PD -> "vfmadd132pd"
-  | Opcode.VFMADD132PS -> "vfmadd132ps"
   | Opcode.VFMADD132SD -> "vfmadd132sd"
   | Opcode.VFMADD132SS -> "vfmadd132ss"
-  | Opcode.VFMADD213PD -> "vfmadd213pd"
   | Opcode.VFMADD213PS -> "vfmadd213ps"
   | Opcode.VFMADD213SD -> "vfmadd213sd"
   | Opcode.VFMADD213SS -> "vfmadd213ss"
   | Opcode.VFMADD231PD -> "vfmadd231pd"
-  | Opcode.VFMADD231PS -> "vfmadd231ps"
   | Opcode.VFMADD231SD -> "vfmadd231sd"
   | Opcode.VFMADD231SS -> "vfmadd231ss"
-  | Opcode.VFMADDPD -> "vfmaddpd"
-  | Opcode.VFMADDPS -> "vfmaddps"
-  | Opcode.VFMADDSD -> "vfmaddsd"
-  | Opcode.VFMADDSS -> "vfmaddss"
-  | Opcode.VFMADDSUB132PD -> "vfmaddsub132pd"
-  | Opcode.VFMADDSUB132PS -> "vfmaddsub132ps"
-  | Opcode.VFMADDSUB213PD -> "vfmaddsub213pd"
-  | Opcode.VFMADDSUB213PS -> "vfmaddsub213ps"
-  | Opcode.VFMADDSUB231PD -> "vfmaddsub231pd"
-  | Opcode.VFMADDSUB231PS -> "vfmaddsub231ps"
-  | Opcode.VFMSUB132PD -> "vfmsub132pd"
-  | Opcode.VFMSUB132PS -> "vfmsub132ps"
-  | Opcode.VFMSUB132SD -> "vfmsub132sd"
   | Opcode.VFMSUB132SS -> "vfmsub132ss"
-  | Opcode.VFMSUB213PD -> "vfmsub213pd"
-  | Opcode.VFMSUB213PS -> "vfmsub213ps"
-  | Opcode.VFMSUB213SD -> "vfmsub213sd"
-  | Opcode.VFMSUB213SS -> "vfmsub213ss"
-  | Opcode.VFMSUB231PD -> "vfmsub231pd"
-  | Opcode.VFMSUB231PS -> "vfmsub231ps"
   | Opcode.VFMSUB231SD -> "vfmsub231sd"
-  | Opcode.VFMSUB231SS -> "vfmsub231ss"
-  | Opcode.VFMSUBADD132PD -> "vfmsubadd132pd"
-  | Opcode.VFMSUBADD132PS -> "vfmsubadd132ps"
-  | Opcode.VFMSUBADD213PD -> "vfmsubadd213pd"
-  | Opcode.VFMSUBADD213PS -> "vfmsubadd213ps"
-  | Opcode.VFMSUBADD231PD -> "vfmsubadd231pd"
-  | Opcode.VFMSUBADD231PS -> "vfmsubadd231ps"
   | Opcode.VFNMADD132PD -> "vfnmadd132pd"
-  | Opcode.VFNMADD132PS -> "vfnmadd132ps"
-  | Opcode.VFNMADD132SD -> "vfnmadd132sd"
-  | Opcode.VFNMADD132SS -> "vfnmadd132ss"
-  | Opcode.VFNMADD213PD -> "vfnmadd213pd"
-  | Opcode.VFNMADD213PS -> "vfnmadd213ps"
-  | Opcode.VFNMADD213SD -> "vfnmadd213sd"
-  | Opcode.VFNMADD213SS -> "vfnmadd213ss"
   | Opcode.VFNMADD231PD -> "vfnmadd231pd"
-  | Opcode.VFNMADD231PS -> "vfnmadd231ps"
+  | Opcode.VFNMADD132SD -> "vfnmadd132sd"
+  | Opcode.VFNMADD213SD -> "vfnmadd213sd"
   | Opcode.VFNMADD231SD -> "vfnmadd231sd"
-  | Opcode.VFNMADD231SS -> "vfnmadd231ss"
-  | Opcode.VFNMSUB132PD -> "vfnmsub132pd"
-  | Opcode.VFNMSUB132PS -> "vfnmsub132ps"
-  | Opcode.VFNMSUB132SD -> "vfnmsub132sd"
-  | Opcode.VFNMSUB132SS -> "vfnmsub132ss"
-  | Opcode.VFNMSUB213PD -> "vfnmsub213pd"
-  | Opcode.VFNMSUB213PS -> "vfnmsub213ps"
-  | Opcode.VFNMSUB213SD -> "vfnmsub213sd"
-  | Opcode.VFNMSUB213SS -> "vfnmsub213ss"
-  | Opcode.VFNMSUB231PD -> "vfnmsub231pd"
-  | Opcode.VFNMSUB231PS -> "vfnmsub231ps"
-  | Opcode.VFNMSUB231SD -> "vfnmsub231sd"
-  | Opcode.VFNMSUB231SS -> "vfnmsub231ss"
-  | Opcode.VFPCLASSPD -> "vfpclasspd"
-  | Opcode.VFPCLASSPS -> "vfpclassps"
-  | Opcode.VFPCLASSSD -> "vfpclasssd"
-  | Opcode.VFPCLASSSS -> "vfpclassss"
-  | Opcode.VGATHERDPD -> "vgatherdpd"
   | Opcode.VGATHERDPS -> "vgatherdps"
-  | Opcode.VGATHERPF0DPD -> "vgatherpf0dpd"
-  | Opcode.VGATHERPF0DPS -> "vgatherpf0dps"
-  | Opcode.VGATHERPF0QPD -> "vgatherpf0qpd"
-  | Opcode.VGATHERPF0QPS -> "vgatherpf0qps"
-  | Opcode.VGATHERPF1DPD -> "vgatherpf1dpd"
-  | Opcode.VGATHERPF1DPS -> "vgatherpf1dps"
-  | Opcode.VGATHERPF1QPD -> "vgatherpf1qpd"
-  | Opcode.VGATHERPF1QPS -> "vgatherpf1qps"
-  | Opcode.VGATHERQPD -> "vgatherqpd"
-  | Opcode.VGATHERQPS -> "vgatherqps"
-  | Opcode.VGETEXPPD -> "vgetexppd"
-  | Opcode.VGETEXPPS -> "vgetexpps"
-  | Opcode.VGETEXPSD -> "vgetexpsd"
-  | Opcode.VGETEXPSS -> "vgetexpss"
-  | Opcode.VGETMANTPD -> "vgetmantpd"
-  | Opcode.VGETMANTPS -> "vgetmantps"
-  | Opcode.VGETMANTSD -> "vgetmantsd"
-  | Opcode.VGETMANTSS -> "vgetmantss"
-  | Opcode.VGF2P8AFFINEINVQB -> "vgf2p8affineinvqb"
-  | Opcode.VGF2P8AFFINEQB -> "vgf2p8affineqb"
-  | Opcode.VGF2P8MULB -> "vgf2p8mulb"
-  | Opcode.VHADDPD -> "vhaddpd"
-  | Opcode.VHADDPS -> "vhaddps"
-  | Opcode.VHSUBPD -> "vhsubpd"
-  | Opcode.VHSUBPS -> "vhsubps"
   | Opcode.VINSERTF128 -> "vinsertf128"
-  | Opcode.VINSERTF32X4 -> "vinsertf32x4"
-  | Opcode.VINSERTF64X2 -> "vinsertf64x2"
   | Opcode.VINSERTF64X4 -> "vinsertf64x4"
   | Opcode.VINSERTI128 -> "vinserti128"
-  | Opcode.VINSERTI32X8 -> "vinserti32x8"
-  | Opcode.VINSERTI64X2 -> "vinserti64x2"
   | Opcode.VINSERTI64X4 -> "vinserti64x4"
-  | Opcode.VINSERTPS -> "vinsertps"
   | Opcode.VLDDQU -> "vlddqu"
-  | Opcode.VMASKMOVDQU -> "vmaskmovdqu"
-  | Opcode.VMASKMOVPD -> "vmaskmovpd"
-  | Opcode.VMASKMOVPS -> "vmaskmovps"
-  | Opcode.VMAXPD -> "vmaxpd"
   | Opcode.VMAXPS -> "vmaxps"
   | Opcode.VMAXSD -> "vmaxsd"
   | Opcode.VMAXSS -> "vmaxss"
   | Opcode.VMCALL -> "vmcall"
   | Opcode.VMCLEAR -> "vmclear"
   | Opcode.VMFUNC -> "vmfunc"
-  | Opcode.VMINPD -> "vminpd"
-  | Opcode.VMINPS -> "vminps"
-  | Opcode.VMINSD -> "vminsd"
   | Opcode.VMINSS -> "vminss"
   | Opcode.VMLAUNCH -> "vmlaunch"
   | Opcode.VMOVAPD -> "vmovapd"
@@ -975,10 +663,10 @@ let opCodeToString = function
   | Opcode.VMOVDQA32 -> "vmovdqa32"
   | Opcode.VMOVDQA64 -> "vmovdqa64"
   | Opcode.VMOVDQU -> "vmovdqu"
+  | Opcode.VMOVDQU8 -> "vmovdqu8"
   | Opcode.VMOVDQU16 -> "vmovdqu16"
   | Opcode.VMOVDQU32 -> "vmovdqu32"
   | Opcode.VMOVDQU64 -> "vmovdqu64"
-  | Opcode.VMOVDQU8 -> "vmovdqu8"
   | Opcode.VMOVHLPS -> "vmovhlps"
   | Opcode.VMOVHPD -> "vmovhpd"
   | Opcode.VMOVHPS -> "vmovhps"
@@ -988,7 +676,6 @@ let opCodeToString = function
   | Opcode.VMOVMSKPD -> "vmovmskpd"
   | Opcode.VMOVMSKPS -> "vmovmskps"
   | Opcode.VMOVNTDQ -> "vmovntdq"
-  | Opcode.VMOVNTDQA -> "vmovntdqa"
   | Opcode.VMOVNTPD -> "vmovntpd"
   | Opcode.VMOVNTPS -> "vmovntps"
   | Opcode.VMOVQ -> "vmovq"
@@ -998,27 +685,19 @@ let opCodeToString = function
   | Opcode.VMOVSS -> "vmovss"
   | Opcode.VMOVUPD -> "vmovupd"
   | Opcode.VMOVUPS -> "vmovups"
-  | Opcode.VMPSADBW -> "vmpsadbw"
   | Opcode.VMPTRLD -> "vmptrld"
   | Opcode.VMPTRST -> "vmptrst"
-  | Opcode.VMREAD -> "vmread"
   | Opcode.VMRESUME -> "vmresume"
   | Opcode.VMULPD -> "vmulpd"
   | Opcode.VMULPS -> "vmulps"
   | Opcode.VMULSD -> "vmulsd"
   | Opcode.VMULSS -> "vmulss"
-  | Opcode.VMWRITE -> "vmwrite"
   | Opcode.VMXOFF -> "vmxoff"
   | Opcode.VMXON -> "vmxon"
   | Opcode.VORPD -> "vorpd"
   | Opcode.VORPS -> "vorps"
-  | Opcode.VP2INTERSECTD -> "vp2intersectd"
-  | Opcode.VP2INTERSECTQ -> "vp2intersectq"
-  | Opcode.VP4DPWSSD -> "vp4dpwssd"
-  | Opcode.VP4DPWSSDS -> "vp4dpwssds"
   | Opcode.VPABSB -> "vpabsb"
   | Opcode.VPABSD -> "vpabsd"
-  | Opcode.VPABSQ -> "vpabsq"
   | Opcode.VPABSW -> "vpabsw"
   | Opcode.VPACKSSDW -> "vpackssdw"
   | Opcode.VPACKSSWB -> "vpacksswb"
@@ -1034,28 +713,11 @@ let opCodeToString = function
   | Opcode.VPADDW -> "vpaddw"
   | Opcode.VPALIGNR -> "vpalignr"
   | Opcode.VPAND -> "vpand"
-  | Opcode.VPANDD -> "vpandd"
   | Opcode.VPANDN -> "vpandn"
-  | Opcode.VPANDQ -> "vpandnq"
   | Opcode.VPAVGB -> "vpavgb"
   | Opcode.VPAVGW -> "vpavgw"
-  | Opcode.VPBLENDD -> "vpblendd"
-  | Opcode.VPBLENDMB -> "vpblendmb"
-  | Opcode.VPBLENDMD -> "vpblendmd"
-  | Opcode.VPBLENDMQ -> "vpblendmq"
-  | Opcode.VPBLENDMW -> "vpblendmw"
-  | Opcode.VPBLENDVB -> "vpblendvb"
-  | Opcode.VPBLENDW -> "vpblendw"
   | Opcode.VPBROADCASTB -> "vpbroadcastb"
   | Opcode.VPBROADCASTD -> "vpbroadcastd"
-  | Opcode.VPBROADCASTM -> "vpbroadcastm"
-  | Opcode.VPBROADCASTMB2Q -> "vpbroadcastmb2q"
-  | Opcode.VPBROADCASTMW2D -> "vpbroadcastmw2d"
-  | Opcode.VPBROADCASTQ -> "vpbroadcastq"
-  | Opcode.VPBROADCASTW -> "vpbroadcastw"
-  | Opcode.VPCLMULQDQ -> "vpclmulqdq"
-  | Opcode.VPCMPB -> "vpcmpb"
-  | Opcode.VPCMPD -> "vpcmpd"
   | Opcode.VPCMPEQB -> "vpcmpeqb"
   | Opcode.VPCMPEQD -> "vpcmpeqd"
   | Opcode.VPCMPEQQ -> "vpcmpeqq"
@@ -1068,60 +730,11 @@ let opCodeToString = function
   | Opcode.VPCMPGTW -> "vpcmpgtw"
   | Opcode.VPCMPISTRI -> "vpcmpistri"
   | Opcode.VPCMPISTRM -> "vpcmpistrm"
-  | Opcode.VPCMPQ -> "vpcmpq"
-  | Opcode.VPCMPUB -> "vpcmpub"
-  | Opcode.VPCMPUD -> "vpcmpud"
-  | Opcode.VPCMPUQ -> "vpcmpuq"
-  | Opcode.VPCMPUW -> "vpcmpuw"
-  | Opcode.VPCMPW -> "vpcmpw"
-  | Opcode.VPCMUB -> "vpcmub"
-  | Opcode.VPCMUD -> "vpcmud"
-  | Opcode.VPCMUQ -> "vpcmuq"
-  | Opcode.VPCMUW -> "vpcmuw"
-  | Opcode.VPCOMPRESSB -> "vpcompressb"
-  | Opcode.VPCOMPRESSD -> "vpcompressd"
-  | Opcode.VPCOMPRESSQ -> "vpcompressq"
-  | Opcode.VPCOMPRESSW -> "vpcompressw"
-  | Opcode.VPCONFLICTD -> "vpconflictd"
-  | Opcode.VPCONFLICTQ -> "vpconflictq"
-  | Opcode.VPDPBUSD -> "vpdpbusd"
-  | Opcode.VPDPBUSDS -> "vpdpbusds"
-  | Opcode.VPDPWSSD -> "vpdpwssd"
-  | Opcode.VPDPWSSDS -> "vpdpwssds"
-  | Opcode.VPERM2F128 -> "vperm2f128"
-  | Opcode.VPERM2I128 -> "vperm2i128"
-  | Opcode.VPERMB -> "vpermb"
-  | Opcode.VPERMD -> "vpermd"
-  | Opcode.VPERMI2B -> "vpermi2b"
   | Opcode.VPERMI2D -> "vpermi2d"
   | Opcode.VPERMI2PD -> "vpermi2pd"
-  | Opcode.VPERMI2PS -> "vpermi2ps"
-  | Opcode.VPERMI2Q -> "vpermi2q"
   | Opcode.VPERMI2W -> "vpermi2w"
-  | Opcode.VPERMILPD -> "vpermilpd"
-  | Opcode.VPERMILPS -> "vpermilps"
-  | Opcode.VPERMPD -> "vpermpd"
-  | Opcode.VPERMPS -> "vpermps"
-  | Opcode.VPERMQ -> "vpermq"
-  | Opcode.VPERMT2B -> "vpermt2b"
-  | Opcode.VPERMT2D -> "vpermt2d"
-  | Opcode.VPERMT2PD -> "vpermt2pd"
-  | Opcode.VPERMT2PS -> "vpermt2ps"
-  | Opcode.VPERMT2Q -> "vpermt2q"
-  | Opcode.VPERMT2W -> "vpermt2w"
-  | Opcode.VPERMW -> "vpermw"
-  | Opcode.VPEXPANDB -> "vpexpandb"
-  | Opcode.VPEXPANDD -> "vpexpandd"
-  | Opcode.VPEXPANDQ -> "vpexpandq"
-  | Opcode.VPEXPANDW -> "vpexpandw"
-  | Opcode.VPEXTRB -> "vpextrb"
-  | Opcode.VPEXTRD -> "vpextrd"
-  | Opcode.VPEXTRQ -> "vpextrq"
   | Opcode.VPEXTRW -> "vpextrw"
   | Opcode.VPGATHERDD -> "vpgatherdd"
-  | Opcode.VPGATHERDQ -> "vpgatherdq"
-  | Opcode.VPGATHERQD -> "vpgatherqd"
-  | Opcode.VPGATHERQQ -> "vpgatherqq"
   | Opcode.VPHADDD -> "vphaddd"
   | Opcode.VPHADDSW -> "vphaddsw"
   | Opcode.VPHADDW -> "vphaddw"
@@ -1131,65 +744,28 @@ let opCodeToString = function
   | Opcode.VPHSUBW -> "vphsubw"
   | Opcode.VPINSRB -> "vpinsrb"
   | Opcode.VPINSRD -> "vpinsrd"
-  | Opcode.VPINSRQ -> "vpinsrq"
   | Opcode.VPINSRW -> "vpinsrw"
-  | Opcode.VPLZCNTD -> "vplzcntd"
-  | Opcode.VPLZCNTQ -> "vplzcntq"
-  | Opcode.VPMADD52HUQ -> "vpmadd52huq"
-  | Opcode.VPMADD52LUQ -> "vpmadd52luq"
-  | Opcode.VPMADDUBSW -> "vpmaddubsw"
+  | Opcode.VPINSRQ -> "vpinsrq"
   | Opcode.VPMADDWD -> "vpmaddwd"
-  | Opcode.VPMASKMOVD -> "vpmaskmovd"
-  | Opcode.VPMASKMOVQ -> "vpmaskmovq"
   | Opcode.VPMAXSB -> "vpmaxsb"
   | Opcode.VPMAXSD -> "vpmaxsd"
-  | Opcode.VPMAXSQ -> "vpmaxsq"
   | Opcode.VPMAXSW -> "vpmaxsw"
   | Opcode.VPMAXUB -> "vpmaxub"
   | Opcode.VPMAXUD -> "vpmaxud"
-  | Opcode.VPMAXUQ -> "vpmaxuq"
   | Opcode.VPMAXUW -> "vpmaxuw"
   | Opcode.VPMINSB -> "vpminsb"
   | Opcode.VPMINSD -> "vpminsd"
-  | Opcode.VPMINSQ -> "vpminsq"
   | Opcode.VPMINSW -> "vpminsw"
   | Opcode.VPMINUB -> "vpminub"
   | Opcode.VPMINUD -> "vpminud"
-  | Opcode.VPMINUQ -> "vpminuq"
   | Opcode.VPMINUW -> "vpminuw"
-  | Opcode.VPMOVB2D -> "vpmovb2d"
-  | Opcode.VPMOVB2M -> "vpmovb2m"
-  | Opcode.VPMOVD2M -> "vpmovd2m"
-  | Opcode.VPMOVDB -> "vpmovdb"
-  | Opcode.VPMOVDW -> "vpmovdw"
-  | Opcode.VPMOVM2B -> "vpmovm2b"
-  | Opcode.VPMOVM2D -> "vpmovm2d"
-  | Opcode.VPMOVM2Q -> "vpmovm2q"
-  | Opcode.VPMOVM2W -> "vpmovm2w"
   | Opcode.VPMOVMSKB -> "vpmovmskb"
-  | Opcode.VPMOVQ2M -> "vpmovq2m"
-  | Opcode.VPMOVQB -> "vpmovqb"
-  | Opcode.VPMOVQD -> "vpmovqd"
-  | Opcode.VPMOVQW -> "vpmovqw"
-  | Opcode.VPMOVSDB -> "vpmovsdb"
-  | Opcode.VPMOVSDW -> "vpmovsdw"
-  | Opcode.VPMOVSQB -> "vpmovsqb"
-  | Opcode.VPMOVSQD -> "vpmovsqd"
-  | Opcode.VPMOVSQW -> "vpmovsqw"
-  | Opcode.VPMOVSWB -> "vpmovswb"
   | Opcode.VPMOVSXBD -> "vpmovsxbd"
   | Opcode.VPMOVSXBQ -> "vpmovsxbq"
   | Opcode.VPMOVSXBW -> "vpmovsxbw"
   | Opcode.VPMOVSXDQ -> "vpmovsxdq"
   | Opcode.VPMOVSXWD -> "vpmovsxwd"
   | Opcode.VPMOVSXWQ -> "vpmovsxwq"
-  | Opcode.VPMOVUSDB -> "vpmovusdb"
-  | Opcode.VPMOVUSDW -> "vpmovusdw"
-  | Opcode.VPMOVUSQB -> "vpmovusqb"
-  | Opcode.VPMOVUSQD -> "vpmovusqd"
-  | Opcode.VPMOVUSQW -> "vpmovusqw"
-  | Opcode.VPMOVUSWB -> "vpmovuswb"
-  | Opcode.VPMOVW2M -> "vpmovw2m"
   | Opcode.VPMOVWB -> "vpmovwb"
   | Opcode.VPMOVZXBD -> "vpmovzxbd"
   | Opcode.VPMOVZXBQ -> "vpmovzxbq"
@@ -1202,46 +778,11 @@ let opCodeToString = function
   | Opcode.VPMULHUW -> "vpmulhuw"
   | Opcode.VPMULHW -> "vpmulhw"
   | Opcode.VPMULLD -> "vpmulld"
-  | Opcode.VPMULLQ -> "vpmullq"
   | Opcode.VPMULLW -> "vpmullw"
-  | Opcode.VPMULTISHIFTQB -> "vpmultishiftqb"
   | Opcode.VPMULUDQ -> "vpmuludq"
-  | Opcode.VPOPCNTB -> "vpopcntb"
-  | Opcode.VPOPCNTD -> "vpopcntd"
-  | Opcode.VPOPCNTQ -> "vpopcntq"
-  | Opcode.VPOPCNTW -> "vpopcntw"
   | Opcode.VPOR -> "vpor"
-  | Opcode.VPORD -> "vpord"
-  | Opcode.VPORQ -> "vporq"
-  | Opcode.VPROLD -> "vprold"
-  | Opcode.VPROLQ -> "vprolq"
-  | Opcode.VPROLVD -> "vprolvd"
-  | Opcode.VPROLVQ -> "vprolvq"
-  | Opcode.VPRORD -> "vprord"
-  | Opcode.VPRORQ -> "vprorq"
-  | Opcode.VPRORRD -> "vprorrd"
-  | Opcode.VPRORRQ -> "vprorrq"
-  | Opcode.VPRORVD -> "vprorvd"
-  | Opcode.VPRORVQ -> "vprorvq"
   | Opcode.VPSADBW -> "vpsadbw"
-  | Opcode.VPSCATTERDD -> "vpscatterdd"
-  | Opcode.VPSCATTERDQ -> "vpscatterdq"
-  | Opcode.VPSCATTERQD -> "vpscatterqd"
-  | Opcode.VPSCATTERQQ -> "vpscatterqq"
-  | Opcode.VPSHLDD -> "vpshldd"
-  | Opcode.VPSHLDQ -> "vpshldq"
-  | Opcode.VPSHLDVD -> "vpshldvd"
-  | Opcode.VPSHLDVQ -> "vpshldvq"
-  | Opcode.VPSHLDVW -> "vpshldvw"
-  | Opcode.VPSHLDW -> "vpshldw"
-  | Opcode.VPSHRDD -> "vpshrdd"
-  | Opcode.VPSHRDQ -> "vpshrdq"
-  | Opcode.VPSHRDVD -> "vpshrdvd"
-  | Opcode.VPSHRDVQ -> "vpshrdvq"
-  | Opcode.VPSHRDVW -> "vpshrdvw"
-  | Opcode.VPSHRDW -> "vpshrdw"
   | Opcode.VPSHUFB -> "vpshufb"
-  | Opcode.VPSHUFBITQMB -> "vpshufbitqmb"
   | Opcode.VPSHUFD -> "vpshufd"
   | Opcode.VPSHUFHW -> "vpshufhw"
   | Opcode.VPSHUFLW -> "vpshuflw"
@@ -1251,22 +792,12 @@ let opCodeToString = function
   | Opcode.VPSLLD -> "vpslld"
   | Opcode.VPSLLDQ -> "vpslldq"
   | Opcode.VPSLLQ -> "vpsllq"
-  | Opcode.VPSLLVD -> "vpsllvd"
-  | Opcode.VPSLLVQ -> "vpsllvq"
-  | Opcode.VPSLLVW -> "vpsllvw"
   | Opcode.VPSLLW -> "vpsllw"
   | Opcode.VPSRAD -> "vpsrad"
-  | Opcode.VPSRAQ -> "vpsraq"
-  | Opcode.VPSRAVD -> "vpsravd"
-  | Opcode.VPSRAVQ -> "vpsravq"
-  | Opcode.VPSRAVW -> "vpsravw"
   | Opcode.VPSRAW -> "vpsraw"
   | Opcode.VPSRLD -> "vpsrld"
   | Opcode.VPSRLDQ -> "vpsrldq"
   | Opcode.VPSRLQ -> "vpsrlq"
-  | Opcode.VPSRLVD -> "vpsrlvd"
-  | Opcode.VPSRLVQ -> "vpsrlvq"
-  | Opcode.VPSRLVW -> "vpsrlvw"
   | Opcode.VPSRLW -> "vpsrlw"
   | Opcode.VPSUBB -> "vpsubb"
   | Opcode.VPSUBD -> "vpsubd"
@@ -1276,19 +807,8 @@ let opCodeToString = function
   | Opcode.VPSUBUSB -> "vpsubusb"
   | Opcode.VPSUBUSW -> "vpsubusw"
   | Opcode.VPSUBW -> "vpsubw"
-  | Opcode.VPTERLOGD -> "vpterlogd"
-  | Opcode.VPTERLOGQ -> "vpterlogq"
   | Opcode.VPTERNLOGD -> "vpternlogd"
-  | Opcode.VPTERNLOGQ -> "vpternlogq"
   | Opcode.VPTEST -> "vptest"
-  | Opcode.VPTESTMB -> "vptestmb"
-  | Opcode.VPTESTMD -> "vptestmd"
-  | Opcode.VPTESTMQ -> "vptestmq"
-  | Opcode.VPTESTMW -> "vptestmw"
-  | Opcode.VPTESTNMB -> "vptestnmb"
-  | Opcode.VPTESTNMD -> "vptestnmd"
-  | Opcode.VPTESTNMQ -> "vptestnmq"
-  | Opcode.VPTESTNMW -> "vptestnmw"
   | Opcode.VPUNPCKHBW -> "vpunpckhbw"
   | Opcode.VPUNPCKHDQ -> "vpunpckhdq"
   | Opcode.VPUNPCKHQDQ -> "vpunpckhqdq"
@@ -1300,82 +820,14 @@ let opCodeToString = function
   | Opcode.VPXOR -> "vpxor"
   | Opcode.VPXORD -> "vpxord"
   | Opcode.VPXORQ -> "vpxorq"
-  | Opcode.VRANGEPD -> "vrangepd"
-  | Opcode.VRANGEPS -> "vrangeps"
-  | Opcode.VRANGESD -> "vrangesd"
-  | Opcode.VRANGESS -> "vrangess"
-  | Opcode.VRCP14PD -> "vrcp14pd"
-  | Opcode.VRCP14PS -> "vrcp14ps"
-  | Opcode.VRCP14SD -> "vrcp14sd"
-  | Opcode.VRCP14SS -> "vrcp14ss"
-  | Opcode.VRCP28PD -> "vrcp28pd"
-  | Opcode.VRCP28PS -> "vrcp28ps"
-  | Opcode.VRCP28SD -> "vrcp28sd"
-  | Opcode.VRCP28SS -> "vrcp28ss"
-  | Opcode.VRCPPS -> "vrcpps"
-  | Opcode.VRCPSS -> "vrcpss"
-  | Opcode.VREDUCEPD -> "vreducepd"
-  | Opcode.VREDUCEPS -> "vreduceps"
-  | Opcode.VREDUCESD -> "vreducesd"
-  | Opcode.VREDUCESS -> "vreducess"
-  | Opcode.VRNDSCALEPD -> "vrndscalepd"
-  | Opcode.VRNDSCALEPS -> "vrndscaleps"
-  | Opcode.VRNDSCALESD -> "vrndscalesd"
-  | Opcode.VRNDSCALESS -> "vrndscaless"
-  | Opcode.VROUNDPD -> "vroundpd"
-  | Opcode.VROUNDPS -> "vroundps"
-  | Opcode.VROUNDSD -> "vroundsd"
-  | Opcode.VROUNDSS -> "vroundss"
-  | Opcode.VRSQRT14PD -> "vrsqrt14pd"
-  | Opcode.VRSQRT14PS -> "vrsqrt14ps"
-  | Opcode.VRSQRT14SD -> "vrsqrt14sd"
-  | Opcode.VRSQRT14SS -> "vrsqrt14ss"
-  | Opcode.VRSQRT28PD -> "vrsqrt28pd"
-  | Opcode.VRSQRT28PS -> "vrsqrt28ps"
-  | Opcode.VRSQRT28SD -> "vrsqrt28sd"
-  | Opcode.VRSQRT28SS -> "vrsqrt28ss"
-  | Opcode.VRSQRTPS -> "vrsqrtps"
-  | Opcode.VRSQRTSS -> "vrsqrtss"
-  | Opcode.VSCALEFPD -> "vscalefpd"
-  | Opcode.VSCALEFPS -> "vscalefps"
-  | Opcode.VSCALEFSD -> "vscalefsd"
-  | Opcode.VSCALEFSS -> "vscalefss"
-  | Opcode.VSCALEPD -> "vscalepd"
-  | Opcode.VSCALEPS -> "vscaleps"
-  | Opcode.VSCALESD -> "vscalesd"
-  | Opcode.VSCALESS -> "vscaless"
-  | Opcode.VSCATTERDD -> "vscatterdd"
-  | Opcode.VSCATTERDPD -> "vscatterdpd"
-  | Opcode.VSCATTERDPS -> "vscatterdps"
-  | Opcode.VSCATTERDQ -> "vscatterdq"
-  | Opcode.VSCATTERPF0DPD -> "vscatterpf0dpd"
-  | Opcode.VSCATTERPF0DPS -> "vscatterpf0dps"
-  | Opcode.VSCATTERPF0QPD -> "vscatterpf0qpd"
-  | Opcode.VSCATTERPF0QPS -> "vscatterpf0qps"
-  | Opcode.VSCATTERPF1DPD -> "vscatterpf1dpd"
-  | Opcode.VSCATTERPF1DPS -> "vscatterpf1dps"
-  | Opcode.VSCATTERPF1QPD -> "vscatterpf1qpd"
-  | Opcode.VSCATTERPF1QPS -> "vscatterpf1qps"
-  | Opcode.VSCATTERQD -> "vscatterqd"
-  | Opcode.VSCATTERQPD -> "vscatterqpd"
-  | Opcode.VSCATTERQPS -> "vscatterqps"
-  | Opcode.VSCATTERQQ -> "vscatterqq"
-  | Opcode.VSHUFF32X4 -> "vshuff32x4"
-  | Opcode.VSHUFF64X2 -> "vshuff64x2"
-  | Opcode.VSHUFI32X4 -> "vshufi32x4"
   | Opcode.VSHUFI64X2 -> "vshufi64x2"
+  | Opcode.VSHUFI32X4 -> "vshufi32x4"
   | Opcode.VSHUFPD -> "vshufpd"
   | Opcode.VSHUFPS -> "vshufps"
-  | Opcode.VSQRTPD -> "vsqrtpd"
-  | Opcode.VSQRTPS -> "vsqrtps"
-  | Opcode.VSQRTSD -> "vsqrtsd"
-  | Opcode.VSQRTSS -> "vsqrtss"
   | Opcode.VSUBPD -> "vsubpd"
   | Opcode.VSUBPS -> "vsubps"
   | Opcode.VSUBSD -> "vsubsd"
   | Opcode.VSUBSS -> "vsubss"
-  | Opcode.VTESTPD -> "vtestpd"
-  | Opcode.VTESTPS -> "vtestps"
   | Opcode.VUCOMISD -> "vucomisd"
   | Opcode.VUCOMISS -> "vucomiss"
   | Opcode.VUNPCKHPD -> "vunpckhpd"
@@ -1396,36 +848,161 @@ let opCodeToString = function
   | Opcode.WRUSSD -> "wrussd"
   | Opcode.WRUSSQ -> "wrussq"
   | Opcode.XABORT -> "xabort"
-  | Opcode.XACQUIRE -> "xacquire"
   | Opcode.XADD -> "xadd"
   | Opcode.XBEGIN -> "xbegin"
   | Opcode.XCHG -> "xchg"
   | Opcode.XEND -> "xend"
   | Opcode.XGETBV -> "xgetbv"
-  | Opcode.XLAT -> "xlat"
   | Opcode.XLATB -> "xlatb"
   | Opcode.XOR -> "xor"
   | Opcode.XORPD -> "xorpd"
   | Opcode.XORPS -> "xorps"
-  | Opcode.XRELEASE -> "xrelease"
   | Opcode.XRSTOR -> "xrstor"
   | Opcode.XRSTORS -> "xrstors"
   | Opcode.XRSTORS64 -> "xrstors64"
   | Opcode.XSAVE -> "xsave"
   | Opcode.XSAVEC -> "xsavec"
   | Opcode.XSAVEC64 -> "xsavec64"
-  | Opcode.XSAVEOPT -> "xsaveopt"
   | Opcode.XSAVES -> "xsaves"
   | Opcode.XSAVES64 -> "xsaves64"
+  | Opcode.XSAVEOPT -> "xsaveopt"
   | Opcode.XSETBV -> "xsetbv"
   | Opcode.XTEST -> "xtest"
   | _ -> raise InvalidOpcodeException
 
-let inline private iToHexStr (i: int64) (builder: DisasmBuilder) =
-  builder.Accumulate AsmWordKind.Value (HexString.ofInt64 i)
+let inline private iToHexStr (i: int64) (builder: DisasmBuilder<_>) =
+  builder.Accumulate AsmWordKind.Value (String.i64ToHex i)
 
-let inline private uToHexStr (i: uint64) (builder: DisasmBuilder) =
-  builder.Accumulate AsmWordKind.Value (HexString.ofUInt64 i)
+let inline private uToHexStr (i: uint64) (builder: DisasmBuilder<_>) =
+  builder.Accumulate AsmWordKind.Value (String.u64ToHex i)
+
+let private ptrDirectiveString isFar = function
+  | 8<rt> -> "byte ptr"
+  | 16<rt> -> "word ptr"
+  | 32<rt> -> if isFar then "word far ptr" else "dword ptr"
+  | 48<rt> -> "dword far ptr"
+  | 64<rt> -> "qword ptr"
+  | 80<rt> -> if isFar then "qword far ptr" else "tword ptr"
+  | 128<rt> -> "xmmword ptr"
+  | 256<rt> -> "ymmword ptr"
+  | 512<rt> -> "zmmword ptr"
+  | 224<rt> | 864<rt> -> "" (* x87 FPU state *)
+  | _ -> Utils.impossible ()
+
+let dispToString showSign (disp: Disp) (builder: DisasmBuilder<_>) =
+  let mask = WordSize.toRegType builder.WordSize |> RegType.getMask |> uint64
+  if showSign && disp < 0L then
+    builder.Accumulate AsmWordKind.String "-"
+    iToHexStr (- disp) builder
+  elif showSign then
+    builder.Accumulate AsmWordKind.String "+"
+    iToHexStr disp builder
+  else
+    uToHexStr (uint64 disp &&& mask) builder
+
+let inline private memDispToStr showSign disp builder =
+  match disp with
+  | None -> ()
+  | Some d -> dispToString showSign d builder
+
+let inline scaleToString (scale: Scale) (builder: DisasmBuilder<_>) =
+  if scale = Scale.X1 then ()
+  else
+    builder.Accumulate AsmWordKind.String "*"
+    builder.Accumulate AsmWordKind.Value ((int scale).ToString())
+
+let private memScaleDispToStr emptyBase si d builder =
+  match si with
+  | None -> memDispToStr (not emptyBase) d builder
+  | Some (i, scale) ->
+    if emptyBase then () else builder.Accumulate AsmWordKind.String "+"
+    builder.Accumulate AsmWordKind.Variable (Register.toString i)
+    scaleToString scale builder
+    memDispToStr true d builder
+
+let private memAddrToStr b si disp builder =
+  match b with
+  | None -> memScaleDispToStr true si disp builder
+  | Some b ->
+    builder.Accumulate AsmWordKind.Variable (Register.toString b)
+    memScaleDispToStr false si disp builder
+
+let inline isFar (ins: InsInfo) =
+  match ins.Opcode with
+  | Opcode.JMPFar | Opcode.CALLFar -> true
+  | _ -> false
+
+let mToString (ins: InsInfo) (builder: DisasmBuilder<_>) b si d oprSz =
+  let ptrDirective = ptrDirectiveString (isFar ins) oprSz
+  match Helper.getSegment ins.Prefixes with
+  | None ->
+    builder.Accumulate AsmWordKind.String ptrDirective
+    builder.Accumulate AsmWordKind.String (" [")
+    memAddrToStr b si d builder
+    builder.Accumulate AsmWordKind.String "]"
+  | Some seg ->
+    builder.Accumulate AsmWordKind.String ptrDirective
+    builder.Accumulate AsmWordKind.String (" [")
+    builder.Accumulate AsmWordKind.Variable (Register.toString seg)
+    builder.Accumulate AsmWordKind.String ":"
+    memAddrToStr b si d builder
+    builder.Accumulate AsmWordKind.String "]"
+
+let commentWithSymbol (helper: DisasmHelper) targetAddr builder =
+  if (builder: DisasmBuilder<_>).ResolveSymbol then
+    match helper.FindFunctionSymbol (targetAddr) with
+    | Error _ ->
+      (builder: DisasmBuilder<_>).Accumulate AsmWordKind.String " ; "
+      uToHexStr targetAddr builder
+    | Ok "" -> ()
+    | Ok name ->
+      builder.Accumulate AsmWordKind.String " ; <"
+      builder.Accumulate AsmWordKind.Value name
+      builder.Accumulate AsmWordKind.String ">"
+  else ()
+
+let inline relToString offset hlp (builder: DisasmBuilder<_>) =
+  if offset < 0L then builder.Accumulate AsmWordKind.String "-"
+  else builder.Accumulate AsmWordKind.String "+"
+  iToHexStr (abs offset) builder
+  commentWithSymbol hlp (builder.Address + uint64 offset) builder
+
+let inline absToString selector (offset: Addr) builder =
+  uToHexStr (uint64 selector) builder
+  builder.Accumulate AsmWordKind.String ":"
+  uToHexStr offset builder
+
+let getOpmaskRegister = function
+  | 0x0uy -> Register.K0
+  | 0x1uy -> Register.K1
+  | 0x2uy -> Register.K2
+  | 0x3uy -> Register.K3
+  | 0x4uy -> Register.K4
+  | 0x5uy -> Register.K5
+  | 0x6uy -> Register.K6
+  | 0x7uy -> Register.K7
+  | _ -> raise InvalidRegisterException
+
+/// Zeroing/Merging (EVEX.z)
+let maskZtoString ev (builder: DisasmBuilder<_>) =
+  if ev.Z = Zeroing then ()
+  else builder.Accumulate AsmWordKind.String "{z}"
+
+/// Opmask register
+let maskRegToString ePrx (builder: DisasmBuilder<_>) =
+  if ePrx.AAA = 0uy then ()
+  else
+    builder.Accumulate AsmWordKind.String " {"
+    builder.Accumulate AsmWordKind.Variable
+      (getOpmaskRegister ePrx.AAA |> Register.toString)
+    builder.Accumulate AsmWordKind.String "}"
+
+let buildMask (ins: InsInfo) builder =
+  match ins.VEXInfo with
+  | Some { EVEXPrx = Some ePrx }->
+    maskRegToString ePrx builder
+    maskZtoString ePrx builder
+  | _ -> ()
 
 let inline private getMask sz =
   match sz with
@@ -1434,7 +1011,20 @@ let inline private getMask sz =
   | 32<rt> -> 0xFFFFFFFFL
   | _ -> 0xFFFFFFFFFFFFFFFFL
 
-let inline private buildPref (prefs: Prefix) (builder: DisasmBuilder) =
+let oprToString ins hlp opr isFst (builder: DisasmBuilder<_>) =
+  match opr with
+  | OprReg reg ->
+    builder.Accumulate AsmWordKind.Variable (Register.toString reg)
+    if isFst then buildMask ins builder else ()
+  | OprMem (b, si, disp, oprSz) ->
+    mToString ins builder b si disp oprSz
+    if isFst then buildMask ins builder else ()
+  | OprImm (imm, _) -> iToHexStr (imm &&& getMask ins.MainOperationSize) builder
+  | OprDirAddr (Absolute (sel, offset, _)) -> absToString sel offset builder
+  | OprDirAddr (Relative (offset)) -> relToString offset hlp builder
+  | Label _ -> Utils.impossible ()
+
+let inline buildPref (prefs: Prefix) (builder: DisasmBuilder<_>) =
   if prefs = Prefix.PrxNone then ()
   elif (prefs &&& Prefix.PrxLOCK) <> Prefix.PrxNone then
     builder.Accumulate AsmWordKind.String "lock "
@@ -1446,527 +1036,63 @@ let inline private buildPref (prefs: Prefix) (builder: DisasmBuilder) =
     builder.Accumulate AsmWordKind.String "bnd "
   else ()
 
-let inline private buildOpcode opcode (builder: DisasmBuilder) =
+let inline buildOpcode opcode (builder: DisasmBuilder<_>) =
   builder.Accumulate AsmWordKind.Mnemonic (opCodeToString opcode)
 
-let private buildDisplacement showSign (disp: Disp) (builder: DisasmBuilder) =
-  let mask = WordSize.toRegType builder.WordSize |> RegType.getMask |> uint64
-  if showSign && disp < 0L then
-    builder.Accumulate AsmWordKind.String "-"
-    iToHexStr (- disp) builder
-  elif showSign then
-    builder.Accumulate AsmWordKind.String "+"
-    iToHexStr disp builder
-  else
-    uToHexStr (uint64 disp &&& mask) builder
+let recomputeRIPRel disp oprSize builder =
+  let dir = ptrDirectiveString false oprSize
+  (builder: DisasmBuilder<_>).Accumulate AsmWordKind.String dir
+  builder.Accumulate AsmWordKind.String " ["
+  uToHexStr (builder.Address + uint64 disp + uint64 builder.InsLength) builder
+  builder.Accumulate AsmWordKind.String "]"
 
-let inline private buildAbsAddr selector (offset: Addr) builder =
-  uToHexStr (uint64 selector) builder
-  builder.Accumulate AsmWordKind.String ":"
-  uToHexStr offset builder
+let buildOprs (ins: InsInfo) hlp (builder: DisasmBuilder<_>) =
+  match ins.Operands with
+  | NoOperand -> ()
+  | OneOperand (OprMem (Some Register.RIP, None, Some off, 64<rt>)) ->
+    builder.Accumulate AsmWordKind.String (" ")
+    mToString ins builder (Some Register.RIP) None (Some off) 64<rt>
+    commentWithSymbol hlp
+      (builder.Address + uint64 builder.InsLength + uint64 off) builder
+  | OneOperand opr ->
+    builder.Accumulate AsmWordKind.String " "
+    oprToString ins hlp opr true builder
+  | TwoOperands (OprMem (Some R.RIP, None, Some disp, sz), opr) ->
+    builder.Accumulate AsmWordKind.String " "
+    recomputeRIPRel disp sz builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr false builder
+  | TwoOperands (opr, OprMem (Some R.RIP, None, Some disp, sz)) ->
+    builder.Accumulate AsmWordKind.String " "
+    oprToString ins hlp opr true builder
+    builder.Accumulate AsmWordKind.String ", "
+    recomputeRIPRel disp sz builder
+  | TwoOperands (opr1, opr2) ->
+    builder.Accumulate AsmWordKind.String " "
+    oprToString ins hlp opr1 true builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr2 false builder
+  | ThreeOperands (opr1, opr2, opr3) ->
+    builder.Accumulate AsmWordKind.String " "
+    oprToString ins hlp opr1 true builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr2 false builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr3 false builder
+  | FourOperands (opr1, opr2, opr3, opr4) ->
+    builder.Accumulate AsmWordKind.String " "
+    oprToString ins hlp opr1 true builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr2 false builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr3 false builder
+    builder.Accumulate AsmWordKind.String ", "
+    oprToString ins hlp opr4 false builder
 
-let private buildComment (reader: INameReadable) targetAddr builder =
-  if (builder: DisasmBuilder).ResolveSymbol then
-    match reader.TryFindFunctionName targetAddr with
-    | Error _ ->
-      (builder: DisasmBuilder).Accumulate AsmWordKind.String " ; "
-      uToHexStr targetAddr builder
-    | Ok "" -> ()
-    | Ok name ->
-      builder.Accumulate AsmWordKind.String " ; <"
-      builder.Accumulate AsmWordKind.Value name
-      builder.Accumulate AsmWordKind.String ">"
-  else ()
+let disasm hlp ins (builder: DisasmBuilder<_>) =
+  if builder.ShowAddr then builder.AccumulateAddr () else ()
+  buildPref (ins: InsInfo).Prefixes builder
+  buildOpcode ins.Opcode builder
+  buildOprs ins hlp builder
 
-let inline private buildRelAddr offset reader (builder: DisasmBuilder) =
-  if offset < 0L then builder.Accumulate AsmWordKind.String "-"
-  else builder.Accumulate AsmWordKind.String "+"
-  iToHexStr (abs offset) builder
-  buildComment reader (builder.Address + uint64 offset) builder
-
-/// Zeroing/Merging (EVEX.z)
-let inline buildEVEXZ ev (builder: DisasmBuilder) =
-  if ev.Z = Zeroing then builder.Accumulate AsmWordKind.String "{z}"
-  else ()
-
-module private IntelSyntax = begin
-
-  let inline private memDispToStr showSign disp builder =
-    match disp with
-    | None -> ()
-    | Some d -> buildDisplacement showSign d builder
-
-  let inline scaleToString (scale: Scale) (builder: DisasmBuilder) =
-    if scale = Scale.X1 then ()
-    else
-      builder.Accumulate AsmWordKind.String "*"
-      builder.Accumulate AsmWordKind.Value ((int scale).ToString())
-
-  let private memScaleDispToStr emptyBase si d builder =
-    match si with
-    | None -> memDispToStr (not emptyBase) d builder
-    | Some (i, scale) ->
-      if emptyBase then () else builder.Accumulate AsmWordKind.String "+"
-      builder.Accumulate AsmWordKind.Variable (Register.toString i)
-      scaleToString scale builder
-      memDispToStr true d builder
-
-  let private memAddrToStr b si disp builder =
-    match b with
-    | None -> memScaleDispToStr true si disp builder
-    | Some b ->
-      builder.Accumulate AsmWordKind.Variable (Register.toString b)
-      memScaleDispToStr false si disp builder
-
-  let inline private isFar (ins: InsInfo) =
-    match ins.Opcode with
-    | Opcode.JMPFar | Opcode.CALLFar -> true
-    | _ -> false
-
-  let private ptrDirectiveString isFar = function
-    | 8<rt> -> "byte ptr"
-    | 16<rt> -> "word ptr"
-    | 32<rt> -> if isFar then "word far ptr" else "dword ptr"
-    | 48<rt> -> "fword ptr"
-    | 64<rt> -> "qword ptr"
-    | 80<rt> -> if isFar then "fword ptr" else "tbyte ptr"
-    | 128<rt> -> "xmmword ptr"
-    | 256<rt> -> "ymmword ptr"
-    | 512<rt> -> "zmmword ptr"
-    | 224<rt> | 864<rt> -> "" (* x87 FPU state *)
-    | _ -> Utils.impossible ()
-
-  let mToString (ins: InsInfo) (builder: DisasmBuilder) b si d oprSz =
-    let ptrDirective = ptrDirectiveString (isFar ins) oprSz
-    match Helper.getSegment ins.Prefixes with
-    | None ->
-      builder.Accumulate AsmWordKind.String ptrDirective
-      builder.Accumulate AsmWordKind.String (" [")
-      memAddrToStr b si d builder
-      builder.Accumulate AsmWordKind.String "]"
-    | Some seg ->
-      builder.Accumulate AsmWordKind.String ptrDirective
-      builder.Accumulate AsmWordKind.String (" [")
-      builder.Accumulate AsmWordKind.Variable (Register.toString seg)
-      builder.Accumulate AsmWordKind.String ":"
-      memAddrToStr b si d builder
-      builder.Accumulate AsmWordKind.String "]"
-
-  /// Opmask register
-  let buildOpMask ePrx (builder: DisasmBuilder) =
-    if ePrx.AAA = 0uy then ()
-    else
-      builder.Accumulate AsmWordKind.String "{"
-      builder.Accumulate AsmWordKind.Variable
-        (ePrx.AAA |> int |> Register.opmask |> Register.toString)
-      builder.Accumulate AsmWordKind.String "}"
-
-  let buildMask (ins: InsInfo) builder =
-    match ins.VEXInfo with
-    | Some { EVEXPrx = Some ePrx } ->
-      buildOpMask ePrx builder
-      buildEVEXZ ePrx builder
-    | _ -> ()
-
-  let buildBroadcast (ins: InsInfo) (builder: DisasmBuilder) memSz =
-    match ins.VEXInfo with
-    | Some { EVEXPrx = Some ePrx; VectorLength = vl } ->
-      if ePrx.B = 1uy then
-        builder.Accumulate AsmWordKind.String "{1to"
-        builder.Accumulate AsmWordKind.Value ((vl / memSz).ToString())
-        builder.Accumulate AsmWordKind.String "}"
-      else ()
-    | _ -> ()
-
-  let buildRoundingControl (ins: InsInfo) (builder: DisasmBuilder) =
-    match ins.VEXInfo with
-    | Some { EVEXPrx = Some ePrx }->
-      if ePrx.B = 1uy then
-        builder.Accumulate AsmWordKind.String ", {"
-        builder.Accumulate AsmWordKind.String (ePrx.RC.ToString().ToLower())
-        builder.Accumulate AsmWordKind.String "-sae}"
-      else ()
-    | _ -> ()
-
-  let oprToString ins reader opr (builder: DisasmBuilder) =
-    match opr with
-    | OprReg reg ->
-      builder.Accumulate AsmWordKind.Variable (Register.toString reg)
-    | OprMem (b, si, disp, oprSz) ->
-      mToString ins builder b si disp oprSz
-    | OprImm (imm, _) ->
-      iToHexStr (imm &&& getMask ins.MainOperationSize) builder
-    | OprDirAddr (Absolute (sel, offset, _)) -> buildAbsAddr sel offset builder
-    | OprDirAddr (Relative (offset)) -> buildRelAddr offset reader builder
-    | Label _ -> Utils.impossible ()
-
-  let buildOprs (ins: InsInfo) reader (builder: DisasmBuilder) =
-    match ins.Operands with
-    | NoOperand -> ()
-    | OneOperand (OprMem (Some Register.RIP, None, Some off, 64<rt>)) ->
-      builder.Accumulate AsmWordKind.String (" ")
-      mToString ins builder (Some Register.RIP) None (Some off) 64<rt>
-      buildComment reader
-        (builder.Address + uint64 builder.InsLength + uint64 off) builder
-    | OneOperand opr ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr builder
-    | TwoOperands (OprMem (Some R.RIP, None, Some disp, sz), opr) ->
-      builder.Accumulate AsmWordKind.String " "
-      mToString ins builder (Some Register.RIP) None (Some disp) sz
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr builder
-      buildComment reader
-        (builder.Address + uint64 builder.InsLength + uint64 disp) builder
-    | TwoOperands (opr, OprMem (Some R.RIP, None, Some disp, sz)) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr builder
-      builder.Accumulate AsmWordKind.String ", "
-      mToString ins builder (Some Register.RIP) None (Some disp) sz
-      buildComment reader
-        (builder.Address + uint64 builder.InsLength + uint64 disp) builder
-    | TwoOperands (opr1, (OprMem (_, _, _, memSz) as opr2)) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      buildBroadcast ins builder memSz
-    | TwoOperands (opr1, opr2) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-    | ThreeOperands (opr1, opr2, (OprMem (_, _, _, memSz) as opr3)) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr3 builder
-      buildBroadcast ins builder memSz
-    | ThreeOperands (opr1, opr2, (OprReg _ as opr3)) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr3 builder
-      buildRoundingControl ins builder
-    | ThreeOperands (opr1, opr2, opr3) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr3 builder
-    | FourOperands (opr1, opr2, (OprMem (_, _, _, memSz) as opr3), opr4) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr3 builder
-      buildBroadcast ins builder memSz
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr4 builder
-    | FourOperands (opr1, opr2, opr3, opr4) ->
-      builder.Accumulate AsmWordKind.String " "
-      oprToString ins reader opr1 builder
-      buildMask ins builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr2 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr3 builder
-      builder.Accumulate AsmWordKind.String ", "
-      oprToString ins reader opr4 builder
-
-  let disasm reader (builder: DisasmBuilder) ins =
-    if builder.ShowAddr then builder.AccumulateAddr () else ()
-    buildPref (ins: InsInfo).Prefixes builder
-    buildOpcode ins.Opcode builder
-    buildOprs ins reader builder
-
-end
-
-module private ATTSyntax = begin
-
-  let buildDisp disp showSign builder =
-    match disp with
-    | Some d -> buildDisplacement showSign d builder
-    | None -> ()
-
-  let buildScaledIndex si (builder: DisasmBuilder) =
-    match si with
-    | None -> ()
-    | Some (i, Scale.X1) ->
-      builder.Accumulate AsmWordKind.String ", %"
-      builder.Accumulate AsmWordKind.Variable (Register.toString i)
-    | Some (i, scale) ->
-      builder.Accumulate AsmWordKind.String ", %"
-      builder.Accumulate AsmWordKind.Variable (Register.toString i)
-      builder.Accumulate AsmWordKind.String ", "
-      builder.Accumulate AsmWordKind.Value ((int scale).ToString())
-
-  let buildSeg seg (builder: DisasmBuilder) =
-    builder.Accumulate AsmWordKind.String "%"
-    builder.Accumulate AsmWordKind.Variable (Register.toString seg)
-    builder.Accumulate AsmWordKind.String ":"
-
-  let buildBasedMemory b si d builder =
-    buildDisp d true builder
-    builder.Accumulate AsmWordKind.String "(%"
-    builder.Accumulate AsmWordKind.Variable (Register.toString b)
-    buildScaledIndex si builder
-    builder.Accumulate AsmWordKind.String ")"
-
-  let buildNobaseMemory (i, s) d builder =
-    buildDisp d true builder
-    match s with
-    | Scale.X1 ->
-      builder.Accumulate AsmWordKind.String "(%"
-      builder.Accumulate AsmWordKind.Variable (Register.toString i)
-    | _ ->
-      builder.Accumulate AsmWordKind.String "(, %"
-      builder.Accumulate AsmWordKind.Variable (Register.toString i)
-      builder.Accumulate AsmWordKind.String ", "
-      builder.Accumulate AsmWordKind.Value ((int s).ToString())
-    builder.Accumulate AsmWordKind.String ")"
-
-  let buildMemOp (ins: InsInfo) (builder: DisasmBuilder) b si d oprSz isFst =
-    if ins.IsBranch () then
-      builder.Accumulate AsmWordKind.String " *"
-    elif isFst then
-      builder.Accumulate AsmWordKind.String " "
-    else
-      builder.Accumulate AsmWordKind.String ", "
-    match Helper.getSegment ins.Prefixes, b, si with
-    | None, Some b, _ ->
-      buildBasedMemory b si d builder
-    | None, None, None ->
-      buildDisp d false builder
-    | None, None, Some si ->
-      buildNobaseMemory si d builder
-    | Some seg, Some b, _ ->
-      buildSeg seg builder
-      buildBasedMemory b si d builder
-    | Some seg, None, _ ->
-      buildSeg seg builder
-      buildDisp d false builder
-
-  let buildMask (ins: InsInfo) (builder: DisasmBuilder) =
-    match ins.VEXInfo with
-    | Some { EVEXPrx = Some ePrx }->
-      if ePrx.AAA = 0uy then ()
-      else
-        builder.Accumulate AsmWordKind.String "{%"
-        builder.Accumulate AsmWordKind.Variable
-          (ePrx.AAA |> int |> Register.opmask |> Register.toString)
-        builder.Accumulate AsmWordKind.String "}"
-      buildEVEXZ ePrx builder
-    | _ -> ()
-
-  let buildOpr (ins: InsInfo) reader isFst (builder: DisasmBuilder) opr =
-    match opr with
-    | OprReg reg ->
-      if isFst then
-        if ins.IsBranch () then builder.Accumulate AsmWordKind.String " *%"
-        else builder.Accumulate AsmWordKind.String " %"
-      else builder.Accumulate AsmWordKind.String ", %"
-      builder.Accumulate AsmWordKind.Variable (Register.toString reg)
-    | OprMem (b, si, disp, oprSz) ->
-      buildMemOp ins builder b si disp oprSz isFst
-    | OprImm (imm, _) ->
-      if isFst then builder.Accumulate AsmWordKind.String " $"
-      else builder.Accumulate AsmWordKind.String ", $"
-      iToHexStr (imm &&& getMask ins.MainOperationSize) builder
-    | OprDirAddr (Absolute (sel, offset, _)) ->
-      builder.Accumulate AsmWordKind.String " "
-      buildAbsAddr sel offset builder
-    | OprDirAddr (Relative (offset)) ->
-      builder.Accumulate AsmWordKind.String " "
-      buildRelAddr offset reader builder
-    | Label _ -> Utils.impossible ()
-
-  let addOpSuffix (builder: DisasmBuilder) = function
-    | 8<rt> -> builder.Accumulate AsmWordKind.Mnemonic "b"
-    | 16<rt> -> builder.Accumulate AsmWordKind.Mnemonic "w"
-    | 32<rt> -> builder.Accumulate AsmWordKind.Mnemonic "l"
-    | 64<rt> -> builder.Accumulate AsmWordKind.Mnemonic "q"
-    | 80<rt> -> builder.Accumulate AsmWordKind.Mnemonic "t"
-    | _ -> ()
-
-  let buildOpSuffix operands builder =
-    match operands with
-    | OneOperand (OprMem (_, _, _, sz)) -> addOpSuffix builder sz
-    | TwoOperands (OprMem (_, _, _, sz), _)
-    | TwoOperands (_, OprMem (_, _, _, sz)) -> addOpSuffix builder sz
-    | ThreeOperands (OprMem (_, _, _, sz), _, _)
-    | ThreeOperands (_, OprMem (_, _, _, sz), _)
-    | ThreeOperands (_, _, OprMem (_, _, _, sz)) -> addOpSuffix builder sz
-    | FourOperands (OprMem (_, _, _, sz), _, _, _)
-    | FourOperands (_, OprMem (_, _, _, sz), _, _)
-    | FourOperands (_, _, OprMem (_, _, _, sz), _)
-    | FourOperands (_, _, _, OprMem (_, _, _, sz)) -> addOpSuffix builder sz
-    | _ -> ()
-
-  let buildSrcSizeSuffix operands builder =
-    match operands with
-    | TwoOperands (_, OprMem (_, _, _, sz)) -> addOpSuffix builder sz
-    | TwoOperands (_, OprReg dst) ->
-      Register.toRegType dst |> addOpSuffix builder
-    | _ -> Utils.impossible ()
-
-  let buildDstSizeSuffix operands builder =
-    match operands with
-    | TwoOperands (OprReg dst, _) ->
-      Register.toRegType dst |> addOpSuffix builder
-    | _ -> Utils.impossible ()
-
-  let buildOprs (ins: InsInfo) reader (builder: DisasmBuilder) =
-    match ins.Operands with
-    | NoOperand -> ()
-    | OneOperand opr ->
-      buildOpr ins reader true builder opr
-    | TwoOperands (opr1, opr2) ->
-      buildOpr ins reader true builder opr2
-      buildOpr ins reader false builder opr1
-      buildMask ins builder
-    | ThreeOperands (opr1, opr2, opr3) ->
-      buildOpr ins reader true builder opr3
-      buildOpr ins reader false builder opr2
-      buildOpr ins reader false builder opr1
-      buildMask ins builder
-    | FourOperands (opr1, opr2, opr3, opr4) ->
-      buildOpr ins reader true builder opr4
-      buildOpr ins reader false builder opr3
-      buildOpr ins reader false builder opr2
-      buildOpr ins reader false builder opr1
-      buildMask ins builder
-
-  let disasm reader (builder: DisasmBuilder) ins =
-    if builder.ShowAddr then builder.AccumulateAddr () else ()
-    buildPref (ins: InsInfo).Prefixes builder
-    match ins.Opcode with
-    | Opcode.MOVSX ->
-      builder.Accumulate AsmWordKind.Mnemonic "movs"
-      buildSrcSizeSuffix ins.Operands builder
-      buildDstSizeSuffix ins.Operands builder
-    | Opcode.MOVZX ->
-      builder.Accumulate AsmWordKind.Mnemonic "movz"
-      buildSrcSizeSuffix ins.Operands builder
-      buildDstSizeSuffix ins.Operands builder
-    | Opcode.MOVSXD ->
-      builder.Accumulate AsmWordKind.Mnemonic "movslq"
-    (* Below are the list of opcodes that should not be used with a suffix. *)
-    | Opcode.ADDSD
-    | Opcode.ADDSS
-    | Opcode.CMPSD
-    | Opcode.CMPSS
-    | Opcode.COMISD
-    | Opcode.COMISS
-    | Opcode.CVTDQ2PD
-    | Opcode.CVTPI2PS
-    | Opcode.CVTPS2PD
-    | Opcode.CVTPS2PI
-    | Opcode.CVTSD2SS
-    | Opcode.CVTSS2SD
-    | Opcode.CVTTPS2PI
-    | Opcode.CVTTSD2SI
-    | Opcode.CVTTSS2SI
-    | Opcode.DIVSD
-    | Opcode.DIVSS
-    | Opcode.FBLD
-    | Opcode.FBSTP
-    | Opcode.FCOMP
-    | Opcode.FCOM
-    | Opcode.FDIV
-    | Opcode.FDIVR
-    | Opcode.FIADD
-    | Opcode.FICOMP
-    | Opcode.FICOM
-    | Opcode.FIDIVR
-    | Opcode.FIDIV
-    | Opcode.FILD
-    | Opcode.FIMUL
-    | Opcode.FISTP
-    | Opcode.FISTTP
-    | Opcode.FISUBR
-    | Opcode.FISUB
-    | Opcode.FMUL
-    | Opcode.FST
-    | Opcode.FSUB
-    | Opcode.FSUBR
-    | Opcode.IRET
-    | Opcode.LAR
-    | Opcode.LDMXCSR
-    | Opcode.MAXSD
-    | Opcode.MAXSS
-    | Opcode.MINSD
-    | Opcode.MINSS
-    | Opcode.MOVD
-    | Opcode.MOVHPD
-    | Opcode.MOVHPS
-    | Opcode.MOVLPD
-    | Opcode.MOVLPS
-    | Opcode.MOVQ
-    | Opcode.MOVSD
-    | Opcode.MOVSS
-    | Opcode.MULSD
-    | Opcode.MULSS
-    | Opcode.PACKUSWB
-    | Opcode.PADDSW
-    | Opcode.PCMPEQB
-    | Opcode.PCMPGTD
-    | Opcode.PINSRW
-    | Opcode.PMAXSW
-    | Opcode.POR
-    | Opcode.PREFETCHNTA
-    | Opcode.PREFETCHT0
-    | Opcode.PSADBW
-    | Opcode.PSLLD
-    | Opcode.PSUBSB
-    | Opcode.PXOR
-    | Opcode.SGDT
-    | Opcode.SIDT
-    | Opcode.SQRTSD
-    | Opcode.SQRTSS
-    | Opcode.STMXCSR
-    | Opcode.SUBSD
-    | Opcode.SUBSS
-    | Opcode.UCOMISD
-    | Opcode.UCOMISS
-    | Opcode.VFMSUB213SD
-    | Opcode.VFMSUB213PD
-    | Opcode.VFNMSUB231SD
-    | Opcode.VFNMSUB231PD
-    | Opcode.VMOVDDUP
-    | Opcode.VMOVD
-    | Opcode.VMOVQ
-    | Opcode.VPBROADCASTB
-    | Opcode.VPBROADCASTQ ->
-      buildOpcode ins.Opcode builder
-    (* Far jmp/call *)
-    | Opcode.JMPFar ->
-      builder.Accumulate AsmWordKind.Mnemonic "ljmp"
-      buildOpSuffix ins.Operands builder
-    | Opcode.CALLFar ->
-      builder.Accumulate AsmWordKind.Mnemonic "lcall"
-      buildOpSuffix ins.Operands builder
-    | opcode ->
-      buildOpcode opcode builder
-      buildOpSuffix ins.Operands builder
-    buildOprs ins reader builder
-
-end
-
-let mutable disasm = Disasm IntelSyntax.disasm
-
-let setDisassemblyFlavor = function
-  | DefaultSyntax -> disasm <- Disasm IntelSyntax.disasm
-  | ATTSyntax -> disasm <- Disasm ATTSyntax.disasm
+// vim: set tw=80 sts=2 sw=2:

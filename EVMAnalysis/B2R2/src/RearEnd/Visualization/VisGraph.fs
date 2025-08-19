@@ -25,52 +25,58 @@
 namespace B2R2.RearEnd.Visualization
 
 open B2R2.MiddleEnd.BinGraph
+open B2R2.MiddleEnd.BinEssence
 open System.Collections.Generic
 
 /// The main graph type for visualization.
-type VisGraph = IGraph<VisBBlock, VisEdge>
+type VisGraph = ControlFlowGraph<VisBBlock, VisEdge>
 
 module VisGraph =
+  let private initializer core = VisGraph (core) :> DiGraph<VisBBlock, VisEdge>
+
   let init () =
-    ImperativeDiGraph<VisBBlock, VisEdge> ()
-    :> VisGraph
+    ImperativeCore<VisBBlock, VisEdge> (initializer, VisEdge UnknownEdge)
+    |> VisGraph
 
   let ofCFG g roots =
     let newGraph = init ()
-    let visited = Dictionary<VertexID, IVertex<VisBBlock>> ()
-    (g: IGraph<_, _>).IterVertex (fun v ->
-      if visited.ContainsKey v.ID then ()
-      else
-        let blk = VisBBlock (v.VData, false)
-        let v', _ = newGraph.AddVertex blk
-        visited[v.ID] <- v'
-    )
-    let roots = roots |> List.map (fun (root: IVertex<_>) -> visited[root.ID])
-    (g: IGraph<_, _>).IterEdge (fun e ->
-      let srcV = visited[e.First.ID]
-      let dstV = visited[e.Second.ID]
-      let edge = VisEdge e.Label
-      newGraph.AddEdge (srcV, dstV, edge) |> ignore)
+    let visited = Dictionary<VertexID, Vertex<VisBBlock>> ()
+    let getVisBBlock (oldV: Vertex<#BasicBlock>) =
+      match visited.TryGetValue (oldV.GetID ()) with
+      | false, _ ->
+        let blk = VisBBlock (oldV.VData :> BasicBlock, false)
+        let v, _ = newGraph.AddVertex blk
+        visited.[oldV.GetID ()] <- v
+        v
+      | true, v -> v
+    (* In case there is no edge in the graph. *)
+    let roots = roots |> List.map (getVisBBlock)
+    DiGraph.iterEdge g (fun src dst e ->
+      let srcV = getVisBBlock src
+      let dstV = getVisBBlock dst
+      let edge = VisEdge (e)
+      newGraph.AddEdge srcV dstV edge |> ignore)
     newGraph, roots
 
-  let getID (v: IVertex<_>) = v.ID
+  let getID v = Vertex<VisBBlock>.GetID v
 
-  let getPreds (vGraph: IGraph<_, _>) (v: IVertex<_>) = vGraph.GetPreds v
+  let getPreds vGraph (v: Vertex<VisBBlock>) = DiGraph.getPreds vGraph v
 
-  let getSuccs (vGraph: IGraph<_, _>) (v: IVertex<_>) = vGraph.GetSuccs v
+  let getSuccs vGraph (v: Vertex<VisBBlock>) = DiGraph.getSuccs vGraph v
 
-  let getVData (v: IVertex<_>) = v.VData
+  let getVData (v: Vertex<VisBBlock>) = v.VData
 
-  let getIndex (v: IVertex<VisBBlock>) = v.VData.Index
+  let getIndex (v: Vertex<VisBBlock>) = v.VData.Index
 
-  let getLayer (v: IVertex<VisBBlock>) = v.VData.Layer
+  let getLayer (v: Vertex<VisBBlock>) = v.VData.Layer
 
-  let setLayer (v: IVertex<VisBBlock>) layer = v.VData.Layer <- layer
+  let setLayer (v: Vertex<VisBBlock>) layer = v.VData.Layer <- layer
 
-  let getWidth (v: IVertex<VisBBlock>) = v.VData.Width
+  let getWidth (v: Vertex<VisBBlock>) = v.VData.Width
 
-  let getHeight (v: IVertex<VisBBlock>) = v.VData.Height
+  let getHeight (v: Vertex<VisBBlock>) = v.VData.Height
 
-  let getXPos (v: IVertex<VisBBlock>) = v.VData.Coordinate.X
+  let getXPos (v: Vertex<VisBBlock>) = v.VData.Coordinate.X
 
-  let getYPos (v: IVertex<VisBBlock>) = v.VData.Coordinate.Y
+  let getYPos (v: Vertex<VisBBlock>) = v.VData.Coordinate.Y
+

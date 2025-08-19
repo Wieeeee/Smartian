@@ -1,25 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>b2r2-240x240.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>B2R2 EVM frontend.</Description>
+    <RepositoryUrl>https://github.com/B2R2-org/B2R2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="EVMTypes.fs" />
+    <Compile Include="EVMRegisterSet.fs" />
     <Compile Include="EVMRegExprs.fs" />
-    <Compile Include="EVMRegisterFactory.fs" />
+    <Compile Include="EVMRegisterBay.fs" />
     <Compile Include="EVMDisasm.fs" />
     <Compile Include="EVMLifter.fs" />
     <Compile Include="EVMInstruction.fs" />
-    <Compile Include="EVMParsingMain.fs" />
     <Compile Include="EVMParser.fs" />
-    <Compile Include="EVMTranslationContext.fs" />
-    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath="" />
+    <Compile Include="EVM.fs" />
+    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath=""/>
     <None Include="..\..\..\..\assets\b2r2-240x240.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>

@@ -63,7 +63,7 @@ type FileViewerOpts () =
   static member OptBaseAddr () =
     let cb opts (arg: string []) =
       (FileViewerOpts.ToThis opts).BaseAddress <-
-        Some (Convert.ToUInt64 (arg[0], 16))
+        Some (Convert.ToUInt64 (arg.[0], 16))
       opts
     CmdOpts.New (descr = "Specify the base <address> in hex (default=0)",
                  extra = 1, callback = cb, short = "-b", long = "--base-addr")
@@ -91,7 +91,7 @@ type FileViewerOpts () =
   /// "--section-details" option for displaying the target section details.
   static member OptSectionDetails () =
     let cb opts (arg: string []) =
-      FileViewerOpts.AddOpt opts (DisplaySectionDetails arg[0])
+      FileViewerOpts.AddOpt opts (DisplaySectionDetails arg.[0])
     CmdOpts.New (descr = "Display the <name> section details", extra = 1,
                  callback = cb, short = "-d", long = "--section-details")
 
@@ -116,13 +116,6 @@ type FileViewerOpts () =
     CmdOpts.New (descr = "Display the function symbols",
                  callback = cb, short = "-f", long = "--functions")
 
-  /// "-x" or "--exceptions" option for displaying the exception table.
-  static member OptExceptionTable () =
-    let cb opts _ =
-      FileViewerOpts.AddOpt opts DisplayExceptionTable
-    CmdOpts.New (descr = "Display the exception table",
-                 callback = cb, short = "-x", long = "--exceptions")
-
   /// "--program-headers" option for displaying the program headers.
   static member OptProgramHeaders () =
     let cb opts _ =
@@ -143,14 +136,6 @@ type FileViewerOpts () =
       FileViewerOpts.AddOpt opts (DisplayELFSpecific ELFDisplayEHFrame)
     CmdOpts.New (descr = "Display the eh_frame information",
                  callback = cb, long = "--ehframe")
-
-  /// "--gcc-except-table" option for displaying the .gcc_except_table section
-  /// information.
-  static member OptGccExceptTable () =
-    let cb opts _ =
-      FileViewerOpts.AddOpt opts (DisplayELFSpecific ELFDisplayGccExceptTable)
-    CmdOpts.New (descr = "Display the gcc_except_table information",
-                 callback = cb, long = "--gcc-except-table")
 
   /// "--notes" option for displaying the notes section information.
   static member OptNotes () =
@@ -226,7 +211,7 @@ type FileViewerOpts () =
   /// "-i" or "--isa" option for specifying ISA.
   static member OptISA () =
     let cb opts (arg: string []) =
-      (FileViewerOpts.ToThis opts).ISA <- ISA.OfString arg[0]; opts
+      (FileViewerOpts.ToThis opts).ISA <- ISA.OfString arg.[0]; opts
     CmdOpts.New (descr = "Specify <ISA> (e.g., x86) for fat binaries",
                  extra = 1, callback = cb, short = "-i", long= "--isa")
 
@@ -246,7 +231,6 @@ module Cmd =
       FileViewerOpts.OptSymbols ()
       FileViewerOpts.OptRelocs ()
       FileViewerOpts.OptFunctions ()
-      FileViewerOpts.OptExceptionTable ()
 
       CmdOpts.New (descr = "", dummy = true)
       CmdOpts.New (descr = "[ELF options]", dummy = true)
@@ -255,7 +239,6 @@ module Cmd =
       FileViewerOpts.OptProgramHeaders ()
       FileViewerOpts.OptPLT ()
       FileViewerOpts.OptEHFrame ()
-      FileViewerOpts.OptGccExceptTable ()
       FileViewerOpts.OptNotes ()
 
       CmdOpts.New (descr = "", dummy = true)

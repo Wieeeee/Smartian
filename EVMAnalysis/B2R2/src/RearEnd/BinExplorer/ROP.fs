@@ -44,8 +44,7 @@ type CmdGadgetSearch () =
 
   override __.CallBack _ ess _args =
     let hdl = ess.BinHandle
-    let liftingUnit = hdl.NewLiftingUnit ()
-    [| Galileo.findGadgets hdl |> GadgetMap.toString liftingUnit |]
+    [| Galileo.findGadgets hdl |> GadgetMap.toString hdl |]
     |> Array.map OutputNormal
 
 type CmdROP () =
@@ -73,31 +72,26 @@ type CmdROP () =
 
   override __.CallBack _ ess args =
     let hdl = ess.BinHandle
-    match hdl.File.ISA.Arch with
+    match hdl.ISA.Arch with
     | Architecture.IntelX86 ->
       let rop = ROPHandle.init hdl 0UL
-      __.HandleSubCmd rop args
+      __.HandleSubCmd hdl rop args
       |> Array.map OutputNormal
     | arch ->
       [| "[*] We currently do not support " + (ISA.ArchToString arch) |]
       |> Array.map OutputNormal
 
-  member private __.HandleSubCmd rop args =
+  member private __.HandleSubCmd hdl rop args =
     match args with
-    | "exec" :: _ ->
-      ROPHandle.execShell rop
-      |> __.ShowResult rop.LiftingUnit
+    | "exec" :: _ -> ROPHandle.execShell rop |> __.ShowResult hdl
     | "func" :: target :: args ->
       let args = Array.ofList args |> Array.map ROPExpr.ofUInt32
-      ROPHandle.funCall rop (ROPExpr.ofUInt32 target) args
-      |> __.ShowResult rop.LiftingUnit
+      ROPHandle.funCall rop (ROPExpr.ofUInt32 target) args |> __.ShowResult hdl
     | "write" :: target :: vals ->
       let vals = Array.ofList vals |> Array.map ROPExpr.ofUInt32
-      ROPHandle.write32s rop (ROPExpr.ofUInt32 target) vals
-      |> __.ShowResult rop.LiftingUnit
+      ROPHandle.write32s rop (ROPExpr.ofUInt32 target) vals |> __.ShowResult hdl
     | "pivot" :: [esp] ->
-      ROPHandle.stackPivot rop (ROPExpr.ofUInt32 esp)
-      |> __.ShowResult rop.LiftingUnit
+      ROPHandle.stackPivot rop (ROPExpr.ofUInt32 esp) |> __.ShowResult hdl
     | _ -> [| "[*] Unknown ROP cmd." |]
 
 // vim: set tw=80 sts=2 sw=2:

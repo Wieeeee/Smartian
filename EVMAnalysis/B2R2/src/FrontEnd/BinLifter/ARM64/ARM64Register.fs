@@ -26,7 +26,24 @@ namespace B2R2.FrontEnd.BinLifter.ARM64
 
 open B2R2
 
-/// ARMv8 (AArch64) registers.
+/// <summary>
+///   ARMv8 registers. Below is how we encode register as a 20-bit integer.
+///   <para/>
+///   <code>
+///   19 18 17 16 15        ...        00 (bit position)
+///   +----------+----------------------+
+///   | Kind     |  Register ID.        |
+///   +----------+----------------------+
+///
+///   # Kind (19 - 16)
+///   - 0000 : General purpose registers.
+///   - 0001 : SIMD registers.
+///   - 0010 : VFP registers.
+///   - 0011 : Co-processor registers.
+///   - 0100 : Control flags.
+///   - 0101 : Control register.
+///   </code>
+/// </summary>
 type Register =
   /// X0.
   | X0 = 0x0
@@ -163,629 +180,490 @@ type Register =
   /// Program counter.
   | PC = 0x42
   /// V0.
-  | V0 = 0x43
+  | V0 = 0x1000
   /// V1.
-  | V1 = 0x44
+  | V1 = 0x1001
   /// V2.
-  | V2 = 0x45
+  | V2 = 0x1002
   /// V3.
-  | V3 = 0x46
+  | V3 = 0x1003
   /// V4.
-  | V4 = 0x47
+  | V4 = 0x1004
   /// V5.
-  | V5 = 0x48
+  | V5 = 0x1005
   /// V6.
-  | V6 = 0x49
+  | V6 = 0x1006
   /// V7.
-  | V7 = 0x4A
+  | V7 = 0x1007
   /// V8.
-  | V8 = 0x4B
+  | V8 = 0x1008
   /// V9.
-  | V9 = 0x4C
+  | V9 = 0x1009
   /// v10.
-  | V10 = 0x4D
+  | V10 = 0x100A
   /// V11.
-  | V11 = 0x4E
+  | V11 = 0x100B
   /// V12.
-  | V12 = 0x4F
+  | V12 = 0x100C
   /// V13.
-  | V13 = 0x50
+  | V13 = 0x100D
   /// V14.
-  | V14 = 0x51
+  | V14 = 0x100E
   /// V15.
-  | V15 = 0x52
+  | V15 = 0x100F
   /// V16.
-  | V16 = 0x53
+  | V16 = 0x1010
   /// V17.
-  | V17 = 0x54
+  | V17 = 0x1011
   /// V18.
-  | V18 = 0x55
+  | V18 = 0x1012
   /// V19.
-  | V19 = 0x56
+  | V19 = 0x1013
   /// V20.
-  | V20 = 0x57
+  | V20 = 0x1014
   /// V21.
-  | V21 = 0x58
+  | V21 = 0x1015
   /// V22.
-  | V22 = 0x59
+  | V22 = 0x1016
   /// V23.
-  | V23 = 0x5A
+  | V23 = 0x1017
   /// V24.
-  | V24 = 0x5B
+  | V24 = 0x1018
   /// V25.
-  | V25 = 0x5C
+  | V25 = 0x1019
   /// V26.
-  | V26 = 0x5D
+  | V26 = 0x102A
   /// V27.
-  | V27 = 0x5E
+  | V27 = 0x102B
   /// V28.
-  | V28 = 0x5F
+  | V28 = 0x102C
   /// V29.
-  | V29 = 0x60
+  | V29 = 0x102D
   /// V30.
-  | V30 = 0x61
+  | V30 = 0x102E
   /// V31.
-  | V31 = 0x62
+  | V31 = 0x102F
   /// B0.
-  | B0 = 0x63
+  | B0 = 0x2000
   /// B1.
-  | B1 = 0x64
+  | B1 = 0x2001
   /// B2.
-  | B2 = 0x65
+  | B2 = 0x2002
   /// B3.
-  | B3 = 0x66
+  | B3 = 0x2003
   /// B4.
-  | B4 = 0x67
+  | B4 = 0x2004
   /// B5.
-  | B5 = 0x68
+  | B5 = 0x2005
   /// B6.
-  | B6 = 0x69
+  | B6 = 0x2006
   /// B7.
-  | B7 = 0x6A
+  | B7 = 0x2007
   /// B8.
-  | B8 = 0x6B
+  | B8 = 0x2008
   /// B9.
-  | B9 = 0x6C
+  | B9 = 0x2009
   /// B10.
-  | B10 = 0x6D
+  | B10 = 0x200A
   /// B11.
-  | B11 = 0x6E
+  | B11 = 0x200B
   /// B12.
-  | B12 = 0x6F
+  | B12 = 0x200C
   /// B13.
-  | B13 = 0x70
+  | B13 = 0x200D
   /// B14.
-  | B14 = 0x71
+  | B14 = 0x200E
   /// B15.
-  | B15 = 0x72
+  | B15 = 0x200F
   /// B16.
-  | B16 = 0x73
+  | B16 = 0x2010
   /// B17.
-  | B17 = 0x74
+  | B17 = 0x2011
   /// B18.
-  | B18 = 0x75
+  | B18 = 0x2012
   /// B19.
-  | B19 = 0x76
+  | B19 = 0x2013
   /// B20.
-  | B20 = 0x77
+  | B20 = 0x2014
   /// B21.
-  | B21 = 0x78
+  | B21 = 0x2015
   /// B22.
-  | B22 = 0x79
+  | B22 = 0x2016
   /// B23.
-  | B23 = 0x7A
+  | B23 = 0x2017
   /// B24.
-  | B24 = 0x7B
+  | B24 = 0x2018
   /// B25.
-  | B25 = 0x7C
+  | B25 = 0x2019
   /// B26.
-  | B26 = 0x7D
+  | B26 = 0x201A
   /// B27.
-  | B27 = 0x7E
+  | B27 = 0x201B
   /// B28.
-  | B28 = 0x7F
+  | B28 = 0x201C
   /// B29.
-  | B29 = 0x80
+  | B29 = 0x201D
   /// B30.
-  | B30 = 0x81
+  | B30 = 0x201E
   /// B31.
-  | B31 = 0x82
+  | B31 = 0x201F
   /// H0.
-  | H0 = 0x83
+  | H0 = 0x2020
   /// H1.
-  | H1 = 0x84
+  | H1 = 0x2021
   /// H2.
-  | H2 = 0x85
+  | H2 = 0x2022
   /// H3.
-  | H3 = 0x86
+  | H3 = 0x2023
   /// H4.
-  | H4 = 0x87
+  | H4 = 0x2024
   /// H5.
-  | H5 = 0x88
+  | H5 = 0x2025
   /// H6.
-  | H6 = 0x89
+  | H6 = 0x2026
   /// H7.
-  | H7 = 0x8A
+  | H7 = 0x2027
   /// H8.
-  | H8 = 0x8B
+  | H8 = 0x2028
   /// H9.
-  | H9 = 0x8C
+  | H9 = 0x2029
   /// H10.
-  | H10 = 0x8D
+  | H10 = 0x202A
   /// H11.
-  | H11 = 0x8E
+  | H11 = 0x202B
   /// H12.
-  | H12 = 0x8F
+  | H12 = 0x202C
   /// H13.
-  | H13 = 0x90
+  | H13 = 0x202D
   /// H14.
-  | H14 = 0x91
+  | H14 = 0x202E
   /// H15.
-  | H15 = 0x92
+  | H15 = 0x202F
   /// H16.
-  | H16 = 0x93
+  | H16 = 0x2030
   /// H17.
-  | H17 = 0x94
+  | H17 = 0x2031
   /// H18.
-  | H18 = 0x95
+  | H18 = 0x2032
   /// H19.
-  | H19 = 0x96
+  | H19 = 0x2033
   /// H20.
-  | H20 = 0x97
+  | H20 = 0x2034
   /// H21.
-  | H21 = 0x98
+  | H21 = 0x2035
   /// H22.
-  | H22 = 0x99
+  | H22 = 0x2036
   /// H23.
-  | H23 = 0x9A
+  | H23 = 0x2037
   /// H24.
-  | H24 = 0x9B
+  | H24 = 0x2038
   /// H25.
-  | H25 = 0x9C
+  | H25 = 0x2039
   /// H26.
-  | H26 = 0x9D
+  | H26 = 0x203A
   /// H27.
-  | H27 = 0x9E
+  | H27 = 0x203B
   /// H28.
-  | H28 = 0x9F
+  | H28 = 0x203C
   /// H29.
-  | H29 = 0xA0
+  | H29 = 0x203D
   /// H30.
-  | H30 = 0xA1
+  | H30 = 0x203E
   /// H31.
-  | H31 = 0xA2
+  | H31 = 0x203F
   /// S0.
-  | S0 = 0xA3
+  | S0 = 0x2040
   /// S1.
-  | S1 = 0xA4
+  | S1 = 0x2041
   /// S2.
-  | S2 = 0xA5
+  | S2 = 0x2042
   /// S3.
-  | S3 = 0xA6
+  | S3 = 0x2043
   /// S4.
-  | S4 = 0xA7
+  | S4 = 0x2044
   /// S5.
-  | S5 = 0xA8
+  | S5 = 0x2045
   /// S6.
-  | S6 = 0xA9
+  | S6 = 0x2046
   /// S7.
-  | S7 = 0xAA
+  | S7 = 0x2047
   /// S8.
-  | S8 = 0xAB
+  | S8 = 0x2048
   /// S9.
-  | S9 = 0xAC
+  | S9 = 0x2049
   /// S10.
-  | S10 = 0xAD
+  | S10 = 0x204A
   /// S11.
-  | S11 = 0xAE
+  | S11 = 0x204B
   /// S12.
-  | S12 = 0xAF
+  | S12 = 0x204C
   /// S13.
-  | S13 = 0xB0
+  | S13 = 0x204D
   /// S14.
-  | S14 = 0xB1
+  | S14 = 0x204E
   /// S15.
-  | S15 = 0xB2
+  | S15 = 0x204F
   /// S16.
-  | S16 = 0xB3
+  | S16 = 0x2050
   /// S17.
-  | S17 = 0xB4
+  | S17 = 0x2051
   /// S18.
-  | S18 = 0xB5
+  | S18 = 0x2052
   /// S19.
-  | S19 = 0xB6
+  | S19 = 0x2053
   /// S20.
-  | S20 = 0xB7
+  | S20 = 0x2054
   /// S21.
-  | S21 = 0xB8
+  | S21 = 0x2055
   /// S22.
-  | S22 = 0xB9
+  | S22 = 0x2056
   /// S23.
-  | S23 = 0xBA
+  | S23 = 0x2057
   /// S24.
-  | S24 = 0xBB
+  | S24 = 0x2058
   /// S25.
-  | S25 = 0xBC
+  | S25 = 0x2059
   /// S26.
-  | S26 = 0xBD
+  | S26 = 0x205A
   /// S27.
-  | S27 = 0xBE
+  | S27 = 0x205B
   /// S28.
-  | S28 = 0xBF
+  | S28 = 0x205C
   /// S29.
-  | S29 = 0xC0
+  | S29 = 0x205D
   /// S30.
-  | S30 = 0xC1
+  | S30 = 0x205E
   /// S31.
-  | S31 = 0xC2
+  | S31 = 0x205F
   /// D0.
-  | D0 = 0xC3
+  | D0 = 0x2060
   /// D1.
-  | D1 = 0xC4
+  | D1 = 0x2061
   /// D2.
-  | D2 = 0xC5
+  | D2 = 0x2062
   /// D3.
-  | D3 = 0xC6
+  | D3 = 0x2063
   /// D4.
-  | D4 = 0xC7
+  | D4 = 0x2064
   /// D5.
-  | D5 = 0xC8
+  | D5 = 0x2065
   /// D6.
-  | D6 = 0xC9
+  | D6 = 0x2066
   /// D7.
-  | D7 = 0xCA
+  | D7 = 0x2067
   /// D8.
-  | D8 = 0xCB
+  | D8 = 0x2068
   /// D9.
-  | D9 = 0xCC
+  | D9 = 0x2069
   /// D10.
-  | D10 = 0xCD
+  | D10 = 0x206A
   /// D11.
-  | D11 = 0xCE
+  | D11 = 0x206B
   /// D12.
-  | D12 = 0xCF
+  | D12 = 0x206C
   /// D13.
-  | D13 = 0xD0
+  | D13 = 0x206D
   /// D14.
-  | D14 = 0xD1
+  | D14 = 0x206E
   /// D15.
-  | D15 = 0xD2
+  | D15 = 0x206F
   /// D16.
-  | D16 = 0xD3
+  | D16 = 0x2070
   /// D17.
-  | D17 = 0xD4
+  | D17 = 0x2071
   /// D18.
-  | D18 = 0xD5
+  | D18 = 0x2072
   /// D19.
-  | D19 = 0xD6
+  | D19 = 0x2073
   /// D20.
-  | D20 = 0xD7
+  | D20 = 0x2074
   /// D21.
-  | D21 = 0xD8
+  | D21 = 0x2075
   /// D22.
-  | D22 = 0xD9
+  | D22 = 0x2076
   /// D23.
-  | D23 = 0xDA
+  | D23 = 0x2077
   /// D24.
-  | D24 = 0xDB
+  | D24 = 0x2078
   /// D25.
-  | D25 = 0xDC
+  | D25 = 0x2079
   /// D26.
-  | D26 = 0xDD
+  | D26 = 0x207A
   /// D27.
-  | D27 = 0xDE
+  | D27 = 0x207B
   /// D28.
-  | D28 = 0xDF
+  | D28 = 0x207C
   /// D29.
-  | D29 = 0xE0
+  | D29 = 0x207D
   /// D30.
-  | D30 = 0xE1
+  | D30 = 0x207E
   /// D31.
-  | D31 = 0xE2
+  | D31 = 0x207F
   /// Q0.
-  | Q0 = 0xE3
+  | Q0 = 0x2080
   /// Q1.
-  | Q1 = 0xE4
+  | Q1 = 0x2081
   /// Q2.
-  | Q2 = 0xE5
+  | Q2 = 0x2082
   /// Q3.
-  | Q3 = 0xE6
+  | Q3 = 0x2083
   /// Q4.
-  | Q4 = 0xE7
+  | Q4 = 0x2084
   /// Q5.
-  | Q5 = 0xE8
+  | Q5 = 0x2085
   /// Q6.
-  | Q6 = 0xE9
+  | Q6 = 0x2086
   /// Q7.
-  | Q7 = 0xEA
+  | Q7 = 0x2087
   /// Q8.
-  | Q8 = 0xEB
+  | Q8 = 0x2088
   /// Q9.
-  | Q9 = 0xEC
+  | Q9 = 0x2089
   /// Q10.
-  | Q10 = 0xED
+  | Q10 = 0x208A
   /// Q11.
-  | Q11 = 0xEE
+  | Q11 = 0x208B
   /// Q12.
-  | Q12 = 0xEF
+  | Q12 = 0x208C
   /// Q13.
-  | Q13 = 0xF0
+  | Q13 = 0x208D
   /// Q14.
-  | Q14 = 0xF1
+  | Q14 = 0x208E
   /// Q15.
-  | Q15 = 0xF2
+  | Q15 = 0x208F
   /// Q16.
-  | Q16 = 0xF3
+  | Q16 = 0x2090
   /// Q17.
-  | Q17 = 0xF4
+  | Q17 = 0x2091
   /// Q18.
-  | Q18 = 0xF5
+  | Q18 = 0x2092
   /// Q19.
-  | Q19 = 0xF6
+  | Q19 = 0x2093
   /// Q20.
-  | Q20 = 0xF7
+  | Q20 = 0x2094
   /// Q21.
-  | Q21 = 0xF8
+  | Q21 = 0x2095
   /// Q22.
-  | Q22 = 0xF9
+  | Q22 = 0x2096
   /// Q23.
-  | Q23 = 0xFA
+  | Q23 = 0x2097
   /// Q24.
-  | Q24 = 0xFB
+  | Q24 = 0x2098
   /// Q25.
-  | Q25 = 0xFC
+  | Q25 = 0x2099
   /// Q26.
-  | Q26 = 0xFD
+  | Q26 = 0x209A
   /// Q27.
-  | Q27 = 0xFE
+  | Q27 = 0x209B
   /// Q28.
-  | Q28 = 0xFF
+  | Q28 = 0x209C
   /// Q29.
-  | Q29 = 0x100
+  | Q29 = 0x209D
   /// Q30.
-  | Q30 = 0x101
+  | Q30 = 0x209E
   /// Q31.
-  | Q31 = 0x102
-  /// V0A is the 1st 64-bit chunk of V0A.
-  | V0A = 0x103
-  /// V0B is the 2nd 64-bit chunk of V0B.
-  | V0B = 0x104
-  ///  V1A is the 1st 64-bit chunk of V1A.
-  | V1A = 0x105
-  /// V1B is the 2nd 64-bit chunk of V1B.
-  | V1B = 0x106
-  /// V2A is the 1st 64-bit chunk of V2A.
-  | V2A = 0x107
-  /// V2B is the 2nd 64-bit chunk of V2B.
-  | V2B = 0x108
-  /// V3A is the 1st 64-bit chunk of V3A.
-  | V3A = 0x109
-  /// V3B is the 2nd 64-bit chunk of V3B.
-  | V3B = 0x10A
-  /// V4A is the 1st 64-bit chunk of V4A.
-  | V4A = 0x10B
-  /// V4B is the 2nd 64-bit chunk of V4B.
-  | V4B = 0x10C
-  /// V5A is the 1st 64-bit chunk of V5A.
-  | V5A = 0x10D
-  /// V5B is the 2nd 64-bit chunk of V5B.
-  | V5B = 0x10E
-  /// V6A is the 1st 64-bit chunk of V6A.
-  | V6A = 0x10F
-  /// V6B is the 2nd 64-bit chunk of V6B.
-  | V6B = 0x110
-  /// V7A is the 1st 64-bit chunk of V7A.
-  | V7A = 0x111
-  /// V7B is the 2nd 64-bit chunk of V7B.
-  | V7B = 0x112
-  /// V8A is the 1st 64-bit chunk of V8A.
-  | V8A = 0x113
-  /// V8B is the 2nd 64-bit chunk of V8B.
-  | V8B = 0x114
-  /// V9A is the 1st 64-bit chunk of V9A.
-  | V9A = 0x115
-  /// V9B is the 2nd 64-bit chunk of V9B.
-  | V9B = 0x116
-  /// V10A is the 1st 64-bit chunk of V10A.
-  | V10A = 0x117
-  /// V10B is the 2nd 64-bit chunk of V10B.
-  | V10B = 0x118
-  /// V11A is the 1st 64-bit chunk of V11A.
-  | V11A = 0x119
-  /// V11B is the 2nd 64-bit chunk of V11B.
-  | V11B = 0x11A
-  /// V12A is the 1st 64-bit chunk of V12A.
-  | V12A = 0x11B
-  /// V12B is the 2nd 64-bit chunk of V12B.
-  | V12B = 0x11C
-  /// V13A is the 1st 64-bit chunk of V13A.
-  | V13A = 0x11D
-  /// V13B is the 2nd 64-bit chunk of V13B.
-  | V13B = 0x11E
-  /// V14A is the 1st 64-bit chunk of V14A.
-  | V14A = 0x11F
-  /// V14B is the 2nd 64-bit chunk of V14B.
-  | V14B = 0x120
-  /// V15A is the 1st 64-bit chunk of V15A.
-  | V15A = 0x121
-  /// V15B is the 2nd 64-bit chunk of V15B.
-  | V15B = 0x122
-  /// V16A is the 1st 64-bit chunk of V16A.
-  | V16A = 0x123
-  /// V16B is the 2nd 64-bit chunk of V16B.
-  | V16B = 0x124
-  /// V17A is the 1st 64-bit chunk of V17A.
-  | V17A = 0x125
-  /// V17B is the 2nd 64-bit chunk of V17B.
-  | V17B = 0x126
-  /// V18A is the 1st 64-bit chunk of V18A.
-  | V18A = 0x127
-  /// V18B is the 2nd 64-bit chunk of V18B.
-  | V18B = 0x128
-  /// V19A is the 1st 64-bit chunk of V19A.
-  | V19A = 0x129
-  /// V19B is the 2nd 64-bit chunk of V19B.
-  | V19B = 0x12A
-  /// V20A is the 1st 64-bit chunk of V20A.
-  | V20A = 0x12B
-  /// V20B is the 2nd 64-bit chunk of V20B.
-  | V20B = 0x12C
-  /// V21A is the 1st 64-bit chunk of V21A.
-  | V21A = 0x12D
-  /// V21B is the 2nd 64-bit chunk of V21B.
-  | V21B = 0x12E
-  /// V22A is the 1st 64-bit chunk of V22A.
-  | V22A = 0x12F
-  /// V22B is the 2nd 64-bit chunk of V22B.
-  | V22B = 0x130
-  /// V23A is the 1st 64-bit chunk of V23A.
-  | V23A = 0x131
-  /// V23B is the 2nd 64-bit chunk of V23B.
-  | V23B = 0x132
-  /// V24A is the 1st 64-bit chunk of V24A.
-  | V24A = 0x133
-  /// V24B is the 2nd 64-bit chunk of V24B.
-  | V24B = 0x134
-  /// V25A is the 1st 64-bit chunk of V25A.
-  | V25A = 0x135
-  /// V25B is the 2nd 64-bit chunk of V25B.
-  | V25B = 0x136
-  /// V26A is the 1st 64-bit chunk of V26A.
-  | V26A = 0x137
-  /// V26B is the 2nd 64-bit chunk of V26B.
-  | V26B = 0x138
-  /// V27A is the 1st 64-bit chunk of V27A.
-  | V27A = 0x139
-  /// V27B is the 2nd 64-bit chunk of V27B.
-  | V27B = 0x13A
-  /// V28A is the 1st 64-bit chunk of V28A.
-  | V28A = 0x13B
-  /// V28B is the 2nd 64-bit chunk of V28B.
-  | V28B = 0x13C
-  /// V29A is the 1st 64-bit chunk of V29A.
-  | V29A = 0x13D
-  /// V29B is the 2nd 64-bit chunk of V29B.
-  | V29B = 0x13E
-  /// V30A is the 1st 64-bit chunk of V30A.
-  | V30A = 0x13F
-  /// V30B is the 2nd 64-bit chunk of V30B.
-  | V30B = 0x140
-  /// V31A is the 1st 64-bit chunk of V31A.
-  | V31A = 0x141
-  /// V31B is the 2nd 64-bit chunk of V31B.
-  | V31B = 0x142
+  | Q31 = 0x209F
+  /// Co-processor register
   /// C0.
-  | C0 = 0x143
+  | C0 = 0x3000
   /// C1.
-  | C1 = 0x144
+  | C1 = 0x3001
   /// C2.
-  | C2 = 0x145
+  | C2 = 0x3002
   /// C3.
-  | C3 = 0x146
+  | C3 = 0x3003
   /// C4.
-  | C4 = 0x147
+  | C4 = 0x3004
   /// C5.
-  | C5 = 0x148
+  | C5 = 0x3005
   /// C6
-  | C6 = 0x149
+  | C6 = 0x3006
   /// C7.
-  | C7 = 0x14A
+  | C7 = 0x3007
   /// C8.
-  | C8 = 0x14B
+  | C8 = 0x3008
   /// C9.
-  | C9 = 0x14C
+  | C9 = 0x3009
   /// C10.
-  | C10 = 0x14D
+  | C10 = 0x300A
   /// C11.
-  | C11 = 0x14E
+  | C11 = 0x300B
   /// C12.
-  | C12 = 0x14F
+  | C12 = 0x300C
   /// C13.
-  | C13 = 0x150
+  | C13 = 0x300D
   /// C14.
-  | C14 = 0x151
+  | C14 = 0x300E
   /// C15.
-  | C15 = 0x152
+  | C15 = 0x300F
   /// Negative condition flag.
-  | N = 0x153
+  | N = 0x4000
   /// Zero condition flag.
-  | Z = 0x154
+  | Z = 0x4001
   /// Carry condition flag.
-  | C = 0x155
+  | C = 0x4002
   /// Overflow condition flag.
-  | V = 0x156
+  | V = 0x4003
   /// Auxiliary Control Register (EL1).
-  | ACTLREL1 = 0x157
+  | ACTLREL1 = 0x5000
   /// Auxiliary Control Register (EL2).
-  | ACTLREL2 = 0x158
+  | ACTLREL2 = 0x5001
   /// Auxiliary Control Register (EL3).
-  | ACTLREL3 = 0x159
+  | ACTLREL3 = 0x5002
   /// Auxiliary Fault Status Register 0 (EL1).
-  | AFSR0EL1 = 0x15A
+  | AFSR0EL1 = 0x5003
   /// Auxiliary Fault Status Register 0 (EL2).
-  | AFSR0EL2 = 0x15B
+  | AFSR0EL2 = 0x5004
   /// Auxiliary Fault Status Register 0 (EL3).
-  | AFSR0EL3 = 0x15C
+  | AFSR0EL3 = 0x5005
   /// Auxiliary Fault Status Register 1 (EL1).
-  | AFSR1EL1 = 0x15D
+  | AFSR1EL1 = 0x5006
   /// Auxiliary Fault Status Register 1 (EL2).
-  | AFSR1EL2 = 0x15E
+  | AFSR1EL2 = 0x5007
   /// Auxiliary Fault Status Register 1 (EL3).
-  | AFSR1EL3 = 0x15F
+  | AFSR1EL3 = 0x5008
   /// Auxiliary ID Register.
-  | AIDREL1 = 0x160
+  | AIDREL1 = 0x5009
   /// Auxiliary Memory Attribute Indirection Register (EL1).
-  | AMAIREL1 = 0x161
+  | AMAIREL1 = 0x500A
   /// Auxiliary Memory Attribute Indirection Register (EL2).
-  | AMAIREL2 = 0x162
+  | AMAIREL2 = 0x500B
   /// Auxiliary Memory Attribute Indirection Register (EL3).
-  | AMAIREL3 = 0x163
+  | AMAIREL3 = 0x500C
   /// Current Cache Size ID Register.
-  | CCSIDREL1 = 0x164
+  | CCSIDREL1 = 0x500D
   /// Cache Level ID Register.
-  | CLIDREL1 = 0x165
+  | CLIDREL1 = 0x500E
   /// Context ID Register (EL1).
-  | CONTEXTIDREL1 = 0x166
+  | CONTEXTIDREL1 = 0x500F
   /// Architectural Feature Access Control Register.
-  | CPACREL1 = 0x167
+  | CPACREL1 = 0x5010
   /// Architectural Feature Trap Register (EL2).
-  | CPTREL2 = 0x168
+  | CPTREL2 = 0x5011
   /// Architectural Feature Trap Register (EL3).
-  | CPTREL3 = 0x169
+  | CPTREL3 = 0x5012
   /// Cache Size Selection Register.
-  | CSSELREL1 = 0x16A
+  | CSSELREL1 = 0x5013
   /// Cache Type Register.
-  | CTREL0 = 0x16B
+  | CTREL0 = 0x5014
   /// Domain Access Control Register.
-  | DACR32EL2 = 0x16C
+  | DACR32EL2 = 0x5015
   /// Data Cache Zero ID register.
-  | DCZIDEL0 = 0x16D
+  | DCZIDEL0 = 0x5016
   /// Exception Syndrome Register (EL1).
-  | ESREL1 = 0x16E
+  | ESREL1 = 0x5017
   /// Exception Syndrome Register (EL2).
-  | ESREL2 = 0x16F
+  | ESREL2 = 0x5018
   /// Exception Syndrome Register (EL3).
-  | ESREL3 = 0x170
+  | ESREL3 = 0x5019
   /// Hypervisor IPA Fault Address Register.
-  | HPFAREL2 = 0x171
+  | HPFAREL2 = 0x501A
   /// EL0 Read/Write Software Thread ID Register.
-  | TPIDREL0 = 0x172
-  /// Main ID Register.
-  | MIDREL1 = 0x173
+  | TPIDREL0 = 0x501B
   /// Floating-point Control Register.
-  | FPCR = 0x174
+  | FPCR = 0x501C
   /// Floating-point Status Register.
-  | FPSR = 0x175
-  /// Pseudo register for passing a return value from an external call. This is
-  /// used to handle instruction semantics for Exclusive Monitor (EM).
-  | ERET = 0x176
-  /// Condition Flags.
-  | NZCV = 0x177
-  /// S<op0>_<op1>_<Cn>_<Cm>_<op2>.
-  | S3_5_C3_C2_0 = 0x178
-  | S3_7_C2_C2_7 = 0x179
-  | S0_0_C2_C9_3 = 0x180
-  | S2_7_C12_C7_6 = 0x181
+  | FPSR = 0x501D
 
 /// Shortcut for Register type.
 type internal R = Register
@@ -800,7 +678,7 @@ module Register =
     LanguagePrimitives.EnumToValue (reg) |> RegisterID.create
 
   let ofString (str: string) =
-    match str.ToLowerInvariant () with
+    match str.ToLower () with
     | "x0" -> R.X0
     | "x1" -> R.X1
     | "x2" -> R.X2
@@ -1060,70 +938,6 @@ module Register =
     | "q29" -> R.Q29
     | "q30" -> R.Q30
     | "q31" -> R.Q31
-    | "v0a" -> R.V0A
-    | "v0b" -> R.V0B
-    | "v1a" -> R.V1A
-    | "v1b" -> R.V1B
-    | "v2a" -> R.V2A
-    | "v2b" -> R.V2B
-    | "v3a" -> R.V3A
-    | "v3b" -> R.V3B
-    | "v4a" -> R.V4A
-    | "v4b" -> R.V4B
-    | "v5a" -> R.V5A
-    | "v5b" -> R.V5B
-    | "v6a" -> R.V6A
-    | "v6b" -> R.V6B
-    | "v7a" -> R.V7A
-    | "v7b" -> R.V7B
-    | "v8a" -> R.V8A
-    | "v8b" -> R.V8B
-    | "v9a" -> R.V9A
-    | "v9b" -> R.V9B
-    | "v10a" -> R.V10A
-    | "v10b" -> R.V10B
-    | "v11a" -> R.V11A
-    | "v11b" -> R.V11B
-    | "v12a" -> R.V12A
-    | "v12b" -> R.V12B
-    | "v13a" -> R.V13A
-    | "v13b" -> R.V13B
-    | "v14a" -> R.V14A
-    | "v14b" -> R.V14B
-    | "v15a" -> R.V15A
-    | "v15b" -> R.V15B
-    | "v16a" -> R.V16A
-    | "v16b" -> R.V16B
-    | "v17a" -> R.V17A
-    | "v17b" -> R.V17B
-    | "v18a" -> R.V18A
-    | "v18b" -> R.V18B
-    | "v19a" -> R.V19A
-    | "v19b" -> R.V19B
-    | "v20a" -> R.V20A
-    | "v20b" -> R.V20B
-    | "v21a" -> R.V21A
-    | "v21b" -> R.V21B
-    | "v22a" -> R.V22A
-    | "v22b" -> R.V22B
-    | "v23a" -> R.V23A
-    | "v23b" -> R.V23B
-    | "v24a" -> R.V24A
-    | "v24b" -> R.V24B
-    | "v25a" -> R.V25A
-    | "v25b" -> R.V25B
-    | "v26a" -> R.V26A
-    | "v26b" -> R.V26B
-    | "v27a" -> R.V27A
-    | "v27b" -> R.V27B
-    | "v28a" -> R.V28A
-    | "v28b" -> R.V28B
-    | "v29a" -> R.V29A
-    | "v29b" -> R.V29B
-    | "v30a" -> R.V30A
-    | "v30b" -> R.V30B
-    | "v31a" -> R.V31A
-    | "v31b" -> R.V31B
     | "c0" -> R.C0
     | "c1" -> R.C1
     | "c2" -> R.C2
@@ -1172,15 +986,8 @@ module Register =
     | "esrel3" -> R.ESREL3
     | "hpfarel2" -> R.HPFAREL2
     | "tpidrel0" -> R.TPIDREL0
-    | "midrel1" -> R.MIDREL1
     | "fpcr" -> R.FPCR
     | "fpsr" -> R.FPSR
-    | "eret" -> R.ERET
-    | "nzcv" -> R.NZCV
-    | "s3_5_c3_c2_0" -> R.S3_5_C3_C2_0
-    | "s3_7_c2_c2_7" -> R.S3_7_C2_C2_7
-    | "s0_0_c2_c9_3" -> R.S0_0_C2_C9_3
-    | "s2_7_c12_c7_6" -> R.S2_7_C12_C7_6
     | _ -> Utils.impossible ()
 
   let toString = function
@@ -1443,70 +1250,6 @@ module Register =
     | R.Q29 -> "q29"
     | R.Q30 -> "q30"
     | R.Q31 -> "q31"
-    | R.V0A -> "v0a"
-    | R.V0B -> "v0b"
-    | R.V1A -> "v1a"
-    | R.V1B -> "v1b"
-    | R.V2A -> "v2a"
-    | R.V2B -> "v2b"
-    | R.V3A -> "v3a"
-    | R.V3B -> "v3b"
-    | R.V4A -> "v4a"
-    | R.V4B -> "v4b"
-    | R.V5A -> "v5a"
-    | R.V5B -> "v5b"
-    | R.V6A -> "v6a"
-    | R.V6B -> "v6b"
-    | R.V7A -> "v7a"
-    | R.V7B -> "v7b"
-    | R.V8A -> "v8a"
-    | R.V8B -> "v8b"
-    | R.V9A -> "v9a"
-    | R.V9B -> "v9b"
-    | R.V10A -> "v10a"
-    | R.V10B -> "v10b"
-    | R.V11A -> "v11a"
-    | R.V11B -> "v11b"
-    | R.V12A -> "v12a"
-    | R.V12B -> "v12b"
-    | R.V13A -> "v13a"
-    | R.V13B -> "v13b"
-    | R.V14A -> "v14a"
-    | R.V14B -> "v14b"
-    | R.V15A -> "v15a"
-    | R.V15B -> "v15b"
-    | R.V16A -> "v16a"
-    | R.V16B -> "v16b"
-    | R.V17A -> "v17a"
-    | R.V17B -> "v17b"
-    | R.V18A -> "v18a"
-    | R.V18B -> "v18b"
-    | R.V19A -> "v19a"
-    | R.V19B -> "v19b"
-    | R.V20A -> "v20a"
-    | R.V20B -> "v20b"
-    | R.V21A -> "v21a"
-    | R.V21B -> "v21b"
-    | R.V22A -> "v22a"
-    | R.V22B -> "v22b"
-    | R.V23A -> "v23a"
-    | R.V23B -> "v23b"
-    | R.V24A -> "v24a"
-    | R.V24B -> "v24b"
-    | R.V25A -> "v25a"
-    | R.V25B -> "v25b"
-    | R.V26A -> "v26a"
-    | R.V26B -> "v26b"
-    | R.V27A -> "v27a"
-    | R.V27B -> "v27b"
-    | R.V28A -> "v28a"
-    | R.V28B -> "v28b"
-    | R.V29A -> "v29a"
-    | R.V29B -> "v29b"
-    | R.V30A -> "v30a"
-    | R.V30B -> "v30b"
-    | R.V31A -> "v31a"
-    | R.V31B -> "v31b"
     | R.C0 -> "c0"
     | R.C1 -> "c1"
     | R.C2 -> "c2"
@@ -1555,15 +1298,8 @@ module Register =
     | R.ESREL3 -> "esr_el3"
     | R.HPFAREL2 -> "hpfar_el2"
     | R.TPIDREL0 -> "tpidr_el0"
-    | R.MIDREL1 -> "midr_el1"
     | R.FPCR -> "fpcr"
     | R.FPSR -> "fpsr"
-    | R.ERET -> "eret"
-    | R.NZCV -> "nzcv"
-    | R.S3_5_C3_C2_0 -> "s3_5_c3_c2_0"
-    | R.S3_7_C2_C2_7 -> "s3_7_c2_c2_7"
-    | R.S0_0_C2_C9_3 -> "s0_0_c2_c9_3"
-    | R.S2_7_C12_C7_6 -> "s2_7_c12_c7_6"
     | _ -> Utils.impossible ()
 
   let toRegType = function
@@ -1575,15 +1311,7 @@ module Register =
     | R.D10 | R.D11 | R.D12 | R.D13 | R.D14 | R.D15 | R.D16 | R.D17 | R.D18
     | R.D19 | R.D20 | R.D21 | R.D22 | R.D23 | R.D24 | R.D25 | R.D26 | R.D27
     | R.D28 | R.D29 | R.D30 | R.D31
-    | R.V0A | R.V0B | R.V1A | R.V1B | R.V2A | R.V2B | R.V3A | R.V3B
-    | R.V4A | R.V4B | R.V5A | R.V5B | R.V6A | R.V6B | R.V7A | R.V7B
-    | R.V8A | R.V8B | R.V9A | R.V9B | R.V10A | R.V10B | R.V11A | R.V11B
-    | R.V12A | R.V12B | R.V13A | R.V13B | R.V14A | R.V14B | R.V15A | R.V15B
-    | R.V16A | R.V16B | R.V17A | R.V17B | R.V18A | R.V18B | R.V19A | R.V19B
-    | R.V20A | R.V20B | R.V21A | R.V21B | R.V22A | R.V22B | R.V23A | R.V23B
-    | R.V24A | R.V24B | R.V25A | R.V25B | R.V26A | R.V26B | R.V27A | R.V27B
-    | R.V28A | R.V28B | R.V29A | R.V29B | R.V30A | R.V30B | R.V31A | R.V31B
-    | R.FPCR | R.FPSR | R.ERET | R.NZCV -> 64<rt>
+    | R.FPCR | R.FPSR -> 64<rt>
     | R.W0 | R.W1 | R.W2 | R.W3 | R.W4 | R.W5 | R.W6 | R.W7 | R.W8 | R.W9
     | R.W10 | R.W11 | R.W12 | R.W13 | R.W14 | R.W15 | R.W16 | R.W17 | R.W18
     | R.W19 | R.W20 | R.W21 | R.W22 | R.W23 | R.W24 | R.W25 | R.W26 | R.W27
@@ -1611,37 +1339,3 @@ module Register =
     | R.N | R.Z | R.C | R.V -> 1<rt>
     | _ -> Utils.impossible ()
 
-  let getOrgSIMDReg = function
-    | R.B0 | R.H0 | R.S0 | R.D0 | R.Q0 -> R.V0
-    | R.B1 | R.H1 | R.S1 | R.D1 | R.Q1 -> R.V1
-    | R.B2 | R.H2 | R.S2 | R.D2 | R.Q2 -> R.V2
-    | R.B3 | R.H3 | R.S3 | R.D3 | R.Q3 -> R.V3
-    | R.B4 | R.H4 | R.S4 | R.D4 | R.Q4 -> R.V4
-    | R.B5 | R.H5 | R.S5 | R.D5 | R.Q5 -> R.V5
-    | R.B6 | R.H6 | R.S6 | R.D6 | R.Q6 -> R.V6
-    | R.B7 | R.H7 | R.S7 | R.D7 | R.Q7 -> R.V7
-    | R.B8 | R.H8 | R.S8 | R.D8 | R.Q8 -> R.V8
-    | R.B9 | R.H9 | R.S9 | R.D9 | R.Q9 -> R.V9
-    | R.B10 | R.H10 | R.S10 | R.D10 | R.Q10 -> R.V10
-    | R.B11 | R.H11 | R.S11 | R.D11 | R.Q11 -> R.V11
-    | R.B12 | R.H12 | R.S12 | R.D12 | R.Q12 -> R.V12
-    | R.B13 | R.H13 | R.S13 | R.D13 | R.Q13 -> R.V13
-    | R.B14 | R.H14 | R.S14 | R.D14 | R.Q14 -> R.V14
-    | R.B15 | R.H15 | R.S15 | R.D15 | R.Q15 -> R.V15
-    | R.B16 | R.H16 | R.S16 | R.D16 | R.Q16 -> R.V16
-    | R.B17 | R.H17 | R.S17 | R.D17 | R.Q17 -> R.V17
-    | R.B18 | R.H18 | R.S18 | R.D18 | R.Q18 -> R.V18
-    | R.B19 | R.H19 | R.S19 | R.D19 | R.Q19 -> R.V19
-    | R.B20 | R.H20 | R.S20 | R.D20 | R.Q20 -> R.V20
-    | R.B21 | R.H21 | R.S21 | R.D21 | R.Q21 -> R.V21
-    | R.B22 | R.H22 | R.S22 | R.D22 | R.Q22 -> R.V22
-    | R.B23 | R.H23 | R.S23 | R.D23 | R.Q23 -> R.V23
-    | R.B24 | R.H24 | R.S24 | R.D24 | R.Q24 -> R.V24
-    | R.B25 | R.H25 | R.S25 | R.D25 | R.Q25 -> R.V25
-    | R.B26 | R.H26 | R.S26 | R.D26 | R.Q26 -> R.V26
-    | R.B27 | R.H27 | R.S27 | R.D27 | R.Q27 -> R.V27
-    | R.B28 | R.H28 | R.S28 | R.D28 | R.Q28 -> R.V28
-    | R.B29 | R.H29 | R.S29 | R.D29 | R.Q29 -> R.V29
-    | R.B30 | R.H30 | R.S30 | R.D30 | R.Q30 -> R.V30
-    | R.B31 | R.H31 | R.S31 | R.D31 | R.Q31 -> R.V31
-    | _ -> Utils.impossible ()

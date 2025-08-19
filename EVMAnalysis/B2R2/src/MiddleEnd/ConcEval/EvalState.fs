@@ -24,210 +24,209 @@
 
 namespace B2R2.MiddleEnd.ConcEval
 
-open System.Runtime.InteropServices
 open B2R2
 open B2R2.BinIR
 
-type LoadFailureEventHandler =
-  delegate of Addr * Addr * RegType * ErrorCase -> Result<BitVector, ErrorCase>
-
-and ExternalCallEventHandler =
-  delegate of BitVector list * EvalState -> unit
-
-and SideEffectEventHandler =
-  delegate of SideEffect * EvalState -> unit
-
-/// The main evaluation state that will be updated by evaluating every statement
-/// encountered during the course of execution. This can be considered as a
-/// single-threaded CPU context.
-and EvalState (regs, temps, lbls, mem, ignoreUndef) =
-  let mutable pc = 0UL
-  let mutable stmtIdx = 0
-  let mutable mode = ArchOperationMode.NoMode
-  let mutable currentInsLen = 0u
-  let mutable isInstrTerminated = false
-  let mutable needToEvaluateIEMark = false
-  let mutable loadFailureHdl = LoadFailureEventHandler (fun _ _ _ e -> Error e)
-  let mutable externalCallEventHdl = ExternalCallEventHandler (fun _ _ -> ())
-  let mutable sideEffectHdl = SideEffectEventHandler (fun _ _ -> ())
-
-  /// This constructor will simply create a fresh new EvalState.
-  new () =
-    EvalState (Variables (),
-               Variables (),
-               Labels (),
-               NonsharableMemory () :> Memory,
-               false)
-
-  /// This constructor will simply create a fresh new EvalState with the given
-  /// memory.
-  new (mem) =
-    EvalState (Variables (),
-               Variables (),
-               Labels (),
-               mem,
-               false)
-
-  /// This constructor will simply create a fresh new EvalState. Depending on
-  /// the `ignoreUndef` parameter, the evaluator using this EvalState will
-  /// silently ignore Undef values. Such a feature is only useful for some
-  /// static analyses.
-  new (ignoreUndef) =
-    EvalState (Variables (),
-               Variables (),
-               Labels (),
-               NonsharableMemory () :> Memory,
-               ignoreUndef)
-
-  /// Current PC.
-  member __.PC with get() = pc and set(addr) = pc <- addr
-
+type Context () =
   /// The current index of the statement to evaluate within the scope of a
   /// machine instruction. This index behaves like a PC for statements of an
   /// instruction.
-  member __.StmtIdx with get() = stmtIdx and set(i) = stmtIdx <- i
+  member val StmtIdx = 0 with get, set
 
-  /// Architecture mode.
-  member __.Mode with get() = mode and set(m) = mode <- m
+  /// The current program counter.
+  member val PC: Addr = 0UL with get, set
 
-  /// Current instruction length.
-  member __.CurrentInsLen
-    with get() = currentInsLen and set(l) = currentInsLen <- l
+  /// Store named register values.
+  member val Registers = Variables<RegisterID>() with get
 
-  /// Named register values.
-  member __.Registers with get() = regs
-
-  /// Temporary variable values.
-  member __.Temporaries with get() = temps
-
-  /// Memory.
-  member __.Memory with get() = mem
+  /// Store temporary variable values.
+  member val Temporaries = Variables<int>() with get
 
   /// Store labels and their corresponding statement indices.
-  member __.Labels with get() = lbls
+  member val Labels = Labels () with get
+
+  /// Architecture mode.
+  member val Mode = ArchOperationMode.NoMode with get, set
+
+type EvalCallBacks () =
+  /// Per-instruction handler.
+  member val PerInstrHandler: EvalState -> EvalState =
+    fun st -> st with get, set
+
+  /// Memory load event handler.
+  member val LoadEventHandler: Addr -> Addr -> BitVector -> unit =
+    fun _ _ _ -> () with get, set
+
+  /// Memory store event handler.
+  member val StoreEventHandler: Addr -> Addr -> BitVector -> unit =
+    fun _ _ _ -> () with get, set
+
+  /// Put event handler. The first parameter is PC, and the second is the value
+  /// that is put to the destination.
+  member val PutEventHandler: Addr -> BitVector -> unit =
+    fun _ _ -> () with get, set
+
+  /// Side-effect event handler.
+  member val SideEffectEventHandler: SideEffect -> EvalState -> unit =
+    fun _ st -> () with get, set
+
+  /// Statement evaluation event handler.
+  member val StmtEvalEventHandler: LowUIR.Stmt -> unit =
+    fun _ -> () with get, set
+
+  member __.OnInstr st = __.PerInstrHandler st
+
+  member __.OnLoad pc addr v = __.LoadEventHandler pc addr v
+
+  member __.OnStore pc addr v = __.StoreEventHandler pc addr v
+
+  member __.OnPut pc v = __.PutEventHandler pc v
+
+  member __.OnSideEffect eff st = __.SideEffectEventHandler eff st
+
+  member __.OnStmtEval stmt = __.StmtEvalEventHandler stmt
+
+/// The main evaluation state that will be updated by evaluating every statement
+/// encountered during the course of execution.
+and EvalState (?reader, ?ignoreundef) =
+  /// Memory reader.
+  let reader = defaultArg reader (fun _ _ -> Error ErrorCase.InvalidMemoryRead)
+
+  /// The current thread ID. We use thread IDs starting from zero. We assign new
+  /// thread IDs by incrementing it by one at a time. The first thread is 0, the
+  /// second is 1, and so on.
+  member val ThreadId = 0 with get, set
+
+  /// Current PC.
+  member __.PC
+    with get() = __.Contexts.[__.ThreadId].PC
+     and set(addr) = __.Contexts.[__.ThreadId].PC <- addr
+
+  /// Per-thread context.
+  member val Contexts: Context [] = [||] with get, set
+
+  /// Memory.
+  member val Memory = Memory (reader) with get
+
+  /// Callback functions.
+  member val Callbacks = EvalCallBacks () with get
 
   /// Indicate whether to terminate the current instruction or not. This flag is
-  /// set to true when we encounter an inter-jump statement or SideEffect, so
-  /// that we can ignore the rest of the statements.
-  member __.IsInstrTerminated
-    with get() = isInstrTerminated and set(f) = isInstrTerminated <- f
+  /// set to true when we encounter an inter-jump statement, so that we can
+  /// ignore the rest of the statements.
+  member val IsInstrTerminated = false with get, set
 
-  /// Indicate whether to evaluate IEMark while ignoring the other instructions.
-  /// This means, the evaluation of the instruction is over, but we need to
-  /// advance the PC to the next instruction using IEMark. Thus, this flag is
-  /// only meaningful when `IsInstrTerminated` is true.
-  member __.NeedToEvaluateIEMark
-    with get() = needToEvaluateIEMark and set(f) = needToEvaluateIEMark <- f
+  /// Indicate whether we are in an abnormal state. If so, the rest of the
+  /// evaluation should be aborted. This flag should never be set in normal
+  /// situation.
+  member val InPrematureState = false with get, set
 
   /// Whether to ignore statements that cannot be evaluated due to undef values.
   /// This is particularly useful to quickly check some constants.
-  member __.IgnoreUndef with get() = ignoreUndef
+  member val IgnoreUndef = defaultArg ignoreundef false with get
+
+  /// Get the context of a specific thread.
+  member inline __.GetContext tid =
+    __.Contexts.[tid]
+
+  /// Get the current context of the current thread.
+  member inline __.GetCurrentContext () =
+    __.Contexts.[__.ThreadId]
 
   /// Update the current statement index to be the next (current + 1) statement.
   member inline __.NextStmt () =
-    __.StmtIdx <- __.StmtIdx + 1
+    __.Contexts.[__.ThreadId].StmtIdx <- __.Contexts.[__.ThreadId].StmtIdx + 1
 
   /// Stop evaluating further statements of the current instruction, and move on
   /// the next instruction.
-  member __.AbortInstr ([<Optional; DefaultParameterValue(false)>]
-                        needToUpdatePC: bool) =
-    isInstrTerminated <- true
-    needToEvaluateIEMark <- needToUpdatePC
+  member inline __.AbortInstr () =
+    __.IsInstrTerminated <- true
     __.NextStmt ()
+
+  /// Start evaluating the instruction.
+  member inline __.StartInstr () =
+    __.IsInstrTerminated <- false
 
   /// Get the value of the given temporary variable.
   member inline __.TryGetTmp n =
-    match __.Temporaries.TryGet (n) with
-    | Ok v -> Def v
-    | Error _ -> Undef
+    let found, v = __.Contexts.[__.ThreadId].Temporaries.TryGet (n)
+    if found then Def v else Undef
 
   /// Get the value of the given temporary variable.
   member inline __.GetTmp n =
-    __.Temporaries.Get (n)
+    __.Contexts.[__.ThreadId].Temporaries.Get (n)
 
   /// Set the value for the given temporary variable.
   member inline __.SetTmp n v =
-    __.Temporaries.Set n v
+    __.Contexts.[__.ThreadId].Temporaries.Set n v
 
   /// Unset the given temporary variable.
   member inline __.UnsetTmp n =
-    __.Temporaries.Unset n
+    __.Contexts.[__.ThreadId].Temporaries.Unset n
 
   /// Get the value of the given register.
-  member inline __.TryGetReg (r: RegisterID) =
-    match __.Registers.TryGet (int r) with
-    | Ok v -> Def v
-    | Error _ -> Undef
+  member inline __.TryGetReg r =
+    let found, v = __.Contexts.[__.ThreadId].Registers.TryGet r
+    if found then Def v else Undef
 
   /// Get the value of the given register.
-  member inline __.GetReg (r: RegisterID) =
-    __.Registers.Get (int r)
+  member inline __.GetReg r =
+    __.Contexts.[__.ThreadId].Registers.Get r
 
   /// Set the value for the given register.
-  member inline __.SetReg (r: RegisterID) v =
-    __.Registers.Set (int r) v
+  member inline __.SetReg r v =
+    __.Contexts.[__.ThreadId].Registers.Set r v
 
   /// Unset the given register.
-  member inline __.UnsetReg (r: RegisterID) =
-    __.Registers.Unset (int r)
+  member inline __.UnsetReg r =
+    __.Contexts.[__.ThreadId].Registers.Unset r
 
-  /// Advance PC by `amount`.
-  member inline __.AdvancePC (amount: uint32) =
+  /// Get the program counter (PC).
+  member inline __.GetPC =
+    __.PC
+
+  /// Set the program counter (PC).
+  member inline __.SetPC addr =
+    __.PC <- addr
+
+  member inline __.IncPC (amount: uint32) =
     __.PC <- __.PC + uint64 amount
 
-  /// Initialize the current context by updating register values.
-  member __.InitializeContext pc regs =
-    __.PC <- pc
+  /// Thread context switch. If the given thread ID does not exist, we create a
+  /// new context for it.
+  member __.ContextSwitch tid =
+    __.ThreadId <- tid
+    if Array.length __.Contexts <= tid then
+      __.Contexts <- Array.append __.Contexts [| Context () |]
+    else ()
+
+  /// Prepare the initial context of the given thread id (tid). This function
+  /// will set the current thread to be tid.
+  member __.PrepareContext tid pc regs =
+    __.ContextSwitch tid
+    __.SetPC pc
     regs |> List.iter (fun (r, v) -> __.SetReg r v)
 
   /// Go to the statement of the given label.
   member inline __.GoToLabel lbl =
-    __.StmtIdx <- __.Labels.Index lbl
+    let ctxt = __.Contexts.[__.ThreadId]
+    ctxt.StmtIdx <- ctxt.Labels.Index lbl
 
-  /// Get ready for evaluating a new instruction.
+  /// Get ready for evaluating an instruction.
   member inline __.PrepareInstrEval stmts =
-    __.IsInstrTerminated <- false
-    __.NeedToEvaluateIEMark <- false
-    __.Labels.Update stmts
-    __.StmtIdx <- 0
+    __.StartInstr ()
+    __.Contexts.[__.ThreadId].Labels.Update stmts
+    __.Contexts.[__.ThreadId].StmtIdx <- 0
 
-  /// Memory load failure (access violation) event handler.
-  member __.LoadFailureEventHandler
-    with get() = loadFailureHdl and set(f) = loadFailureHdl <- f
+  /// Get the current architecture operation mode.
+  member inline __.GetMode () =
+    __.Contexts.[__.ThreadId].Mode
 
-  /// External call event handler.
-  member __.ExternalCallEventHandler
-    with get() = externalCallEventHdl and set(f) = externalCallEventHdl <- f
+  /// Set the architecture operation mode.
+  member inline __.SetMode mode =
+    __.Contexts.[__.ThreadId].Mode <- mode
 
-  /// Side-effect event handler.
-  member __.SideEffectEventHandler
-    with get() = sideEffectHdl and set(f) = sideEffectHdl <- f
-
-  member internal __.OnLoadFailure pc addr rt e =
-    __.LoadFailureEventHandler.Invoke (pc, addr, rt, e)
-
-  member internal __.OnExternalCall args st =
-    __.ExternalCallEventHandler.Invoke (args, st)
-
-  member internal __.OnSideEffect eff st =
-    __.SideEffectEventHandler.Invoke (eff, st)
-
-  /// Make a copy of this EvalState with a given new Memory.
-  member __.Clone (newMem) =
-    EvalState (regs.Clone (),
-               temps.Clone (),
-               lbls.Clone (),
-               newMem,
-               ignoreUndef,
-               PC=pc,
-               StmtIdx=stmtIdx,
-               Mode=mode,
-               CurrentInsLen=currentInsLen,
-               IsInstrTerminated=isInstrTerminated,
-               NeedToEvaluateIEMark=needToEvaluateIEMark,
-               LoadFailureEventHandler=loadFailureHdl,
-               ExternalCallEventHandler=externalCallEventHdl,
-               SideEffectEventHandler=sideEffectHdl)
-
-  /// Make a copy of this EvalState.
-  member __.Clone () = __.Clone (mem)
+  /// Delete temporary states variables and get ready for evaluating the next
+  /// block of isntructions.
+  member inline __.CleanUp () =
+    __.Contexts.[__.ThreadId].Temporaries.Clear ()

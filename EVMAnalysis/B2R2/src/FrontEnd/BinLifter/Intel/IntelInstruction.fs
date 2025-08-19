@@ -27,6 +27,9 @@ namespace B2R2.FrontEnd.BinLifter.Intel
 open B2R2
 open B2R2.FrontEnd.BinLifter
 
+module private Dummy =
+  let helper = DisasmHelper ()
+
 /// The internal representation for an Intel instruction used by our
 /// disassembler and lifter.
 type IntelInstruction
@@ -60,12 +63,13 @@ type IntelInstruction
     | _ -> false
 
   override __.IsCJmpOnTrue () =
-    match opcode with
-    | Opcode.JA | Opcode.JB | Opcode.JBE | Opcode.JCXZ | Opcode.JECXZ
-    | Opcode.JG | Opcode.JL | Opcode.JLE | Opcode.JO | Opcode.JP
-    | Opcode.JRCXZ | Opcode.JS | Opcode.JZ | Opcode.LOOP | Opcode.LOOPE ->
-      true
-    | _ -> false
+    __.IsCondBranch ()
+    && match opcode with
+       | Opcode.JA | Opcode.JB | Opcode.JBE | Opcode.JCXZ | Opcode.JECXZ
+       | Opcode.JG | Opcode.JL | Opcode.JLE | Opcode.JO | Opcode.JP
+       | Opcode.JRCXZ | Opcode.JS | Opcode.JZ | Opcode.LOOP | Opcode.LOOPE ->
+         true
+       | _ -> false
 
   override __.IsCall () =
     match opcode with
@@ -94,7 +98,7 @@ type IntelInstruction
     | Opcode.IRET | Opcode.IRETW | Opcode.IRETD | Opcode.IRETQ -> true
     | _ -> false
 
-  override __.IsTerminator () =
+  override __.IsBBLEnd () =
        __.IsBranch ()
     || __.IsInterrupt ()
     || __.IsExit ()
@@ -120,33 +124,22 @@ type IntelInstruction
       | _ -> false
     else false
 
-  override __.Immediate (v: byref<int64>) =
-    match oprs with
-    | OneOperand (OprImm (c, _))
-    | TwoOperands (OprImm (c, _), _)
-    | TwoOperands (_, OprImm (c, _))
-    | ThreeOperands (OprImm (c, _), _, _)
-    | ThreeOperands (_, OprImm (c, _), _)
-    | ThreeOperands (_, _, OprImm (c, _))
-    | FourOperands (OprImm (c, _), _, _, _)
-    | FourOperands (_, OprImm (c, _), _, _)
-    | FourOperands (_, _, OprImm (c, _), _)
-    | FourOperands (_, _, _, OprImm (c, _)) -> v <- c; true
-    | _ -> false
-
   member private __.AddBranchTargetIfExist addrs =
-    match __.DirectBranchTarget () with
-    | false, _ -> addrs
-    | true, target -> (target, ArchOperationMode.NoMode) :: addrs
+    match __.DirectBranchTarget () |> Utils.tupleToOpt with
+    | None -> addrs
+    | Some target ->
+      Seq.singleton (target, ArchOperationMode.NoMode) |> Seq.append addrs
 
   override __.GetNextInstrAddrs () =
-    let acc = [ (__.Address + uint64 __.Length, ArchOperationMode.NoMode) ]
-    if __.IsBranch () then
+    let acc =
+      Seq.singleton (__.Address + uint64 __.Length, ArchOperationMode.NoMode)
+    if __.IsCall () then acc |> __.AddBranchTargetIfExist
+    elif __.IsDirectBranch () || __.IsIndirectBranch () then
       if __.IsCondBranch () then acc |> __.AddBranchTargetIfExist
-      else __.AddBranchTargetIfExist []
-    elif opcode = Opcode.HLT || opcode = Opcode.UD2 then []
+      else __.AddBranchTargetIfExist Seq.empty
+    elif opcode = Opcode.HLT then Seq.empty
+    elif opcode = Opcode.UD2 then Seq.empty
     else acc
-    |> List.toArray
 
   override __.InterruptNum (num: byref<int64>) =
     if opcode = Opcode.INT then
@@ -163,26 +156,20 @@ type IntelInstruction
   override __.Translate ctxt =
     (Lifter.translate __ len ctxt).ToStmts ()
 
-  override __.TranslateToList ctxt =
-    Lifter.translate __ len ctxt
-
-  override __.Disasm (showAddr, nameReader) =
-    let resolveSymb = not (isNull nameReader)
+  override __.Disasm (showAddr, resolveSymb, disasmHelper) =
     let builder = DisasmStringBuilder (showAddr, resolveSymb, wordSz, addr, len)
-    Disasm.disasm.Invoke (nameReader, builder, __)
-    builder.ToString ()
+    Disasm.disasm disasmHelper __ builder
+    builder.Finalize ()
 
   override __.Disasm () =
     let builder = DisasmStringBuilder (false, false, wordSz, addr, len)
-    Disasm.disasm.Invoke (null, builder, __)
-    builder.ToString ()
+    Disasm.disasm Dummy.helper __ builder
+    builder.Finalize ()
 
   override __.Decompose (showAddr) =
     let builder = DisasmWordBuilder (showAddr, false, wordSz, addr, len, 8)
-    Disasm.disasm.Invoke (null, builder, __)
-    builder.ToArray ()
-
-  override __.IsInlinedAssembly () = false
+    Disasm.disasm Dummy.helper __ builder
+    builder.Finalize ()
 
   interface ICacheableOperation<TranslationContext, BinIR.LowUIR.Stmt []> with
     member __.Perform ctxt = (Lifter.translate __ len ctxt).ToStmts ()

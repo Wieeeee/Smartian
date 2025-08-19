@@ -33,119 +33,127 @@ open B2R2.MiddleEnd.ConcEval.EvalUtils
 let rec evalConcrete (st: EvalState) e =
   match e.E with
   | Num n -> n
-  | Var (_, n, _) -> st.GetReg n
-  | PCVar (t, _) -> BitVector.OfUInt64 st.PC t
+  | Var (_, n, _, _) -> st.GetReg n
+  | PCVar (t, _) -> BitVector.ofUInt64 st.PC t
   | TempVar (_, n) -> st.GetTmp n
-  | UnOp (t, e) -> evalUnOp st e t
-  | BinOp (t, _, e1, e2) -> evalBinOp st e1 e2 t
-  | RelOp (t, e1, e2) -> evalRelOp st e1 e2 t
-  | Load (endian, t, addr) -> evalLoad st endian t addr
-  | Ite (cond, e1, e2) ->
+  | UnOp (t, e, _) -> evalUnOp st e t
+  | BinOp (t, _, e1, e2, _) -> evalBinOp st e1 e2 t
+  | RelOp (t, e1, e2, _) -> evalRelOp st e1 e2 t
+  | Load (endian, t, addr, _) -> evalLoad st endian t addr
+  | Ite (cond, e1, e2, _) ->
     let cond = evalConcrete st cond
     if cond = tr then evalConcrete st e1 else evalConcrete st e2
-  | Cast (kind, t, e) -> evalCast st t e kind
-  | Extract (e, t, p) -> BitVector.Extract (evalConcrete st e, t, p)
+  | Cast (kind, t, e, _) -> evalCast st t e kind
+  | Extract (e, t, p, _) -> BitVector.extract (evalConcrete st e) t p
   | Undefined (_) -> raise UndefExpException
   | _ -> raise InvalidExprException
 
 and private evalLoad st endian t addr =
-  let addr = evalConcrete st addr |> BitVector.ToUInt64
-  match st.Memory.Read addr endian t with
-  | Ok v -> v
-  | Error e ->
-    match st.OnLoadFailure st.PC addr t e with
-    | Ok v -> v
-    | Error _ ->  raise (InvalidMemException addr)
+  let pc = st.PC
+  let addr = evalConcrete st addr |> BitVector.toUInt64
+  match st.Memory.Read pc addr endian t with
+  | Ok v ->
+    st.Callbacks.OnLoad pc addr v
+    v
+  | Error _ -> raise InvalidMemException
 
 and private evalCast st t e = function
-  | CastKind.SignExt -> BitVector.SExt (evalConcrete st e, t)
-  | CastKind.ZeroExt -> BitVector.ZExt (evalConcrete st e, t)
-  | CastKind.FloatCast -> BitVector.FCast (evalConcrete st e, t)
-  | CastKind.SIntToFloat -> BitVector.Itof (evalConcrete st e, t, true)
-  | CastKind.UIntToFloat -> BitVector.Itof (evalConcrete st e, t, false)
-  | CastKind.FtoICeil -> BitVector.FtoiCeil (evalConcrete st e, t)
-  | CastKind.FtoIFloor -> BitVector.FtoiFloor (evalConcrete st e, t)
-  | CastKind.FtoIRound -> BitVector.FtoiRound (evalConcrete st e, t)
-  | CastKind.FtoITrunc -> BitVector.FtoiTrunc (evalConcrete st e, t)
+  | CastKind.SignExt -> BitVector.sext (evalConcrete st e) t
+  | CastKind.ZeroExt -> BitVector.zext (evalConcrete st e) t
+  | CastKind.FloatCast -> BitVector.fcast (evalConcrete st e) t
+  | CastKind.IntToFloat -> BitVector.itof (evalConcrete st e) t
+  | CastKind.FtoICeil -> BitVector.ftoiceil (evalConcrete st e) t
+  | CastKind.FtoIFloor -> BitVector.ftoifloor (evalConcrete st e) t
+  | CastKind.FtoIRound -> BitVector.ftoiround (evalConcrete st e) t
+  | CastKind.FtoITrunc -> BitVector.ftoitrunc (evalConcrete st e) t
   | _ -> raise IllegalASTTypeException
 
 and private evalUnOp st e typ =
   let v = evalConcrete st e
   match typ with
-  | UnOpType.NEG -> BitVector.Neg v
-  | UnOpType.NOT -> BitVector.BNot v
-  | UnOpType.FSQRT -> BitVector.FSqrt v
-  | UnOpType.FCOS -> BitVector.FCos v
-  | UnOpType.FSIN -> BitVector.FSin v
-  | UnOpType.FTAN -> BitVector.FTan v
-  | UnOpType.FATAN -> BitVector.FAtan v
+  | UnOpType.NEG -> BitVector.neg v
+  | UnOpType.NOT -> BitVector.bnot v
+  | UnOpType.FSQRT -> BitVector.fsqrt v
+  | UnOpType.FCOS -> BitVector.fcos v
+  | UnOpType.FSIN -> BitVector.fsin v
+  | UnOpType.FTAN -> BitVector.ftan v
+  | UnOpType.FATAN -> BitVector.fatan v
   | _ -> raise IllegalASTTypeException
 
 and private evalBinOp st e1 e2 typ =
   let e1 = evalConcrete st e1
   let e2 = evalConcrete st e2
   match typ with
-  | BinOpType.ADD -> BitVector.Add (e1, e2)
-  | BinOpType.SUB -> BitVector.Sub (e1, e2)
-  | BinOpType.MUL  -> BitVector.Mul (e1, e2)
-  | BinOpType.DIV -> BitVector.Div (e1, e2)
-  | BinOpType.SDIV -> BitVector.SDiv (e1, e2)
-  | BinOpType.MOD -> BitVector.Modulo (e1, e2)
-  | BinOpType.SMOD -> BitVector.SModulo (e1, e2)
-  | BinOpType.SHL -> BitVector.Shl (e1, e2)
-  | BinOpType.SAR -> BitVector.Sar (e1, e2)
-  | BinOpType.SHR -> BitVector.Shr (e1, e2)
-  | BinOpType.AND -> BitVector.BAnd (e1, e2)
-  | BinOpType.OR -> BitVector.BOr (e1, e2)
-  | BinOpType.XOR -> BitVector.BXor (e1, e2)
-  | BinOpType.CONCAT -> BitVector.Concat (e1, e2)
-  | BinOpType.FADD -> BitVector.FAdd (e1, e2)
-  | BinOpType.FSUB -> BitVector.FSub (e1, e2)
-  | BinOpType.FMUL -> BitVector.FMul (e1, e2)
-  | BinOpType.FDIV -> BitVector.FDiv (e1, e2)
-  | BinOpType.FPOW -> BitVector.FPow (e1, e2)
-  | BinOpType.FLOG -> BitVector.FLog (e1, e2)
+  | BinOpType.ADD -> BitVector.add e1 e2
+  | BinOpType.SUB -> BitVector.sub e1 e2
+  | BinOpType.MUL  -> BitVector.mul e1 e2
+  | BinOpType.DIV -> BitVector.div e1 e2
+  | BinOpType.SDIV -> BitVector.sdiv e1 e2
+  | BinOpType.MOD -> BitVector.modulo e1 e2
+  | BinOpType.SMOD -> BitVector.smodulo e1 e2
+  | BinOpType.SHL -> BitVector.shl e1 e2
+  | BinOpType.SAR -> BitVector.sar e1 e2
+  | BinOpType.SHR -> BitVector.shr e1 e2
+  | BinOpType.AND -> BitVector.band e1 e2
+  | BinOpType.OR -> BitVector.bor e1 e2
+  | BinOpType.XOR -> BitVector.bxor e1 e2
+  | BinOpType.CONCAT -> BitVector.concat e1 e2
+  | BinOpType.FADD -> BitVector.fadd e1 e2
+  | BinOpType.FSUB -> BitVector.fsub e1 e2
+  | BinOpType.FMUL -> BitVector.fmul e1 e2
+  | BinOpType.FDIV -> BitVector.fdiv e1 e2
+  | BinOpType.FPOW -> BitVector.fpow e1 e2
+  | BinOpType.FLOG -> BitVector.flog e1 e2
   | _ -> raise IllegalASTTypeException
 
 and private evalRelOp st e1 e2 typ =
   let e1 = evalConcrete st e1
   let e2 = evalConcrete st e2
   match typ with
-  | RelOpType.EQ -> BitVector.Eq (e1, e2)
-  | RelOpType.NEQ -> BitVector.Neq (e1, e2)
-  | RelOpType.GT -> BitVector.Gt (e1, e2)
-  | RelOpType.GE -> BitVector.Ge (e1, e2)
-  | RelOpType.SGT -> BitVector.SGt (e1, e2)
-  | RelOpType.SGE -> BitVector.SGe (e1, e2)
-  | RelOpType.LT -> BitVector.Lt (e1, e2)
-  | RelOpType.LE -> BitVector.Le (e1, e2)
-  | RelOpType.SLT -> BitVector.SLt (e1, e2)
-  | RelOpType.SLE -> BitVector.SLe (e1, e2)
-  | RelOpType.FLT -> BitVector.FLt (e1, e2)
-  | RelOpType.FLE -> BitVector.FLe (e1, e2)
-  | RelOpType.FGT -> BitVector.FGt (e1, e2)
-  | RelOpType.FGE -> BitVector.FGe (e1, e2)
+  | RelOpType.EQ -> BitVector.eq e1 e2
+  | RelOpType.NEQ -> BitVector.neq e1 e2
+  | RelOpType.GT -> BitVector.gt e1 e2
+  | RelOpType.GE -> BitVector.ge e1 e2
+  | RelOpType.SGT -> BitVector.sgt e1 e2
+  | RelOpType.SGE -> BitVector.sge e1 e2
+  | RelOpType.LT -> BitVector.lt e1 e2
+  | RelOpType.LE -> BitVector.le e1 e2
+  | RelOpType.SLT -> BitVector.slt e1 e2
+  | RelOpType.SLE -> BitVector.sle e1 e2
+  | RelOpType.FLT -> BitVector.flt e1 e2
+  | RelOpType.FLE -> BitVector.fle e1 e2
+  | RelOpType.FGT -> BitVector.fgt e1 e2
+  | RelOpType.FGE -> BitVector.fge e1 e2
   | _ -> raise IllegalASTTypeException
 
 let private evalPCUpdate st rhs =
   let v = evalConcrete st rhs
-  st.PC <- BitVector.ToUInt64 v
+  st.Callbacks.OnPut st.PC v
+  BitVector.toUInt64 v |> st.SetPC
+
+let evalUndef (st: EvalState) lhs =
+  match lhs.E with
+  | Var (_, n, _, _) -> st.UnsetReg n
+  | TempVar (_, n) -> st.UnsetTmp n
+  | _ -> raise InvalidExprException
 
 let private evalPut st lhs rhs =
   try
     let v = evalConcrete st rhs
+    st.Callbacks.OnPut st.PC v
     match lhs.E with
-    | Var (_, n, _) -> st.SetReg n v
+    | Var (_, n, _, _) -> st.SetReg n v
     | TempVar (_, n) -> st.SetTmp n v
-    | PCVar (_) -> st.PC <- BitVector.ToUInt64 v
+    | PCVar (_) -> BitVector.toUInt64 v |> st.SetPC
     | _ -> raise InvalidExprException
   with
     | UndefExpException
     | :? System.Collections.Generic.KeyNotFoundException -> ()
 
 let private evalStore st endian addr v =
-  let addr = evalConcrete st addr |> BitVector.ToUInt64
+  let addr = evalConcrete st addr |> BitVector.toUInt64
   let v = evalConcrete st v
+  st.Callbacks.OnStore st.PC addr v
   st.Memory.Write addr v endian
 
 let private evalJmp (st: EvalState) target =
@@ -161,61 +169,53 @@ let private evalIntCJmp st cond t f =
   let cond = evalConcrete st cond
   evalPCUpdate st (if cond = tr then t else f)
 
-let rec concretizeArgs st acc = function
-  | arg :: tl ->
-    let v = evalConcrete st arg
-    concretizeArgs st (v :: acc) tl
-  | [] -> acc
-
-let private evalArgs st args =
-  match args with
-  | { E = BinOp (BinOpType.APP, _, _, args) } ->
-    uncurryArgs [] args |> concretizeArgs st []
-  | _ -> Utils.impossible ()
-
 let evalStmt (st: EvalState) s =
   match s.S with
-  | ISMark (len) -> st.CurrentInsLen <- len; st.NextStmt ()
-  | IEMark (len) -> st.AdvancePC len; st.AbortInstr ()
+  | ISMark (_) -> st.NextStmt ()
+  | IEMark (len) -> st.IncPC len; st.AbortInstr ()
   | LMark _ -> st.NextStmt ()
-  | Put (_, { E = Undefined (_) }) -> st.NextStmt ()
+  | Put (lhs, { E = Undefined (_) }) -> evalUndef st lhs |> st.NextStmt
   | Put (lhs, rhs) -> evalPut st lhs rhs |> st.NextStmt
   | Store (e, addr, v) -> evalStore st e addr v |> st.NextStmt
   | Jmp target -> evalJmp st target
   | CJmp (cond, t, f) -> evalCJmp st cond t f
-  | InterJmp (target, InterJmpKind.SwitchToARM) ->
-    st.Mode <- ArchOperationMode.ARMMode
-    evalPCUpdate st target |> st.AbortInstr
-  | InterJmp (target, InterJmpKind.SwitchToThumb) ->
-    st.Mode <- ArchOperationMode.ThumbMode
-    evalPCUpdate st target |> st.AbortInstr
-  | InterJmp (target, _) ->
-    evalPCUpdate st target |> st.AbortInstr
+  | InterJmp (target, _) -> evalPCUpdate st target |> st.AbortInstr
   | InterCJmp (c, t, f) -> evalIntCJmp st c t f |> st.AbortInstr
-  | ExternalCall (args) ->
-    st.OnExternalCall (evalArgs st args) st |> st.NextStmt
-  | SideEffect eff -> st.OnSideEffect eff st
+  | SideEffect eff -> st.Callbacks.OnSideEffect eff st |> ignore
 
 let internal tryEvaluate stmt st =
   try evalStmt st stmt with
   | UndefExpException
-  | InvalidMemException _ ->
+  | InvalidMemException ->
     if st.IgnoreUndef then st.NextStmt ()
     else raise UndefExpException
 
-/// Evaluate a sequence of statements, assuming that the statements are lifted
-/// from a single instruction.
-let rec evalStmts stmts (st: EvalState) =
-  let idx = st.StmtIdx
-  let numStmts = Array.length stmts
-  if numStmts > idx then
-    if st.IsInstrTerminated then
-      if st.NeedToEvaluateIEMark then
-        let stmt = stmts[numStmts - 1]
-        tryEvaluate stmt st
-      else ()
-    else
-      let stmt = stmts[idx]
-      tryEvaluate stmt st
-      evalStmts stmts st
+/// Evaluate a sequence of statements, which is lifted from a single
+/// instruction.
+let rec internal evalStmts stmts (st: EvalState) =
+  let ctxt = st.GetCurrentContext ()
+  let idx = ctxt.StmtIdx
+  let st = if idx = 0 then st.Callbacks.OnInstr st else st
+  if not st.IsInstrTerminated && Array.length stmts > idx
+    && not st.InPrematureState then
+    let stmt = stmts.[idx]
+    st.Callbacks.OnStmtEval stmt
+    tryEvaluate stmt st
+    evalStmts stmts st
   else ()
+
+let rec evalBlockLoop idx (blk: Stmt [][]) (st: EvalState) =
+  if idx < blk.Length && not st.InPrematureState then
+    let stmts = blk.[idx]
+    st.PrepareInstrEval stmts
+    evalStmts stmts st
+    evalBlockLoop (idx + 1) blk st
+  else ()
+
+/// Evaluate a block of statements. The block represents a series of lifted IR
+/// statements from one or more machine instructions.
+let evalBlock (st: EvalState) pc tid blk =
+  st.SetPC pc
+  if st.ThreadId <> tid then st.ContextSwitch tid else ()
+  evalBlockLoop 0 blk st
+  st.CleanUp ()

@@ -32,9 +32,7 @@ open B2R2.FrontEnd.BinLifter.MIPS
 [<TestClass>]
 type MIPSTests () =
   let mips =
-      { Arch = Architecture.MIPS32
-        Endian = Endian.Big
-        WordSize = WordSize.Bit32 }
+      { Arch = Arch.MIPS32; Endian = Endian.Big; WordSize = WordSize.Bit32 }
   let assembler = MIPS.AsmParser (mips, 0UL)
   let newInfo = MIPS.ParserHelper.newInfo
 
@@ -60,7 +58,7 @@ type MIPSTests () =
   [<TestMethod>]
   member __.``[MipsAssembly] Test jmp with memmory access operand``() =
     let result = assembler.Run "jr ($s0)"
-    let operands = OneOperand (OpMem (Register.R16, Imm 0L, 32<rt>))
+    let operands = OneOperand (OpMem (Register.R16, 0L, 32<rt>))
     let answer =
       [ newInfo mips 0UL Opcode.JR None None operands ]
     Assert.AreEqual (answer, result)

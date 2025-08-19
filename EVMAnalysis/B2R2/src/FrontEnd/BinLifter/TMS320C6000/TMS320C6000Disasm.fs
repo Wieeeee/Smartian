@@ -277,14 +277,14 @@ let inline appendUnit insInfo opcode =
   | D2XUnit -> opcode + ".D2X"
   | NoUnit -> opcode
 
-let buildParallelPipe ins (builder: DisasmBuilder) =
+let buildParallelPipe ins (builder: DisasmBuilder<_>) =
   if ins.IsParallel then builder.Accumulate AsmWordKind.String "|| " else ()
 
-let inline buildOpcode ins (builder: DisasmBuilder) =
+let inline buildOpcode ins (builder: DisasmBuilder<_>) =
   let str = opCodeToString ins.Opcode |> appendUnit ins
   builder.Accumulate AsmWordKind.Mnemonic str
 
-let buildMemBase (builder: DisasmBuilder) baseR = function
+let buildMemBase (builder: DisasmBuilder<_>) baseR = function
   | NegativeOffset ->
     builder.Accumulate AsmWordKind.String "-"
     builder.Accumulate AsmWordKind.Variable (Register.toString baseR)
@@ -304,13 +304,13 @@ let buildMemBase (builder: DisasmBuilder) baseR = function
     builder.Accumulate AsmWordKind.Variable (Register.toString baseR)
     builder.Accumulate AsmWordKind.String "++"
 
-let private offsetToString (builder: DisasmBuilder) offset =
+let private offsetToString (builder: DisasmBuilder<_>) offset =
   match offset with
   | UCst5 i -> builder.Accumulate AsmWordKind.Value (i.ToString())
   | UCst15 i -> builder.Accumulate AsmWordKind.Value (i.ToString())
   | OffsetR r -> builder.Accumulate AsmWordKind.Variable (Register.toString r)
 
-let private buildMemOffset (builder: DisasmBuilder) offset =
+let private buildMemOffset (builder: DisasmBuilder<_>) offset =
   match offset with
   | UCst5 0UL -> ()
   | offset ->
@@ -322,7 +322,7 @@ let memToString builder baseR modification offset =
   buildMemBase builder baseR modification
   buildMemOffset builder offset
 
-let oprToString opr delim (builder: DisasmBuilder) =
+let oprToString opr delim (builder: DisasmBuilder<_>) =
   match opr with
   | OpReg reg ->
     builder.Accumulate AsmWordKind.String delim
@@ -338,7 +338,7 @@ let oprToString opr delim (builder: DisasmBuilder) =
     memToString builder baseR modification offset
   | Immediate imm ->
     builder.Accumulate AsmWordKind.String delim
-    builder.Accumulate AsmWordKind.Value (HexString.ofUInt64 imm)
+    builder.Accumulate AsmWordKind.Value (String.u64ToHex imm)
 
 let buildOprs insInfo builder =
   match insInfo.Operands with
@@ -358,7 +358,7 @@ let buildOprs insInfo builder =
     oprToString opr3 ", " builder
     oprToString opr4 ", " builder
 
-let disasm insInfo (builder: DisasmBuilder) =
+let disasm insInfo (builder: DisasmBuilder<_>) =
   if builder.ShowAddr then builder.AccumulateAddr () else ()
   buildParallelPipe insInfo builder
   buildOpcode insInfo builder

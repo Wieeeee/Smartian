@@ -35,8 +35,11 @@ using the following tags:
 
 ### F# Coding Style
 
-Please read the [F# code formatting guideline](https://docs.microsoft.com/en-us/dotnet/fsharp/style-guide/formatting),
-before you proceed as we mostly follow it.
+Please read the [F# design
+guidelines](https://fsharp.org/specs/component-design-guidelines/) and the [F#
+style
+guideline](https://github.com/fsprojects/fantomas/blob/master/docs/FormattingConventions.md),
+before you proceed as we mostly follow these guidelines.
 
 #### Basic Rules
 
@@ -60,13 +63,7 @@ before you proceed as we mostly follow it.
 - We use nouns for variables (or parameters).
 - We *mostly* use verbs for function names.
 
-### Line-endings
-
-We always use unix-style (LF) line-endings for every file.
-
 #### Editor Settings
-
-- See our [.editorconfig](.editorconfig)
 
 - For Emacs users:
     ```

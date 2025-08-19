@@ -24,67 +24,35 @@
 
 namespace B2R2
 
-/// A program point (ProgramPoint) is a specific location in a lifted program.
-/// We represent it as a three-tuple: (Address of the instruction, Index of the
-/// IR stmt for the instruction, Address of a callsite). The third element is
-/// optional and only meaningful for abstract vertices.
-type ProgramPoint private (addr, pos, callsite) =
-
-  new (addr, pos: int) = ProgramPoint (addr, pos, None)
-
-  new (callsite, addr, pos: int) = ProgramPoint (addr, pos, Some callsite)
-
+/// A program point (ProgramPoint) is a fine-grained location in a program,
+/// which can point to a specific IR statement. We represent it as a tuple:
+/// (Address of the instruction, Index of the IR stmt for the instruction).
+type ProgramPoint (addr, pos) =
   /// Address of the instruction.
-  member __.Address with get(): Addr = addr
-
+  member val Address: Addr = addr
   /// Index of the IR statement within the instruction.
-  member __.Position with get(): int = pos
-
-  /// Address of the callsite if this program point refers to an abstract
-  /// vertex.
-  member __.CallSite with get(): Addr option = callsite
-
-  /// Compare against another program point.
-  member __.CompareTo (rhs: ProgramPoint) =
-    let result = compare __.Address rhs.Address
-    if result <> 0 then result
-    elif __.Position = rhs.Position then compare __.CallSite rhs.CallSite
-    else compare __.Position rhs.Position
-
+  member val Position: int = pos
   override __.Equals (o) =
     match o with
-    | :? ProgramPoint as o ->
-      o.Address = __.Address
-      && o.Position = __.Position
-      && o.CallSite = __.CallSite
+    | :? ProgramPoint as o -> o.Address = __.Address && o.Position = __.Position
     | _ -> false
-
-  override __.GetHashCode () =
-    match __.CallSite with
-    | None -> int __.Address ^^^ (__.Position <<< 16)
-    | Some callSite -> int __.Address ^^^ (__.Position <<< 16) + int callSite
-
-  override __.ToString () =
-    match __.CallSite with
-    | Some callsite -> $"{callsite:x}-{addr:x}"
-    | None -> $"{addr:x}:{pos}"
+  override __.GetHashCode () = hash (__.Address, __.Position)
+  override __.ToString () = String.u64ToHexNoPrefix addr + ":" + pos.ToString ()
 
   /// Get a fake program point to represent a fake vertex, which does not exist
   /// in a CFG. Fake vertices are useful for representing external function
   /// calls and their nodes in the SCFG.
   static member GetFake () = ProgramPoint (0UL, -1)
-
   static member IsFake (p: ProgramPoint) = p.Address = 0UL && p.Position = -1
 
   static member Next (p: ProgramPoint) =
-    if ProgramPoint.IsFake p then p
-    else ProgramPoint (p.Address, p.Position + 1)
+    ProgramPoint (p.Address, p.Position + 1)
 
   interface System.IComparable with
     member __.CompareTo (rhs) =
       match rhs with
-      | :? ProgramPoint as rhs -> __.CompareTo rhs
+      | :? ProgramPoint as rhs ->
+        (* To lexicographically sort leaders. Being too pedantic here. *)
+        if __.Address = rhs.Address then compare __.Position rhs.Position
+        else compare __.Address rhs.Address
       | _ -> invalidArg (nameof rhs) "Invalid comparison"
-
-  interface System.IComparable<ProgramPoint> with
-    member __.CompareTo (rhs) = __.CompareTo rhs

@@ -24,27 +24,12 @@
 
 module B2R2.Peripheral.Assembly.ARM32.ParserHelper
 
-open B2R2
 open B2R2.FrontEnd.BinLifter.ARM32
 open FParsec
 
-type AsmInsInfo = {
-  Address: Addr
-  NumBytes: uint32
-  Condition: Condition
-  Opcode: Opcode
-  Operands: Operands
-  ITState: byte
-  WriteBack: bool
-  Qualifier: Qualifier
-  SIMDTyp: SIMDDataTypes option
-  Mode: ArchOperationMode
-  Cflag: bool option
-}
-
 type AssemblyLine =
   | LabelDefLine
-  | InstructionLine of AsmInsInfo
+  | InstructionLine of InsInfo
 
 /// Updates the dummy offset value by substituing the reg field of the dummy
 /// offset value by the register given.
@@ -68,7 +53,7 @@ let parseShiftOperation opcode imm =
   else preturn (srType.Value, imm)
 
 let getSRType (str: string) =
-  match str.ToLowerInvariant () with
+  match str.ToLower () with
   | "lsl" -> SRTypeLSL
   | "lsr" -> SRTypeLSR
   | "asr" -> SRTypeASR
@@ -109,7 +94,7 @@ let getOperandsAsList operands =
   | SixOperands (op1, op2, op3, op4, op5, op6) -> [op1; op2; op3; op4; op5; op6]
 
 let getSIMDTypFromStr (str: string) =
-  match str.ToLowerInvariant () with
+  match str.ToLower () with
   | "8" -> SIMDTyp8
   | "16" -> SIMDTyp16
   | "32" -> SIMDTyp32
@@ -133,7 +118,7 @@ let getSIMDTypFromStr (str: string) =
   | _ -> failwith "unknown SIMD Type"
 
 let getPSRFlagFromStr (str: string) =
-  match str.ToLowerInvariant () with
+  match str.ToLower () with
   | "c" -> PSRc
   | "x" -> PSRx
   | "xc" -> PSRxc
@@ -156,23 +141,23 @@ let getPSRFlagFromStr (str: string) =
   | _ -> failwith "unknown PSRFlag"
 
 let optionOprFromStr (str: string) =
-  match str.ToLowerInvariant () with
-  | "sy" -> BarrierOption.SY
-  | "st" -> BarrierOption.ST
-  | "ld" -> BarrierOption.LD
-  | "ish" -> BarrierOption.ISH
-  | "ishst" -> BarrierOption.ISHST
-  | "ishld" -> BarrierOption.ISHLD
-  | "nsh" -> BarrierOption.NSH
-  | "nshst" -> BarrierOption.NSHST
-  | "nshld" -> BarrierOption.NSHLD
-  | "osh" -> BarrierOption.OSH
-  | "oshst" -> BarrierOption.OSHST
-  | "oshld" -> BarrierOption.OSHLD
+  match str.ToLower () with
+  | "sy" -> SY
+  | "st" -> ST
+  | "ld" -> LD
+  | "ish" -> ISH
+  | "ishst" -> ISHST
+  | "ishld" -> ISHLD
+  | "nsh" -> NSH
+  | "nshst" -> NSHST
+  | "nshld" -> NSHLD
+  | "osh" -> OSH
+  | "oshst" -> OSHST
+  | "oshld" -> OSHLD
   | _ -> failwith "unknown OptionOperand"
 
 let iFlagFromStr (str: string) =
-  match str.ToLowerInvariant () with
+  match str.ToLower () with
   | "a" -> A
   | "i" -> I
   | "f" -> F
@@ -209,7 +194,7 @@ let newInsInfo addr opcode c it w q simd oprs iLen mode cflag =
     Opcode = opcode
     Operands = oprs
     ITState = it
-    WriteBack = w
+    WriteBack = if w then Some w else None
     Qualifier = q
     SIMDTyp = simd
     Mode = mode

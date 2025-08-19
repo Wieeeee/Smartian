@@ -44,8 +44,8 @@ type SimpleArithEvaluator () =
         elif res = "" then
           doConcatenation (res + hd) tail errorPos
         else
-          let lastChar = res[res.Length - 1]
-          let firstChar = hd[0]
+          let lastChar = res.[res.Length - 1]
+          let firstChar = hd.[0]
           if System.Char.IsDigit lastChar && System.Char.IsDigit firstChar then
             doConcatenation (res + " " + hd) tail res.Length
           else
@@ -62,7 +62,7 @@ type SimpleArithEvaluator () =
     let str = getIntegerPart value
     let intValue = BigInteger.Parse str
     let intValue =
-      if not (hasZeroFraction value) && result.FloatValue < 0.0 then
+      if hasZeroFraction value = false && result.FloatValue < 0.0 then
         intValue - 1I
       else intValue
     match typ with
@@ -96,7 +96,7 @@ type SimpleArithEvaluator () =
     [| result + space + "\n" + "Wrong Input" |]
 
   let processASCIICharacters str =
-    match SimpleArithASCIIParser.run str with
+    match SimpleArithASCIIPArser.run str with
     | Success (v, _, position) ->
       if position.Column <> int64 (str.Length + 1) then
         processASCIIError str position

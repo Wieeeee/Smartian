@@ -29,7 +29,6 @@ type ELFDisplayItem =
   | ELFDisplayProgramHeader
   | ELFDisplayPLT
   | ELFDisplayEHFrame
-  | ELFDisplayGccExceptTable
   | ELFDisplayNotes
 
 /// Display items for PE.
@@ -53,18 +52,16 @@ type DisplayItem =
   | DisplayAll
   /// Basic file header information.
   | DisplayFileHeader
-  /// Section headers.
+  /// Section headers
   | DisplaySectionHeaders
-  /// Section details.
+  /// Section details
   | DisplaySectionDetails of string
   /// Symbols.
   | DisplaySymbols
-  /// Relocations.
+  /// Relocations
   | DisplayRelocations
   /// Functions.
   | DisplayFunctions
-  /// Exception table.
-  | DisplayExceptionTable
   /// ELF-specific item.
   | DisplayELFSpecific of ELFDisplayItem
   /// PE-specific item.

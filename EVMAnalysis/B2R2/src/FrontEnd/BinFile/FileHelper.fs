@@ -25,46 +25,60 @@
 module internal B2R2.FrontEnd.BinFile.FileHelper
 
 open B2R2
+open B2R2.FrontEnd.BinLifter
 
-/// Pick a number based on the word size.
-let inline pickNum wordSize o32 o64 =
-  if wordSize = WordSize.Bit32 then o32 else o64
+let peekUIntOfType (reader: BinReader) bitType o =
+  if bitType = WordSize.Bit32 then reader.PeekUInt32 (o) |> uint64
+  else reader.PeekUInt64 (o)
 
-let readUIntOfType (span: ByteSpan) (reader: IBinReader) cls o =
-  if cls = WordSize.Bit32 then reader.ReadUInt32 (span, o) |> uint64
-  else reader.ReadUInt64 (span, o)
+let readUIntOfType reader bitType o =
+  let inline sizeByCls bitType = if bitType = WordSize.Bit32 then 4 else 8
+  struct (peekUIntOfType reader bitType o, o + sizeByCls bitType)
 
-let readNative span reader cls d32 d64 =
-  readUIntOfType span reader cls (pickNum cls d32 d64)
+let peekHeaderB (reader: BinReader) cls offset d32 d64 =
+  offset + (if cls = WordSize.Bit32 then d32 else d64)
+  |> reader.PeekByte
 
-let rec private cstrLoop (span: ByteSpan) acc pos =
-  let byte = span[pos]
-  if byte = 0uy then List.rev (0uy :: acc) |> List.toArray
-  else cstrLoop span (byte :: acc) (pos + 1)
+let peekHeaderU16 (reader: BinReader) cls offset d32 d64 =
+  offset + (if cls = WordSize.Bit32 then d32 else d64)
+  |> reader.PeekUInt16
 
-let readCString (span: ByteSpan) offset =
-  let bs = cstrLoop span [] offset
+let peekHeaderI32 (reader: BinReader) cls offset d32 d64 =
+  offset + (if cls = WordSize.Bit32 then d32 else d64)
+  |> reader.PeekInt32
+
+let peekHeaderU32 (reader: BinReader) cls offset d32 d64 =
+  offset + (if cls = WordSize.Bit32 then d32 else d64)
+  |> reader.PeekUInt32
+
+let peekHeaderNative reader cls offset d32 d64 =
+  offset + (if cls = WordSize.Bit32 then d32 else d64)
+  |> peekUIntOfType reader cls
+
+let peekCString (reader: BinReader) offset =
+  let rec loop acc pos =
+    let byte = reader.PeekByte pos
+    if byte = 0uy then List.rev (0uy :: acc) |> List.toArray
+    else loop (byte :: acc) (pos + 1)
+  let bs = loop [] offset
   ByteArray.extractCString bs 0
 
-let addInvalidRange set saddr eaddr =
-  if saddr = eaddr then set
-  else IntervalSet.add (AddrRange (saddr, eaddr - 1UL)) set
+let peekCStringOfSize (reader: BinReader) offset (size: int) =
+  let span = reader.PeekSpan (size, offset)
+  ByteArray.extractCStringFromSpan span 0
 
-let addLastInvalidRange wordSize (set, saddr) =
+let addInvRange set saddr eaddr =
+  if saddr = eaddr then set
+  else IntervalSet.add (AddrRange (saddr, eaddr)) set
+
+let addLastInvRange wordSize (set, saddr) =
   let laddr =
     if wordSize = WordSize.Bit32 then 0xFFFFFFFFUL else 0xFFFFFFFFFFFFFFFFUL
   IntervalSet.add (AddrRange (saddr, laddr)) set
 
-let getNotInFileIntervals fileBase fileSize (range: AddrRange) =
-  let lastAddr = fileBase + fileSize - 1UL
-  if range.Max < fileBase then [| range |]
-  elif range.Max <= lastAddr && range.Min < fileBase then
-    [| AddrRange (range.Min, fileBase - 1UL) |]
-  elif range.Max > lastAddr && range.Min < fileBase then
-    [| AddrRange (range.Min, fileBase - 1UL)
-       AddrRange (lastAddr + 1UL, range.Max) |]
-  elif range.Max > lastAddr && range.Min <= lastAddr then
-    [| AddrRange (lastAddr + 1UL, range.Max) |]
-  elif range.Max > lastAddr && range.Min > lastAddr then [| range |]
-  else [||]
-
+/// Trim the target range based on my range (myrange) in such a way that the
+/// resulting range is always included in myrange.
+let trimByRange myrange target =
+  let l = max (AddrRange.GetMin myrange) (AddrRange.GetMin target)
+  let h = min (AddrRange.GetMax myrange) (AddrRange.GetMax target)
+  AddrRange (l, h)

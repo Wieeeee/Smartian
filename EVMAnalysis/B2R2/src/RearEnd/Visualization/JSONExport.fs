@@ -27,7 +27,7 @@ namespace B2R2.RearEnd.Visualization
 open B2R2
 open B2R2.FrontEnd.BinLifter
 open B2R2.MiddleEnd.BinGraph
-open B2R2.MiddleEnd.ControlFlowGraph
+open B2R2.MiddleEnd.BinEssence
 open Microsoft.FSharpLu.Json
 
 type JSONCoordinate = {
@@ -36,8 +36,8 @@ type JSONCoordinate = {
 }
 
 type JSONNode = {
-  PPoint: Addr
-  Terms: (string * string) [][]
+  PPoint: Addr * int
+  Terms: (string * string) [] []
   Width: float
   Height: float
   Coordinate: JSONCoordinate
@@ -57,24 +57,21 @@ type JSONGraph = {
 }
 
 module JSONExport =
-  let private getJSONTerms (visualizableAsm: AsmWord[][]) =
-    visualizableAsm |> Array.map (Array.map AsmWord.ToStringTuple)
+  let private getJSONTerms (visualBlock: VisualBlock) =
+    visualBlock |> Array.map (Array.map AsmWord.ToStringTuple)
 
-  let private ofVisGraph (g: VisGraph) (roots: IVertex<_> list) =
-    let roots =
-      roots |> List.map (fun r -> (r.VData :> IVisualizable).BlockAddress)
+  let private ofVisGraph (g: VisGraph) (roots: Vertex<#BasicBlock> list) =
+    let roots = roots |> List.map (fun r -> r.VData.PPoint.Address)
     let nodes =
       g.FoldVertex (fun acc v ->
-        let vData = v.VData :> IVisualizable
-        { PPoint = vData.BlockAddress
-          Terms = vData.Visualize () |> getJSONTerms
+        { PPoint = v.VData.PPoint.Address, v.VData.PPoint.Position
+          Terms = v.VData.ToVisualBlock () |> getJSONTerms
           Width = v.VData.Width
           Height = v.VData.Height
           Coordinate = { X = v.VData.Coordinate.X
                          Y = v.VData.Coordinate.Y } } :: acc) []
     let edges =
-      g.FoldEdge (fun acc e ->
-        let e = e.Label
+      g.FoldEdge (fun acc _ _ e ->
         { Type = e.Type
           Points = e.Points |> List.map (fun p -> { X = p.X; Y = p.Y })
           IsBackEdge = e.IsBackEdge } :: acc) []

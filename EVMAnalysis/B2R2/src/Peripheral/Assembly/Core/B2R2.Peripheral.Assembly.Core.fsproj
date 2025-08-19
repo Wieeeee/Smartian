@@ -1,18 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>b2r2-240x240.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>B2R2 assembly core library.</Description>
+    <RepositoryUrl>https://github.com/B2R2-org/B2R2</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="AsmParser.fs" />
     <Compile Include="Utils.fs" />
-    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath="" />
+    <None Include="..\..\..\..\LICENSE.md" Pack="true" PackagePath=""/>
     <None Include="..\..\..\..\assets\b2r2-240x240.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,7 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\FrontEnd\Core\B2R2.FrontEnd.Core.fsproj" />
+    <ProjectReference Include="..\..\..\FrontEnd\BinInterface\B2R2.FrontEnd.BinInterface.fsproj" />
+    <ProjectReference Include="..\..\..\Core\B2R2.Core.fsproj" />
   </ItemGroup>
 
 </Project>

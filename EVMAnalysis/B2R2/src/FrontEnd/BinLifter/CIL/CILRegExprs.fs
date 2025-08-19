@@ -25,11 +25,10 @@
 namespace B2R2.FrontEnd.BinLifter.CIL
 
 open B2R2
-open B2R2.FrontEnd.BinLifter
 open B2R2.BinIR.LowUIR
 
 type internal RegExprs () =
-  let var sz t name = AST.var sz t name
+  let var sz t name = AST.var sz t name (CILRegisterSet.singleton t)
 
   member val PC = var 256<rt> (Register.toRegID Register.PC) "PC" with get
   member val SP = var 256<rt> (Register.toRegID Register.SP) "SP" with get
@@ -38,4 +37,4 @@ type internal RegExprs () =
     match name with
     | Register.PC -> __.PC
     | Register.SP -> __.SP
-    | _ -> raise UnhandledRegExprException
+    | _ -> raise B2R2.FrontEnd.BinLifter.UnhandledRegExprException

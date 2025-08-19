@@ -40,14 +40,14 @@ module ROPPayload =
   let addExpr e p = Array.append p [|ROPValue.ofExpr e|]
 
   let addExprs exprs p =
-    Array.map ROPValue.ofExpr exprs |> Array.append p
+    Array.map (fun e -> ROPValue.ofExpr e) exprs |> Array.append p
 
   let setExpr e i p = Array.set p i (ROPValue.ofExpr e); p
 
   let addNum32 num p = Array.append p [|ROPValue.ofUInt32 num|]
 
   let addNum32s nums p =
-    Array.map ROPValue.ofUInt32 nums |> Array.append p
+    Array.map (fun num -> ROPValue.ofUInt32 num) nums |> Array.append p
 
   let setNum32 num i p = Array.set p i (ROPValue.ofUInt32 num); p
 
@@ -71,13 +71,13 @@ module ROPPayload =
     | Some p1, Some p2 -> merge p1 p2 |> Some
     | _, _ -> None
 
-  let toString liftingUnit binBase p =
+  let toString hdl binBase p =
     let sb = StringBuilder ()
     let sb = sb.Append ("------------")
     let sb = sb.Append (System.Environment.NewLine)
     let sb =
       Array.fold (fun (sb: StringBuilder) v ->
-                   sb.Append (ROPValue.toString liftingUnit binBase v)) sb p
+                   sb.Append (ROPValue.toString hdl binBase v)) sb p
     let sb = sb.Append ("------------")
     let sb = sb.Append (System.Environment.NewLine)
     sb.ToString ()

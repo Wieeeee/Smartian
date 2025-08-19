@@ -33,14 +33,14 @@ module SimpleArithParser =
   /// Returns a tuple of the big int value of the string and the number of bits
   /// required to represent the number.
   let calculateValue (str : string) =
-    let rep = if (str.Length >= 2) then (str[0 .. 1]) else ""
+    let rep = if (str.Length >= 2) then (str.[0 .. 1]) else ""
     if rep = "0x" || rep = "0X" || rep = "0o" || rep = "0O" ||
       rep = "0b" || rep = "oB" then
       stringToBigint str
     else
       (System.Numerics.BigInteger.Parse str, -1)
 
-  type Parser<'A> = Parser<'A, unit>
+  type Parser<'a> = Parser<'a,unit>
 
   let dummyValue = { IntValue = 0I; Type = CError Default ; FloatValue = 0.0 }
 
@@ -134,7 +134,8 @@ module SimpleArithParser =
 
   let strWs s = pstring s >>. spaces
 
-  let opp = OperatorPrecedenceParser<Number, Position, unit>()
+  let opp =
+    new OperatorPrecedenceParser<Number, Position, unit>()
 
   let expr = opp.ExpressionParser
 
@@ -170,14 +171,12 @@ module SimpleArithParser =
     opp.AddOperator(constructCastingOp "(float32)" (Float Bit32))
     opp.AddOperator(constructCastingOp "(float)" (Float Bit64))
 
-module SimpleArithASCIIParser =
+module SimpleArithASCIIPArser =
   let parseSingleByte =
     hex .>>. hex |>> (fun (a, b) -> "0x" + string a + string b)
 
-  let singleHexToString ch = "0x0" + string ch
-
   let parseSingleHexDigit: Parser<string, unit> =
-    hex |>> singleHexToString
+    hex |>> (fun a -> "0x0" + string a)
 
   let parseOddNumberOfHexDigits =
     pstringCI "0x" >>. parseSingleHexDigit .>>. many parseSingleByte
@@ -217,10 +216,8 @@ module SimpleArithASCIIParser =
 
   let parseOctal = anyOf "01234567"
 
-  let singleOctalToString ch = "0o00" + string ch
-
   let parseSingleOctalDigit =
-    parseOctal |>> singleOctalToString
+    parseOctal |>> (fun a -> "0o00" + string a)
 
   let parseDoubleOctalDigit =
     parseOctal .>>. parseOctal

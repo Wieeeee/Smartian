@@ -25,7 +25,7 @@
 namespace B2R2.RearEnd.BinExplorer
 
 open B2R2
-open B2R2.MiddleEnd
+open B2R2.MiddleEnd.BinEssence
 
 /// Raised when there are duplicate commands with the same name or alias.
 exception DuplicateCommandException
@@ -34,25 +34,24 @@ exception DuplicateCommandException
 [<AbstractClass>]
 type Cmd () =
   /// The name of the command.
-  abstract CmdName: string
+  abstract member CmdName: string
 
   /// Aliases for the command.
-  abstract CmdAlias: string list
+  abstract member CmdAlias: string list
 
   /// Short command description.
-  abstract CmdDescr: string
+  abstract member CmdDescr: string
 
   /// Command-specific help string.
-  abstract CmdHelp: string
+  abstract member CmdHelp: string
 
   /// A list of sub-command strings that can be used with this command. This
   /// list provides a way to tab-complete a keyword.
-  abstract SubCommands: string list
+  abstract member SubCommands: string list
 
   /// A command callback function. This function takes in an Agent (arbiter), a
   /// CmdMap, and a list of arguments as input, and produces some side effects.
-  abstract CallBack:
-    CmdMap -> BinaryBrew<_, _> -> string list -> OutString[]
+  abstract member CallBack: CmdMap -> BinEssence -> string list -> OutString []
 
 /// This is a mapping from a command name to the corresponding command (Cmd).
 and CmdMap = {
@@ -67,10 +66,10 @@ module internal Cmd =
     [| "[*] Unknown command: '" + cmd + "'"
        "" (* for new line *) |]
 
-  let handle cmdMap brew cmd args =
+  let handle cmdMap binEssence cmd args =
     match Map.tryFind cmd cmdMap.CmdMap with
     | None -> warnUnknown cmd |> Array.map OutputNormal
-    | Some cmd -> cmd.CallBack cmdMap brew args
+    | Some cmd -> cmd.CallBack cmdMap binEssence args
 
 module internal CmdMap =
 

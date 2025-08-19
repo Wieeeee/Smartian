@@ -26,7 +26,7 @@ namespace B2R2.RearEnd.BinExplorer
 
 open B2R2
 open B2R2.FrontEnd.BinFile
-open B2R2.RearEnd.StringUtils
+open B2R2.MiddleEnd.BinEssence
 
 type CmdBinInfo () =
   inherit Cmd ()
@@ -45,27 +45,32 @@ type CmdBinInfo () =
 
   override __.SubCommands = []
 
-  override __.CallBack _ brew _args =
-    let file = brew.BinHandle.File
-    let isa = brew.BinHandle.File.ISA
+  override __.CallBack _ ess _args =
+    let fileInfo = ess.BinHandle.FileInfo
+    let path = ess.BinHandle.FileInfo.FilePath
+    let isa = ess.BinHandle.ISA
     let machine = isa.Arch |> ISA.ArchToString
-    let fmt = brew.BinHandle.File.Format |> FileFormat.toString
-    let entry = file.EntryPoint |> entryPointToString
-    let secNum = file.GetSections () |> Seq.length
-    let staticSymNum = file.GetStaticSymbols () |> Seq.length
-    let dynamicSymNum = file.GetDynamicSymbols () |> Seq.length
-    let fileType = file.Type |> FileType.toString
-    let nx = if file.IsNXEnabled then "Enabled" else "Disabled"
-    [| "[*] Binary information:\n"
-       sprintf "- Executable Path: %s" file.Path
+    let fmt = ess.BinHandle.FileInfo.FileFormat |> FileFormat.toString
+    let entry = fileInfo.EntryPoint |> FileInfo.EntryPointToString
+    let textAddr = fileInfo.TextStartAddr
+    let secNum = fileInfo.GetSections () |> Seq.length
+    let staticSymNum = fileInfo.GetStaticSymbols () |> Seq.length
+    let dynamicSymNum = fileInfo.GetDynamicSymbols () |> Seq.length
+    let fileType = fileInfo.FileType |> FileInfo.FileTypeToString
+    let nx = if fileInfo.IsNXEnabled then "Enabled" else "Disabled"
+    [|
+       "[*] Binary information:\n"
+       sprintf "- Executable Path: %s" path
        sprintf "- Machine: %s" machine
        sprintf "- File Format: %s" fmt
        sprintf "- File Type: %s" fileType
+       sprintf "- Start of Text Section Address: 0x%x" textAddr
        sprintf "- Entry Point Address: %s" entry
        sprintf "- Number of Sections: %d" secNum
        sprintf "- Number of Static Symbols: %d" staticSymNum
        sprintf "- Number of Dynamic Symbols: %d" dynamicSymNum
-       sprintf "- NX bit: %s" nx |]
+       sprintf "- NX bit: %s" nx
+    |]
     |> Array.map OutputNormal
 
 // vim: set tw=80 sts=2 sw=2:

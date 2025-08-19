@@ -76,7 +76,7 @@ let ptrStringToBitSize = function
   | _ -> Utils.impossible ()
 
 let prefixFromRegString (str: string) =
-  match str.ToLowerInvariant () with
+  match str.ToLower () with
   | "cs" -> Prefix.PrxCS
   | "ds" -> Prefix.PrxDS
   | "es" -> Prefix.PrxES

@@ -25,7 +25,6 @@
 namespace B2R2.FrontEnd.BinLifter.ARM32
 
 open B2R2
-open B2R2.FrontEnd.BinLifter
 open System.Runtime.CompilerServices
 
 [<assembly: InternalsVisibleTo("B2R2.FrontEnd.BinLifter.Tests")>]
@@ -166,992 +165,896 @@ type Opcode =
   | CRC32H = 39
   /// CRC-32 sum from word.
   | CRC32W = 40
-  /// Consumption of Speculative Data Barrier.
-  | CSDB = 41
   /// Debug hint.
-  | DBG = 42
-  /// Debug switch to Exception level 1.
-  | DCPS1 = 43
-  /// Debug switch to Exception level 2.
-  | DCPS2 = 44
-  /// Debug switch to Exception level 3.
-  | DCPS3 = 45
+  | DBG = 41
   /// Data Memory Barrier.
-  | DMB = 46
+  | DMB = 42
   /// Data Synchronization Barrier.
-  | DSB = 47
+  | DSB = 43
   /// Enter ThumbEE state.
-  | ENTERX = 48
+  | ENTERX = 44
   /// Bitwise Exclusive OR.
-  | EOR = 49
+  | EOR = 45
   /// Bitwise Exclusive OR and update the flags.
-  | EORS = 50
+  | EORS = 46
   /// Exception Return.
-  | ERET = 51
-  /// Error Synchronization Barrier.
-  | ESB = 52
-  /// Loads multiple SIMD&FP registers.
-  | FLDMDBX = 53
-  /// Loads multiple SIMD&FP registers.
-  | FLDMIAX = 54
+  | ERET = 47
   /// Stores multiple SIMD&FP registers .
-  | FSTMDBX = 55
+  | FSTMDBX = 48
   /// Stores multiple SIMD&FP registers .
-  | FSTMIAX = 56
+  | FSTMIAX = 49
   /// Halt Instruction.
-  | HLT = 57
+  | HLT = 50
   /// Hypervisor Call.
-  | HVC = 58
+  | HVC = 51
   /// Instruction Synchronization Barrier.
-  | ISB = 59
-  /// If-Then.
-  | IT = 60
-  /// If-Then.
-  | ITE = 61
-  /// If-Then.
-  | ITEE = 62
-  /// If-Then.
-  | ITEEE = 63
-  /// If-Then.
-  | ITEET = 64
-  /// If-Then.
-  | ITET = 65
-  /// If-Then.
-  | ITETE = 66
-  /// If-Then.
-  | ITETT = 67
-  /// If-Then.
-  | ITT = 68
-  /// If-Then.
-  | ITTE = 69
-  /// If-Then.
-  | ITTEE = 70
-  /// If-Then.
-  | ITTET = 71
-  /// If-Then.
-  | ITTT = 72
-  /// If-Then.
-  | ITTTE = 73
-  /// If-Then.
-  | ITTTT = 74
+  | ISB = 52
+  // If-Then.
+  | IT = 53
+  // If-Then.
+  | ITE = 54
+  // If-Then.
+  | ITEE = 55
+  // If-Then.
+  | ITEEE = 56
+  // If-Then.
+  | ITEET = 57
+  // If-Then.
+  | ITET = 58
+  // If-Then.
+  | ITETE = 59
+  // If-Then.
+  | ITETT = 60
+  // If-Then.
+  | ITT = 61
+  // If-Then.
+  | ITTE = 62
+  // If-Then.
+  | ITTEE = 63
+  // If-Then.
+  | ITTET = 64
+  // If-Then.
+  | ITTT = 65
+  // If-Then.
+  | ITTTE = 66
+  // If-Then.
+  | ITTTT = 67
   /// Load-Acquire Word.
-  | LDA = 75
+  | LDA = 68
   /// Load-Acquire Byte.
-  | LDAB = 76
+  | LDAB = 69
   /// Load-Acquire Exclusive Word.
-  | LDAEX = 77
+  | LDAEX = 70
   /// Load-Acquire Exclusive Byte.
-  | LDAEXB = 78
+  | LDAEXB = 71
   /// Load-Acquire Exclusive Double.
-  | LDAEXD = 79
+  | LDAEXD = 72
   /// Load-Acquire Exclusive Halfword.
-  | LDAEXH = 80
+  | LDAEXH = 73
   /// Load-Acquire Halfword.
-  | LDAH = 81
+  | LDAH = 74
   /// Load Coprocessor.
-  | LDC = 82
+  | LDC = 75
   /// Load Coprocessor.
-  | LDC2 = 83
+  | LDC2 = 76
   /// Load Coprocessor.
-  | LDC2L = 84
+  | LDC2L = 77
   /// Load Coprocessor.
-  | LDCL = 85
+  | LDCL = 78
   /// Load Multiple.
-  | LDM = 86
+  | LDM = 79
   /// Load Multiple. Decrement After.
-  | LDMDA = 87
+  | LDMDA = 80
   /// Load Multiple. Decrement Before.
-  | LDMDB = 88
+  | LDMDB = 81
   /// Load Multiple. Increment After.
-  | LDMIA = 89
+  | LDMIA = 82
   /// Load Multiple. Increment Before.
-  | LDMIB = 90
+  | LDMIB = 83
   /// Load Register.
-  | LDR = 91
+  | LDR = 84
   /// Load Register Byte.
-  | LDRB = 92
+  | LDRB = 85
   /// Load Register Byte Unprivileged.
-  | LDRBT = 93
+  | LDRBT = 86
   /// Load Register Dual.
-  | LDRD = 94
+  | LDRD = 87
   /// Load Register Exclusive.
-  | LDREX = 95
-  /// Load Register Exclusive Byte.
-  | LDREXB = 96
+  | LDREX = 88
+  /// Load Register Exclusive Byte
+  | LDREXB = 89
   /// Load Register Exclusive Doubleword.
-  | LDREXD = 97
+  | LDREXD = 90
   /// Load Register Exclusive Halfword.
-  | LDREXH = 98
+  | LDREXH = 91
   /// Load Register Halfword.
-  | LDRH = 99
+  | LDRH = 92
   /// Load Register Halfword Unprivileged.
-  | LDRHT = 100
+  | LDRHT = 93
   /// Load Register Signed Byte.
-  | LDRSB = 101
+  | LDRSB = 94
   /// Load Register Signed Byte Unprivileged.
-  | LDRSBT = 102
+  | LDRSBT = 95
   /// Load Register Signed Halfword.
-  | LDRSH = 103
+  | LDRSH = 96
   /// Load Register Signed Halfword Unprivileged.
-  | LDRSHT = 104
+  | LDRSHT = 97
   /// Load Register Unprivileged.
-  | LDRT = 105
+  | LDRT = 98
   /// Exit ThumbEE state.
-  | LEAVEX = 106
+  | LEAVEX = 99
   /// Logical Shift Left.
-  | LSL = 107
+  | LSL = 100
   /// Logical Shift Left and OutSide IT block.
-  | LSLS = 108
+  | LSLS = 101
   /// Logical Shift Right.
-  | LSR = 109
+  | LSR = 102
   /// Logical Shift Right and OutSide IT block.
-  | LSRS = 110
+  | LSRS = 103
   /// Move to Coprocessor from ARM core register (T1/A1).
-  | MCR = 111
+  | MCR = 104
   /// Move to Coprocessor from ARM core register (T2/A2).
-  | MCR2 = 112
+  | MCR2 = 105
   /// Move to Coprocessor from two ARM core registers (T1/A1).
-  | MCRR = 113
+  | MCRR = 106
   /// Move to Coprocessor from two ARM core registers (T2/A2).
-  | MCRR2 = 114
+  | MCRR2 = 107
   /// Multiply Accumulate.
-  | MLA = 115
+  | MLA = 108
   /// Multiply Accumulate and update the flags.
-  | MLAS = 116
+  | MLAS = 109
   /// Multiply and Subtract.
-  | MLS = 117
+  | MLS = 110
   /// Move.
-  | MOV = 118
+  | MOV = 111
   /// Move and update the flags.
-  | MOVS = 119
+  | MOVS = 112
   /// Move Top (16-bit).
-  | MOVT = 120
+  | MOVT = 113
   /// Move (Only encoding T3 or A2 permitted).
-  | MOVW = 121
+  | MOVW = 114
   /// Move to ARM core register from Coprocessor (T1/A1).
-  | MRC = 122
+  | MRC = 115
   /// Move to ARM core register from Coprocessor (T2/A2).
-  | MRC2 = 123
+  | MRC2 = 116
   /// Move to two ARM core registers from Coprocessor (T1/A1).
-  | MRRC = 124
+  | MRRC = 117
   /// Move to two ARM core registers from Coprocessor (T2/A2).
-  | MRRC2 = 125
+  | MRRC2 = 118
   /// Move from Banked or Special register.
-  | MRS = 126
+  | MRS = 119
   /// Move to Special register, Application level.
-  | MSR = 127
+  | MSR = 120
   /// Multiply.
-  | MUL = 128
+  | MUL = 121
   /// Multiply and update the flags.
-  | MULS = 129
+  | MULS = 122
   /// Bitwise NOT.
-  | MVN = 130
+  | MVN = 123
   /// Bitwise NOT and update the flags.
-  | MVNS = 131
+  | MVNS = 124
   /// No Operation.
-  | NOP = 132
+  | NOP = 125
   /// Bitwise OR NOT.
-  | ORN = 133
+  | ORN = 126
   /// Bitwise OR NOT and update the flags.
-  | ORNS = 134
+  | ORNS = 127
   /// Bitwise OR.
-  | ORR = 135
+  | ORR = 128
   /// Bitwise OR and update the flags.
-  | ORRS = 136
+  | ORRS = 129
   /// Pack Halfword (tbform == FALSE).
-  | PKHBT = 137
+  | PKHBT = 130
   /// Pack Halfword (tbform == TRUE).
-  | PKHTB = 138
+  | PKHTB = 131
   /// Preload Data.
-  | PLD = 139
+  | PLD = 132
   /// Preload Data (W = 1 in Thumb or R = 0 in ARM).
-  | PLDW = 140
+  | PLDW = 133
   /// Preload Instruction.
-  | PLI = 141
+  | PLI = 134
   /// Pop Multiple Registers.
-  | POP = 142
-  /// Physical Speculative Store Bypass Barrier.
-  | PSSBB = 143
+  | POP = 135
   /// Push Multiple Registers.
-  | PUSH = 144
+  | PUSH = 136
   /// Saturating Add.
-  | QADD = 145
+  | QADD = 137
   /// Saturating Add 16-bit.
-  | QADD16 = 146
+  | QADD16 = 138
   /// Saturating Add 8-bit.
-  | QADD8 = 147
+  | QADD8 = 139
   /// Saturating Add and Subtract with Exchange, 16-bit.
-  | QASX = 148
+  | QASX = 140
   /// Saturating Double and Add.
-  | QDADD = 149
+  | QDADD = 141
   /// Saturating Double and Subtract.
-  | QDSUB = 150
+  | QDSUB = 142
   /// Saturating Subtract and Add with Exchange, 16-bit.
-  | QSAX = 151
+  | QSAX = 143
   /// Saturating Subtract.
-  | QSUB = 152
+  | QSUB = 144
   /// Saturating Subtract 16-bit.
-  | QSUB16 = 153
+  | QSUB16 = 145
   /// Saturating Add 8-bit.
-  | QSUB8 = 154
+  | QSUB8 = 146
   /// Reverse Bits.
-  | RBIT = 155
+  | RBIT = 147
   /// Byte-Reverse Word.
-  | REV = 156
+  | REV = 148
   /// Byte-Reverse Packed Halfword.
-  | REV16 = 157
+  | REV16 = 149
   /// Byte-Reverse Signed Halfword.
-  | REVSH = 158
+  | REVSH = 150
   /// Return From Exception.
-  | RFE = 159
+  | RFE = 151
   /// Return From Exception. Decrement After.
-  | RFEDA = 160
+  | RFEDA = 152
   /// Return From Exception. Decrement Before.
-  | RFEDB = 161
+  | RFEDB = 153
   /// Return From Exception. Increment After.
-  | RFEIA = 162
+  | RFEIA = 154
   /// Return From Exception. Increment Before.
-  | RFEIB = 163
+  | RFEIB = 155
   /// Rotate Right.
-  | ROR = 164
+  | ROR = 156
   /// Rotate Right and update the flags.
-  | RORS = 165
+  | RORS = 157
   /// Rotate Right with Extend.
-  | RRX = 166
+  | RRX = 158
   /// Rotate Right with Extend and update the flags.
-  | RRXS = 167
+  | RRXS = 159
   /// Reverse Subtract.
-  | RSB = 168
+  | RSB = 160
   /// Reverse Subtract and update the flags.
-  | RSBS = 169
+  | RSBS = 161
   /// Reverse Subtract with Carry.
-  | RSC = 170
+  | RSC = 162
   /// Reverse Subtract with Carry and update the flags.
-  | RSCS = 171
+  | RSCS = 163
   /// Add 16-bit.
-  | SADD16 = 172
+  | SADD16 = 164
   /// Add 8-bit.
-  | SADD8 = 173
+  | SADD8 = 165
   /// Add and Subtract with Exchange, 16-bit.
-  | SASX = 174
-  /// Speculation Barrier.
-  | SB = 175
+  | SASX = 166
   /// Subtract with Carry.
-  | SBC = 176
+  | SBC = 167
   /// Subtract with Carry and update the flags.
-  | SBCS = 177
+  | SBCS = 168
   /// Signed Bit Field Extract.
-  | SBFX = 178
+  | SBFX = 169
   /// Signed Divide.
-  | SDIV = 179
+  | SDIV = 170
   /// Select Bytes.
-  | SEL = 180
+  | SEL = 171
   /// Set Endianness.
-  | SETEND = 181
-  /// Set Privileged Access Never.
-  | SETPAN = 182
+  | SETEND = 172
   /// Send Event.
-  | SEV = 183
+  | SEV = 173
   /// Send Event Local is a hint instruction.
-  | SEVL = 184
-  /// SHA1 hash update (choose).
-  | SHA1C = 185
+  | SEVL = 174
   /// SHA1 fixed rotate.
-  | SHA1H = 186
-  /// SHA1 hash update (majority).
-  | SHA1M = 187
-  /// SHA1 hash update (parity).
-  | SHA1P = 188
-  /// SHA1 schedule update 0.
-  | SHA1SU0 = 189
+  | SHA1H = 175
   /// SHA1 schedule update 1.
-  | SHA1SU1 = 190
+  | SHA1SU1 = 176
   /// SHA256 schedule update 0.
-  | SHA256H = 191
-  /// SHA256 hash update (part 2).
-  | SHA256H2 = 192
-  /// SHA256 schedule update 0.
-  | SHA256SU0 = 193
-  /// SHA256 schedule update 1.
-  | SHA256SU1 = 194
+  | SHA256SU0 = 177
   /// Halving Add 16-bit.
-  | SHADD16 = 195
+  | SHADD16 = 178
   /// Halving Add 8-bit.
-  | SHADD8 = 196
+  | SHADD8 = 179
   /// Halving Add and Subtract with Exchange, 16-bit.
-  | SHASX = 197
+  | SHASX = 180
   /// Halving Subtract and Add with Exchange, 16-bit.
-  | SHSAX = 198
+  | SHSAX = 181
   /// Halving Subtract 16-bit.
-  | SHSUB16 = 199
+  | SHSUB16 = 182
   /// Halving Subtract 8-bit.
-  | SHSUB8 = 200
+  | SHSUB8 = 183
   /// Secure Monitor Call.
-  | SMC = 201
+  | SMC = 184
   /// Signed Multiply Accumulate (Halfwords).
-  | SMLABB = 202
+  | SMLABB = 185
   /// Signed Multiply Accumulate (Halfwords).
-  | SMLABT = 203
+  | SMLABT = 186
   /// Signed Multiply Accumulate Dual.
-  | SMLAD = 204
+  | SMLAD = 187
   /// Signed Multiply Accumulate Dual (M = 1).
-  | SMLADX = 205
+  | SMLADX = 188
   /// Signed Multiply Accumulate Long.
-  | SMLAL = 206
+  | SMLAL = 189
   /// Signed Multiply Accumulate Long (Halfwords).
-  | SMLALBB = 207
+  | SMLALBB = 190
   /// Signed Multiply Accumulate Long (Halfwords).
-  | SMLALBT = 208
+  | SMLALBT = 191
   /// Signed Multiply Accumulate Long Dual.
-  | SMLALD = 209
-  /// Signed Multiply Accumulate Long Dual (M = 1).
-  | SMLALDX = 210
+  | SMLALD = 192
+  /// /// Signed Multiply Accumulate Long Dual (M = 1).
+  | SMLALDX = 193
   /// Signed Multiply Accumulate Long and update the flags.
-  | SMLALS = 211
+  | SMLALS = 194
   /// Signed Multiply Accumulate Long.
-  | SMLALTB = 212
+  | SMLALTB = 195
   /// Signed Multiply Accumulate Long (Halfwords).
-  | SMLALTT = 213
+  | SMLALTT = 196
   /// Signed Multiply Accumulate (Halfwords).
-  | SMLATB = 214
+  | SMLATB = 197
   /// Signed Multiply Accumulate (Halfwords).
-  | SMLATT = 215
+  | SMLATT = 198
   /// Signed Multiply Accumulate (Word by halfword).
-  | SMLAWB = 216
+  | SMLAWB = 199
   /// Signed Multiply Accumulate.
-  | SMLAWT = 217
+  | SMLAWT = 200
   /// Signed Multiply Subtract Dual.
-  | SMLSD = 218
+  | SMLSD = 201
   /// Signed Multiply Subtract Dual (M = 1).
-  | SMLSDX = 219
+  | SMLSDX = 202
   /// Signed Multiply Subtract Long Dual.
-  | SMLSLD = 220
+  | SMLSLD = 203
   /// Signed Multiply Subtract Long Dual (M = 1).
-  | SMLSLDX = 221
+  | SMLSLDX = 204
   /// Signed Most Significant Word Multiply Accumulate.
-  | SMMLA = 222
+  | SMMLA = 205
   /// Signed Most Significant Word Multiply Accumulate (R = 1).
-  | SMMLAR = 223
+  | SMMLAR = 206
   /// Signed Most Significant Word Multiply Subtract.
-  | SMMLS = 224
+  | SMMLS = 207
   /// Signed Most Significant Word Multiply Subtract (R = 1).
-  | SMMLSR = 225
+  | SMMLSR = 208
   /// Signed Most Significant Word Multiply.
-  | SMMUL = 226
+  | SMMUL = 209
   /// Signed Most Significant Word Multiply (R = 1).
-  | SMMULR = 227
+  | SMMULR = 210
   /// Signed Dual Multiply Add.
-  | SMUAD = 228
+  | SMUAD = 211
   /// Signed Dual Multiply Add (M = 1).
-  | SMUADX = 229
+  | SMUADX = 212
   /// Signed Multiply (Halfwords).
-  | SMULBB = 230
+  | SMULBB = 213
   /// Signed Multiply (Halfwords).
-  | SMULBT = 231
+  | SMULBT = 214
   /// Signed Multiply Long.
-  | SMULL = 232
+  | SMULL = 215
   /// Signed Multiply Long and update the flags.
-  | SMULLS = 233
+  | SMULLS = 216
   /// Signed Multiply Long (Halfwords).
-  | SMULTB = 234
+  | SMULTB = 217
   /// Signed Multiply Long (Halfwords).
-  | SMULTT = 235
+  | SMULTT = 218
   /// Signed Multiply Accumulate (Word by halfword).
-  | SMULWB = 236
+  | SMULWB = 219
   /// Signed Multiply Accumulate (Word by halfword).
-  | SMULWT = 237
+  | SMULWT = 220
   /// Signed Dual Multiply Subtract.
-  | SMUSD = 238
+  | SMUSD = 221
   /// Signed Dual Multiply Subtract (M = 1).
-  | SMUSDX = 239
+  | SMUSDX = 222
   /// Store Return State.
-  | SRS = 240
+  | SRS = 223
   /// Store Return State. Decrement After.
-  | SRSDA = 241
+  | SRSDA = 224
   /// Store Return State. Decrement Before.
-  | SRSDB = 242
+  | SRSDB = 225
   /// Store Return State. Increment After.
-  | SRSIA = 243
+  | SRSIA = 226
   /// Store Return State. Increment Before.
-  | SRSIB = 244
+  | SRSIB = 227
   /// Signed Saturate.
-  | SSAT = 245
+  | SSAT = 228
   /// Signed Saturate, two 16-bit.
-  | SSAT16 = 246
-  /// Subtract and Add with Exchange, 16-bit.
-  | SSAX = 247
-  /// Speculative Store Bypass Barrier.
-  | SSBB = 248
+  | SSAT16 = 229
+  /// Subtract and Add with Exchange, 16-bit
+  | SSAX = 230
   /// Subtract 16-bit.
-  | SSUB16 = 249
+  | SSUB16 = 231
   /// Subtract 8-bit.
-  | SSUB8 = 250
+  | SSUB8 = 232
   /// Store Coprocessor (T1/A1).
-  | STC = 251
+  | STC = 233
   /// Store Coprocessor (T2/A2).
-  | STC2 = 252
+  | STC2 = 234
   /// Store Coprocessor (T2/A2) (D == 1).
-  | STC2L = 253
+  | STC2L = 235
   /// Store Coprocessor (T1/A1) (D == 1).
-  | STCL = 254
+  | STCL = 236
   /// Store-Release Word.
-  | STL = 255
+  | STL = 237
   /// Store-Release Byte.
-  | STLB = 256
+  | STLB = 238
   /// Store-Release Exclusive Word.
-  | STLEX = 257
+  | STLEX = 239
   /// Store-Release Exclusive Byte.
-  | STLEXB = 258
+  | STLEXB = 240
   /// Store-Release Exclusive Doubleword.
-  | STLEXD = 259
+  | STLEXD = 241
   /// Store-Release Exclusive Halfword.
-  | STLEXH = 260
+  | STLEXH = 242
   /// Store-Release Halfword.
-  | STLH = 261
+  | STLH = 243
   /// Store Multiple.
-  | STM = 262
+  | STM = 244
   /// Store Multiple. Decrement After.
-  | STMDA = 263
+  | STMDA = 245
   /// Store Multiple. Decrement Before.
-  | STMDB = 264
+  | STMDB = 246
   /// Store Multiple. Increment After.
-  | STMEA = 265
+  | STMEA = 247
   /// Store Multiple. Increment After.
-  | STMIA = 266
+  | STMIA = 248
   /// Store Multiple. Increment Before.
-  | STMIB = 267
+  | STMIB = 249
   /// Store Register.
-  | STR = 268
+  | STR = 250
   /// Store Register Byte.
-  | STRB = 269
+  | STRB = 251
   /// Store Register Byte Unprivileged.
-  | STRBT = 270
+  | STRBT = 252
   /// Store Register Dual.
-  | STRD = 271
+  | STRD = 253
   /// Store Register Exclusive.
-  | STREX = 272
+  | STREX = 254
   /// Store Register Exclusive Byte.
-  | STREXB = 273
+  | STREXB = 255
   /// Store Register Exclusive Doubleword.
-  | STREXD = 274
+  | STREXD = 256
   /// Store Register Exclusive Halfword.
-  | STREXH = 275
+  | STREXH = 257
   /// Store Register Halfword.
-  | STRH = 276
+  | STRH = 258
   /// Store Register Halfword Unprivileged.
-  | STRHT = 277
+  | STRHT = 259
   /// Store Register Unprivileged.
-  | STRT = 278
+  | STRT = 260
   /// Subtract.
-  | SUB = 279
+  | SUB = 261
   /// Subtract and update the flags.
-  | SUBS = 280
+  | SUBS = 262
   /// Subtract Wide.
-  | SUBW = 281
+  | SUBW = 263
   /// Supervisor Call.
-  | SVC = 282
+  | SVC = 264
   /// Swap Word.
-  | SWP = 283
+  | SWP = 265
   /// Swap Byte.
-  | SWPB = 284
+  | SWPB = 266
   /// Signed Extend and Add Byte.
-  | SXTAB = 285
+  | SXTAB = 267
   /// Signed Extend and Add Byte 16.
-  | SXTAB16 = 286
+  | SXTAB16 = 268
   /// Signed Extend and Add Halfword.
-  | SXTAH = 287
+  | SXTAH = 269
   /// Signed Extend Byte.
-  | SXTB = 288
+  | SXTB = 270
   /// Signed Extend Byte 16.
-  | SXTB16 = 289
+  | SXTB16 = 271
   /// Signed Extend Halfword.
-  | SXTH = 290
+  | SXTH = 272
   /// Table Branch (byte offsets).
-  | TBB = 291
+  | TBB = 273
   /// Table Branch (halfword offsets).
-  | TBH = 292
+  | TBH = 274
   /// Test Equivalence.
-  | TEQ = 293
-  /// Trace Synchronization Barrier.
-  | TSB = 294
-  /// Test performs a bitwise AND operation.
-  | TST = 295
+  | TEQ = 275
+  /// Test.
+  | TST = 276
   /// Add 16-bit.
-  | UADD16 = 296
+  | UADD16 = 277
   /// Add 8-bit.
-  | UADD8 = 297
+  | UADD8 = 278
   /// Add and Subtract with Exchange, 16-bit.
-  | UASX = 298
+  | UASX = 279
   /// Unsigned Bit Field Extract.
-  | UBFX = 299
+  | UBFX = 280
   /// Permanently UNDEFINED.
-  | UDF = 300
+  | UDF = 281
   /// Unsigned Divide.
-  | UDIV = 301
+  | UDIV = 282
   /// Halving Add 16-bit.
-  | UHADD16 = 302
+  | UHADD16 = 283
   /// Halving Add 8-bit.
-  | UHADD8 = 303
+  | UHADD8 = 284
   /// Halving Add and Subtract with Exchange, 16-bit.
-  | UHASX = 304
+  | UHASX = 285
   /// Halving Subtract and Add with Exchange, 16-bit.
-  | UHSAX = 305
+  | UHSAX = 286
   /// Halving Subtract 16-bit.
-  | UHSUB16 = 306
+  | UHSUB16 = 287
   /// Halving Add 8-bit.
-  | UHSUB8 = 307
+  | UHSUB8 = 288
   /// Unsigned Multiply Accumulate Accumulate Long.
-  | UMAAL = 308
+  | UMAAL = 289
   /// Unsigned Multiply Accumulate Long.
-  | UMLAL = 309
+  | UMLAL = 290
   /// Unsigned Multiply Accumulate Long and update the flags.
-  | UMLALS = 310
+  | UMLALS = 291
   /// Unsigned Multiply Long.
-  | UMULL = 311
+  | UMULL = 292
   /// Unsigned Multiply Long and update the flags.
-  | UMULLS = 312
+  | UMULLS = 293
   /// Saturating Add 16-bit.
-  | UQADD16 = 313
+  | UQADD16 = 294
   /// Saturating Add 8-bit.
-  | UQADD8 = 314
+  | UQADD8 = 295
   /// Saturating Add and Subtract with Exchange, 16-bit.
-  | UQASX = 315
+  | UQASX = 296
   /// Saturating Subtract and Add with Exchange, 16-bit.
-  | UQSAX = 316
+  | UQSAX = 297
   /// Saturating Subtract 16-bit.
-  | UQSUB16 = 317
+  | UQSUB16 = 298
   /// Saturating Subtract 8-bit.
-  | UQSUB8 = 318
+  | UQSUB8 = 299
   /// Unsigned Sum of Absolute Differences.
-  | USAD8 = 319
+  | USAD8 = 300
   /// Unsigned Sum of Absolute Differences, Accumulate.
-  | USADA8 = 320
+  | USADA8 = 301
   /// Unsigned Saturate.
-  | USAT = 321
+  | USAT = 302
   /// Unsigned Saturate, two 16-bit.
-  | USAT16 = 322
+  | USAT16 = 303
   /// Subtract and Add with Exchange, 16-bit.
-  | USAX = 323
+  | USAX = 304
   /// Subtract 16-bit.
-  | USUB16 = 324
+  | USUB16 = 305
   /// Subtract 8-bit.
-  | USUB8 = 325
+  | USUB8 = 306
   /// Unsigned Extend and Add Byte.
-  | UXTAB = 326
+  | UXTAB = 307
   /// Unsigned Extend and Add Byte 16.
-  | UXTAB16 = 327
+  | UXTAB16 = 308
   /// Unsigned Extend and Add Halfword.
-  | UXTAH = 328
+  | UXTAH = 309
   /// Unsigned Extend Byte.
-  | UXTB = 329
+  | UXTB = 310
   /// Unsigned Extend Byte 16.
-  | UXTB16 = 330
+  | UXTB16 = 311
   /// Unsigned Extend Halfword.
-  | UXTH = 331
+  | UXTH = 312
   /// Vector Absolute Difference and Accumulate.
-  | VABA = 332
+  | VABA = 313
   /// Vector Absolute Difference and Accumulate (T2/A2).
-  | VABAL = 333
+  | VABAL = 314
   /// Vector Absolute Difference.
-  | VABD = 334
+  | VABD = 315
   /// Vector Absolute Difference (T2/A2).
-  | VABDL = 335
+  | VABDL = 316
   /// Vector Absolute.
-  | VABS = 336
+  | VABS = 317
   /// Vector Absolute Compare Greater or Less Than (or Equal).
-  | VACGE = 337
+  | VACGE = 318
   /// Vector Absolute Compare Greater or Less Than (or Equal).
-  | VACGT = 338
+  | VACGT = 319
   /// Vector Absolute Compare Greater or Less Than (or Equal).
-  | VACLE = 339
+  | VACLE = 320
   /// Vector Absolute Compare Greater or Less Than (or Equal).
-  | VACLT = 340
+  | VACLT = 321
   /// Vector Add.
-  | VADD = 341
+  | VADD = 322
   /// Vector Add and Narrow, returning High Half.
-  | VADDHN = 342
+  | VADDHN = 323
   /// Vector Add Long.
-  | VADDL = 343
+  | VADDL = 324
   /// Vector Add Wide.
-  | VADDW = 344
+  | VADDW = 325
   /// Vector Bitwise AND.
-  | VAND = 345
+  | VAND = 326
   /// Vector Bitwise Bit Clear, AND complement.
-  | VBIC = 346
+  | VBIC = 327
   /// Vector Bitwise Select. Bitwise Insert if False, encoded as op = 0b11.
-  | VBIF = 347
+  | VBIF = 328
   /// Vector Bitwise Select. Bitwise Insert if True, encoded as op = 0b10.
-  | VBIT = 348
+  | VBIT = 329
   /// Vector Bitwise Select. Bitwise Select, encoded as op = 0b01.
-  | VBSL = 349
-  /// Vector Complex Add.
-  | VCADD = 350
+  | VBSL = 330
   /// Vector Compare Equal.
-  | VCEQ = 351
+  | VCEQ = 331
   /// Vector Compare Greater Than or Equal.
-  | VCGE = 352
+  | VCGE = 332
   /// Vector Compare Greater Than.
-  | VCGT = 353
+  | VCGT = 333
   /// Vector Compare Less Than or Equal to Zero.
-  | VCLE = 354
+  | VCLE = 334
   /// Vector Count Leading Sign Bits.
-  | VCLS = 355
+  | VCLS = 335
   /// Vector Compare Less Than Zero.
-  | VCLT = 356
+  | VCLT = 336
   /// Vector Count Leading Zeros.
-  | VCLZ = 357
-  /// Vector Complex Multiply Accumulate.
-  | VCMLA = 358
-  /// Vector Compare. (Encoded as E = 0).
-  | VCMP = 359
+  | VCLZ = 337
+  /// Vector Compare. (Encoded as E = 0)
+  | VCMP = 338
   /// Vector Compare. (Encoded as E = 1).
-  | VCMPE = 360
+  | VCMPE = 339
   /// Vector Count.
-  | VCNT = 361
+  | VCNT = 340
   /// Vector Convert.
-  | VCVT = 362
+  | VCVT = 341
   /// Convert floating-point to integer with Round to Nearest with Ties to Away.
-  | VCVTA = 363
+  | VCVTA = 342
   /// Convert between half-precision and single-precision.
-  | VCVTB = 364
+  | VCVTB = 343
   /// Convert floating-point to integer with Round towards Minus Infinity.
-  | VCVTM = 365
+  | VCVTM = 344
   /// Convert floating-point to integer with Round to Nearest.
-  | VCVTN = 366
+  | VCVTN = 345
   /// Convert floating-point to integer with Round towards Plus Infinity.
-  | VCVTP = 367
+  | VCVTP = 346
   /// Vector Convert floating-point to integer.
-  | VCVTR = 368
+  | VCVTR = 347
   /// Convert between half-precision and single-precision.
-  | VCVTT = 369
+  | VCVTT = 348
   /// Vector Divide.
-  | VDIV = 370
-  /// BFloat16 floating-point (BF16) dot product (vector).
-  | VDOT = 371
+  | VDIV = 349
   /// Vector Duplicate.
-  | VDUP = 372
-  /// Vector Bitwise Exclusive OR.
-  | VEOR = 373
+  | VDUP = 350
+  /// Vector Bitwise Exclusive OR
+  | VEOR = 351
   /// Vector Extract.
-  | VEXT = 374
-  /// Vector Fused Multiply Accumulate.
-  | VFMA = 375
-  /// BFloat16 floating-point widening multiply-add.
-  | VFMAB = 376
-  /// Vector Floating-point Multiply-Add Long to accumulator.
-  | VFMAL = 377
-  /// BFloat16 floating-point widening multiply-add.
-  | VFMAT = 378
-  /// Vector Fused Multiply Subtract.
-  | VFMS = 379
-  /// Vector Floating-Point Multiply-Subtract Long.
-  | VFMSL = 380
+  | VEXT = 352
+  ///Vector Fused Multiply Accumulate.
+  | VFMA = 353
+  ///Vector Fused Multiply Subtract.
+  | VFMS = 354
   /// Vector Fused Negate Multiply Accumulate.
-  | VFNMA = 381
+  | VFNMA = 355
   /// Vector Fused Negate Multiply Subtract.
-  | VFNMS = 382
+  | VFNMS = 356
   /// Vector Halving Add.
-  | VHADD = 383
+  | VHADD = 357
   /// Vector Halving Subtract.
-  | VHSUB = 384
-  /// Vector move Insertion.
-  | VINS = 385
-  /// FP Javascript convert to signed fixed-point, rounding toward zero.
-  | VJCVT = 386
+  | VHSUB = 358
   /// Vector Load. (multiple single elements).
-  | VLD1 = 387
+  | VLD1 = 359
   /// Vector Load. (multiple 2-element structures).
-  | VLD2 = 388
+  | VLD2 = 360
   /// Vector Load. (multiple 3-element structures).
-  | VLD3 = 389
+  | VLD3 = 361
   /// Vector Load. (multiple 4-element structures).
-  | VLD4 = 390
+  | VLD4 = 362
   /// Vector Load Multiple.
-  | VLDM = 391
+  | VLDM = 363
   /// Vector Load Multiple. Decrement Before.
-  | VLDMDB = 392
+  | VLDMDB = 364
   /// Vector Load Multiple. Increment After.
-  | VLDMIA = 393
+  | VLDMIA = 365
   /// Vector Load Register.
-  | VLDR = 394
+  | VLDR = 366
   /// Vector Maximum.
-  | VMAX = 395
-  /// Floating-point Maximum Number.
-  | VMAXNM = 396
+  | VMAX = 367
   /// Vector Minimum.
-  | VMIN = 397
-  /// Floating-point Minimum Number.
-  | VMINNM = 398
+  | VMIN = 368
   /// Vector Multiply Accumulate.
-  | VMLA = 399
+  | VMLA = 369
   /// Vector Multiply Accumulate (T2/A2).
-  | VMLAL = 400
+  | VMLAL = 370
   /// Vector Multiply Subtract.
-  | VMLS = 401
+  | VMLS = 371
   /// Vector Multiply Subtract (T2/A2).
-  | VMLSL = 402
-  /// BFloat16 floating-point matrix multiply-accumulate.
-  | VMMLA = 403
+  | VMLSL = 372
   /// Vector Move.
-  | VMOV = 404
+  | VMOV = 373
   /// Vector Move Long.
-  | VMOVL = 405
+  | VMOVL = 374
   /// Vector Move and Narrow.
-  | VMOVN = 406
-  /// Vector Move extraction.
-  | VMOVX = 407
+  | VMOVN = 375
   /// Move to ARM core register from Floating-point Special register.
-  | VMRS = 408
+  | VMRS = 376
   /// Move to Floating-point Special register from ARM core register.
-  | VMSR = 409
-  /// Vector Multiply.
-  | VMUL = 410
+  | VMSR = 377
+  /// Vector Multiply
+  | VMUL = 378
   /// Vector Multiply Long.
-  | VMULL = 411
+  | VMULL = 379
   /// Vector Bitwise NOT.
-  | VMVN = 412
+  | VMVN = 380
   /// Vector Negate.
-  | VNEG = 413
+  | VNEG = 381
   /// Vector Negate Multiply Accumulate or Subtract.
-  | VNMLA = 414
+  | VNMLA = 382
   /// Vector Negate Multiply Accumulate or Subtract.
-  | VNMLS = 415
+  | VNMLS = 383
   /// Vector Negate Multiply Accumulate or Subtract.
-  | VNMUL = 416
+  | VNMUL = 384
   /// Vector Bitwise OR NOT.
-  | VORN = 417
+  | VORN = 385
   /// Vector Bitwise OR, if source registers differ.
-  | VORR = 418
+  | VORR = 386
   /// Vector Pairwise Add and Accumulate Long.
-  | VPADAL = 419
+  | VPADAL = 387
   /// Vector Pairwise Add.
-  | VPADD = 420
+  | VPADD = 388
   /// Vector Pairwise Add Long.
-  | VPADDL = 421
+  | VPADDL = 389
   /// Vector Pairwise Maximum.
-  | VPMAX = 422
+  | VPMAX = 390
   /// Vector Pairwise Minimum.
-  | VPMIN = 423
+  | VPMIN = 391
   /// Vector Pop Registers.
-  | VPOP = 424
+  | VPOP = 392
   /// Vector Push Registers.
-  | VPUSH = 425
+  | VPUSH = 393
   /// Vector Saturating Absolute.
-  | VQABS = 426
+  | VQABS = 394
   /// Vector Saturating Add.
-  | VQADD = 427
+  | VQADD = 395
   /// Vector Saturating Doubling Multiply Accumulate Long.
-  | VQDMLAL = 428
+  | VQDMLAL = 396
   /// Vector Saturating Doubling Multiply Subtract Long.
-  | VQDMLSL = 429
+  | VQDMLSL = 397
   /// Vector Saturating Doubling Multiply returning High Half.
-  | VQDMULH = 430
+  | VQDMULH = 398
   /// Vector Saturating Doubling Multiply Long.
-  | VQDMULL = 431
+  | VQDMULL = 399
   /// Vector Saturating Move and Unsigned Narrow (op <> 0b01).
-  | VQMOVN = 432
+  | VQMOVN = 400
   /// Vector Saturating Move and Unsigned Narrow (op = 0b01).
-  | VQMOVUN = 433
+  | VQMOVUN = 401
   /// Vector Saturating Negate.
-  | VQNEG = 434
-  /// Vector Saturating Rounding Doubling Mul Accumulate Returning High Half.
-  | VQRDMLAH = 435
-  /// Vector Saturating Rounding Doubling Multiply Subtract Returning High Half.
-  | VQRDMLSH = 436
+  | VQNEG = 402
   /// Vector Saturating Rounding Doubling Multiply returning High Half.
-  | VQRDMULH = 437
+  | VQRDMULH = 403
   /// Vector Saturating Rounding Shift Left.
-  | VQRSHL = 438
+  | VQRSHL = 404
   /// Vector Saturating Shift Right, Rounded Unsigned Narrow.
-  | VQRSHRN = 439
+  | VQRSHRN = 405
   /// Vector Saturating Shift Right, Rounded Unsigned Narrow.
-  | VQRSHRUN = 440
+  | VQRSHRUN = 406
   /// Vector Saturating Shift Left.
-  | VQSHL = 441
+  | VQSHL = 407
   /// Vector Saturating Shift Left.
-  | VQSHLU = 442
+  | VQSHLU = 408
   /// Vector Saturating Shift Right, Narrow.
-  | VQSHRN = 443
+  | VQSHRN = 409
   /// Vector Saturating Shift Right, Narrow.
-  | VQSHRUN = 444
+  | VQSHRUN = 410
   /// Vector Saturating Subtract.
-  | VQSUB = 445
+  | VQSUB = 411
   /// Vector Rounding Add and Narrow, returning High Half.
-  | VRADDHN = 446
+  | VRADDHN = 412
   /// Vector Reciprocal Estimate.
-  | VRECPE = 447
+  | VRECPE = 413
   /// Vector Reciprocal Step.
-  | VRECPS = 448
+  | VRECPS = 414
   /// Vector Reverse in halfwords.
-  | VREV16 = 449
+  | VREV16 = 415
   /// Vector Reverse in words.
-  | VREV32 = 450
+  | VREV32 = 416
   /// Vector Reverse in doublewords.
-  | VREV64 = 451
-  /// Vector Rounding Halving Add.
-  | VRHADD = 452
+  | VREV64 = 417
+  /// Vector Rounding Halving Add
+  | VRHADD = 418
   /// Vector Round floating-point to integer towards Nearest with Ties to Away.
-  | VRINTA = 453
+  | VRINTA = 419
   /// Vector Round floating-point to integer towards Minus Infinity.
-  | VRINTM = 454
+  | VRINTM = 420
   /// Vector Round floating-point to integer to Nearest.
-  | VRINTN = 455
+  | VRINTN = 421
   /// Vector Round floating-point to integer towards Plus Infinity.
-  | VRINTP = 456
-  /// Vector Round floating-point to integer rounds.
-  | VRINTR = 457
+  | VRINTP = 422
   /// Vector round floating-point to integer to nearest signaling inexactness.
-  | VRINTX = 458
+  | VRINTX = 423
   /// Vector round floating-point to integer towards Zero.
-  | VRINTZ = 459
+  | VRINTZ = 424
   /// Vector Rounding Shift Left.
-  | VRSHL = 460
+  | VRSHL = 425
   /// Vector Rounding Shift Right.
-  | VRSHR = 461
+  | VRSHR = 426
   /// Vector Rounding Shift Right Narrow.
-  | VRSHRN = 462
+  | VRSHRN = 427
   /// Vector Reciprocal Square Root Estimate.
-  | VRSQRTE = 463
+  | VRSQRTE = 428
   /// Vector Reciprocal Square Root Step.
-  | VRSQRTS = 464
+  | VRSQRTS = 429
   /// Vector Rounding Shift Right and Accumulate.
-  | VRSRA = 465
+  | VRSRA = 430
   /// Vector Rounding Subtract and Narrow, returning High Half.
-  | VRSUBHN = 466
-  /// Dot Product vector form with signed integers.
-  | VSDOT = 467
-  /// Floating-point conditional select.
-  | VSELEQ = 468
-  /// Floating-point conditional select.
-  | VSELGE = 469
-  /// Floating-point conditional select.
-  | VSELGT = 470
-  /// Floating-point conditional select.
-  | VSELVS = 471
+  | VRSUBHN = 431
   /// Vector Shift Left.
-  | VSHL = 472
+  | VSHL = 432
   /// Vector Shift Left Long.
-  | VSHLL = 473
+  | VSHLL = 433
   /// Vector Shift Right.
-  | VSHR = 474
+  | VSHR = 434
   /// Vector Shift Right Narrow.
-  | VSHRN = 475
+  | VSHRN = 435
   /// Vector Shift Left and Insert.
-  | VSLI = 476
-  /// The widening integer matrix multiply-accumulate instruction.
-  | VSMMLA = 477
+  | VSLI = 436
   /// Vector Square Root.
-  | VSQRT = 478
+  | VSQRT = 437
   /// Vector Shift Right and Accumulate.
-  | VSRA = 479
+  | VSRA = 438
   /// Vector Shift Right and Insert.
-  | VSRI = 480
+  | VSRI = 439
   /// Vector Store. (multiple single elements).
-  | VST1 = 481
+  | VST1 = 440
   /// Vector Store. (multiple 2-element structures).
-  | VST2 = 482
+  | VST2 = 441
   /// Vector Store. (multiple 3-element structures).
-  | VST3 = 483
+  | VST3 = 442
   /// Vector Store. (multiple 4-element structures).
-  | VST4 = 484
+  | VST4 = 443
   /// Vector Store Multiple.
-  | VSTM = 485
+  | VSTM = 444
   /// Vector Store Multiple. Decrement Before.
-  | VSTMDB = 486
-  /// Vector Store Multiple. Increment After.
-  | VSTMIA = 487
+  | VSTMDB = 445
+  /// Vector Store Multiple. Increment After
+  | VSTMIA = 446
   /// Vector Store Register.
-  | VSTR = 488
+  | VSTR = 447
   /// Vector Subtract.
-  | VSUB = 489
+  | VSUB = 448
   /// Vector Subtract and Narrow, returning High Half.
-  | VSUBHN = 490
+  | VSUBHN = 449
   /// Vector Subtract Long.
-  | VSUBL = 491
+  | VSUBL = 450
   /// Vector Subtract Wide.
-  | VSUBW = 492
-  /// Dot Product index form with signed and unsigned integers.
-  | VSUDOT = 493
+  | VSUBW = 451
   /// Vector Swap.
-  | VSWP = 494
+  | VSWP = 452
   /// Vector Table Lookup.
-  | VTBL = 495
+  | VTBL = 453
   /// Vector Table Extension.
-  | VTBX = 496
+  | VTBX = 454
   /// Vector Transpose.
-  | VTRN = 497
+  | VTRN = 455
   /// Vector Test Bits.
-  | VTST = 498
-  /// Dot Product index form with unsigned integers.
-  | VUDOT = 499
-  /// Widening 8-bit unsigned int matrix multiply-accumulate into 2x2 matrix.
-  | VUMMLA = 500
-  /// Dot Product index form with unsigned and signed integers.
-  | VUSDOT = 501
-  /// Widening 8-bit mixed sign int matrix multiply-accumulate into 2x2 matrix.
-  | VUSMMLA = 502
+  | VTST = 456
   /// Vector Unzip.
-  | VUZP = 503
+  | VUZP = 457
   /// Vector Zip.
-  | VZIP = 504
+  | VZIP = 458
   /// Wait For Event hint.
-  | WFE = 505
+  | WFE = 459
   /// Wait For Interrupt hint.
-  | WFI = 506
-  /// Yield hint.
-  | YIELD = 507
+  | WFI = 460
+  /// Yield hint
+  | YIELD = 461
   /// Invalid Opcode.
-  | InvalidOP = 508
+  | InvalidOP = 462
 
 type internal Op = Opcode
 
 type internal PSR =
-  | Cond = 0
-  | N = 1
-  | Z = 2
-  | C = 3
-  | V = 4
-  | Q = 5
-  | IT10 = 6
-  | J = 7
-  | GE = 8
-  | IT72 = 9
-  | E = 10
-  | A = 11
-  | I = 12
-  | F = 13
-  | T = 14
-  | M = 15
+  | PSR_Cond
+  | PSR_N
+  | PSR_Z
+  | PSR_C
+  | PSR_V
+  | PSR_Q
+  | PSR_IT10
+  | PSR_J
+  | PSR_GE
+  | PSR_IT72
+  | PSR_E
+  | PSR_A
+  | PSR_I
+  | PSR_F
+  | PSR_T
+  | PSR_M
 
-[<Struct>]
 type internal SCTLR =
   | SCTLR_NMFI
 
-[<Struct>]
 type internal SCR =
   | SCR_AW
   | SCR_FW
   | SCR_NS
 
-[<Struct>]
 type internal NSACR =
   | NSACR_RFR
 
-type BarrierOption =
-  | OSHLD = 0b0001
-  | OSHST = 0b0010
-  | OSH = 0b0011
-  | NSHLD = 0b0101
-  | NSHST = 0b0110
-  | NSH = 0b0111
-  | ISHLD = 0b1001
-  | ISHST = 0b1010
-  | ISH = 0b1011
-  | LD = 0b1101
-  | ST = 0b1110
-  | SY = 0b1111
+type OptionOpr =
+  | SY
+  | ST
+  | LD
+  | ISH
+  | ISHST
+  | ISHLD
+  | NSH
+  | NSHST
+  | NSHLD
+  | OSH
+  | OSHST
+  | OSHLD
 
-[<Struct>]
 type Iflag =
   | A
   | I
@@ -1161,12 +1064,10 @@ type Iflag =
   | IF
   | AIF
 
-[<Struct>]
 type internal SIMDVFPRegisterSpacing =
   | Single
   | Double
 
-[<Struct>]
 type SRType =
   | SRTypeLSL
   | SRTypeLSR
@@ -1175,15 +1076,13 @@ type SRType =
   | SRTypeRRX
 
 /// A8.2 Standard assembler syntax fields
-[<Struct>]
 type Qualifier =
   /// Wide.
   | W
-  /// Narrow (defalut).
+  /// Narrow.
   | N
 
 /// A2.6.3 Data types supported by the Advanced SIMD Extension
-[<Struct>]
 type SIMDDataType =
   | SIMDTyp8      (* Any element of <size> bits *)
   | SIMDTyp16
@@ -1197,7 +1096,6 @@ type SIMDDataType =
   | SIMDTypI32
   | SIMDTypI64
   | SIMDTypP8     (* Polynomial over {0, 1} of degree less than <size> *)
-  | SIMDTypP64
   | SIMDTypS8     (* Signed integer of <size> bits *)
   | SIMDTypS16
   | SIMDTypS32
@@ -1206,7 +1104,6 @@ type SIMDDataType =
   | SIMDTypU16
   | SIMDTypU32
   | SIMDTypU64
-  | BF16 // FIMXE
 
 type SIMDDataTypes =
   | OneDT of SIMDDataType
@@ -1283,7 +1180,7 @@ type Operand =
   | OprShift of Shift
   | OprRegShift of SRType * Register
   | OprMemory of AddressingMode
-  | OprOption of BarrierOption
+  | OprOption of OptionOpr
   | OprIflag of Iflag
   | OprEndian of Endian
   | OprCond of Condition
@@ -1299,55 +1196,53 @@ type Operands =
   | SixOperands of Operand * Operand * Operand * Operand * Operand * Operand
 
 /// Basic information for a single ARMv7 instruction obtained after parsing.
-[<AbstractClass>]
-type ARM32InternalInstruction
-  (addr, nb, cond, op, opr, its, wb, q, s, m, cf, oSz, isAdd) =
-  inherit Instruction (addr, nb, WordSize.Bit32)
-
+[<NoComparison; CustomEquality>]
+type InsInfo = {
+  /// Address.
+  Address: Addr
+  /// Number of bytes.
+  NumBytes: uint32
   /// Condition.
-  member __.Condition with get(): Condition = cond
-
+  Condition: Condition option
   /// Opcode.
-  member __.Opcode with get(): Opcode = op
-
+  Opcode: Opcode
   /// Operands.
-  member __.Operands with get(): Operands = opr
-
+  Operands: Operands
   /// IT state for this instruction (used only for IT instructions).
-  member __.ITState with get(): byte = its
-
+  ITState: byte
   /// Write back.
-  member __.WriteBack with get(): bool = wb
-
+  WriteBack: bool option
   /// Qualifier.
-  member __.Qualifier with get(): Qualifier = q
-
+  Qualifier: Qualifier option
   /// SIMD data type.
-  member __.SIMDTyp with get(): SIMDDataTypes option = s
-
+  SIMDTyp: SIMDDataTypes option
   /// Target architecture mode.
-  member __.Mode with get(): ArchOperationMode = m
+  Mode: ArchOperationMode
+  /// Carry Flag from decoding instruction
+  Cflag: bool option
+}
+with
+  override __.GetHashCode () =
+    hash (__.Address,
+          __.NumBytes,
+          __.Condition,
+          __.Opcode,
+          __.Operands,
+          __.Qualifier,
+          __.SIMDTyp,
+          __.Mode)
+  override __.Equals (i) =
+    match i with
+    | :? InsInfo as i ->
+      i.Address = __.Address
+      && i.NumBytes = __.NumBytes
+      && i.Condition = __.Condition
+      && i.Opcode = __.Opcode
+      && i.Operands = __.Operands
+      && i.Qualifier = __.Qualifier
+      && i.SIMDTyp = __.SIMDTyp
+      && i.Mode = __.Mode
+      && i.Cflag = __.Cflag
+    | _ -> false
 
-  /// Carry Flag from decoding instruction.
-  member __.Cflag with get(): bool option = cf
-
-  /// Operation size.
-  member __.OprSize with get(): RegType = oSz
-
-  /// Add or subtract offsets.
-  member __.IsAdd with get(): bool = isAdd
-
-  override __.ToString () =
-    $"Condition: {cond}{System.Environment.NewLine}\
-      Opcode: {op}{System.Environment.NewLine}\
-      Operands: {opr}{System.Environment.NewLine}\
-      ITState: {its}{System.Environment.NewLine}\
-      WriteBack: {wb}{System.Environment.NewLine}\
-      Qualifier: {q}{System.Environment.NewLine}\
-      SIMD: {s}{System.Environment.NewLine}\
-      Mode: {m}{System.Environment.NewLine}\
-      Cflag: {cf}{System.Environment.NewLine}\"
-      OprSize: {oSz}{System.Environment.NewLine}\"
-      IsAdd: {isAdd}{System.Environment.NewLine}"
-
-type internal InsInfo = ARM32InternalInstruction
+// vim: set tw=80 sts=2 sw=2:

@@ -1,4 +1,4 @@
-﻿(*
+(*
   B2R2 - the Next-Generation Reversing Platform
 
   Copyright (c) SoftSec Lab. @ KAIST, since 2016
@@ -25,77 +25,97 @@
 namespace B2R2.MiddleEnd.DataFlow
 
 open B2R2
-open B2R2.BinIR
-open B2R2.BinIR.LowUIR
-open B2R2.FrontEnd
-open B2R2.MiddleEnd.DataFlow
+open B2R2.BinIR.SSA
+open B2R2.FrontEnd.BinInterface
+open B2R2.MiddleEnd.BinGraph
+open B2R2.MiddleEnd.Lens
+open System.Collections.Generic
 
-module internal StackPointerPropagation =
-  let evalBinOp op c1 c2 =
-    match op with
-    | BinOpType.ADD -> StackPointerDomain.add c1 c2
-    | BinOpType.SUB -> StackPointerDomain.sub c1 c2
-    | BinOpType.AND -> StackPointerDomain.``and`` c1 c2
-    | _ -> StackPointerDomain.NotConstSP
+module StackState =
 
+  let initRegister hdl (dict: Dictionary<_, _>) =
+    match hdl.RegisterBay.StackPointer with
+    | Some sp ->
+      let rt = hdl.RegisterBay.RegIDToRegType sp
+      let str = hdl.RegisterBay.RegIDToString sp
+      let var = { Kind = RegVar (rt, sp, str); Identifier = 0 }
+      dict.[var] <- Const (BitVector.ofUInt64 0x80000000UL rt)
+      dict
+    | None -> dict
 
-type StackPointerPropagation =
-  inherit VarBasedDataFlowAnalysis<StackPointerDomain.Lattice>
+  let private collectDefAddrs ess cfg st v addrs = function
+    | _, Def (_, Store (_, rt, addr, _)) ->
+      match StackTransfer.evalExpr ess cfg st v addr with
+      | Const bv ->
+        let addr = BitVector.toUInt64 bv
+        let align = RegType.toByteWidth rt |> uint64
+        if (rt = st.DefaultWordSize) && (addr % align = 0UL) then
+          Set.add addr addrs
+        else addrs
+      | _ -> addrs
+    | _ -> addrs
 
-  new (hdl: BinHandle) =
-    let initialStackPointerValue =
-      hdl.RegisterFactory.StackPointer
-      |> Option.get
-      |> hdl.RegisterFactory.RegIDToRegType
-      |> BitVector.OfUInt64 Constants.InitialStackPointer
-      |> StackPointerDomain.ConstSP
+  let private recordMergePoint mergePoints v addr =
+    match Map.tryFind v mergePoints with
+    | Some addrs -> Map.add v (Set.add addr addrs) mergePoints
+    | None -> Map.add v (Set.singleton addr) mergePoints
 
-    let isStackPointer rid =
-      match hdl.RegisterFactory.StackPointer with
-      | Some spRid -> rid = spRid
-      | None -> false
+  let private updateMergePoint addrsPerNode addr (mps, visited, workList) v =
+    if Set.contains v visited then mps, visited, workList
+    else
+      let mps = recordMergePoint mps v addr
+      let visited = Set.add v visited
+      let addrs = (addrsPerNode: Dictionary<SSAVertex, Set<Addr>>).[v]
+      if not <| Set.contains addr addrs then mps, visited, v :: workList
+      else mps, visited, workList
 
-    let getBaseCase varKind =
-      match varKind with
-      | Regular rid when isStackPointer rid -> initialStackPointerValue
-      | _ -> StackPointerDomain.Undef
+  let rec private foldVertices mergePoints visited addrsPerNode addr = function
+    | [] -> mergePoints
+    | (v: SSAVertex) :: workList ->
+      let mergePoints, visited, workList =
+        v.VData.Frontier
+        |> List.fold (updateMergePoint addrsPerNode addr)
+                      (mergePoints, visited, workList)
+      foldVertices mergePoints visited addrsPerNode addr workList
 
-    let evaluateVarPoint (state: VarBasedDataFlowState<_>) pp varKind =
-      let vp = { ProgramPoint = pp; VarKind = varKind }
-      match state.UseDefMap.TryGetValue vp with
-      | false, _ -> getBaseCase varKind (* initialize here *)
-      | true, defVp -> state.DomainSubState.GetAbsValue defVp
+  /// Memory merge point means an address of which the merging operation should
+  /// be performed. Mempory merge point is necessary for dataflow analysis on
+  /// SSA. Without this, every time we meet a phi statement of a memory, we
+  /// should iterate memories and merge values at all exisitng addresses.
+  let computeMemoryMergePoints ess cfg st =
+    let defSites = Dictionary ()
+    let defsPerNode = Dictionary ()
+    DiGraph.iterVertex cfg (fun (v: Vertex<SSABBlock>) ->
+      if v.VData.IsFakeBlock () then ()
+      else
+        let defs =
+          v.VData.SSAStmtInfos
+          |> Array.fold (collectDefAddrs ess cfg st v) Set.empty
+        defsPerNode.[v] <- defs
+        defs
+        |> Set.iter (fun d ->
+          if defSites.ContainsKey d then defSites.[d] <- Set.add v defSites.[d]
+          else defSites.[d] <- Set.singleton v))
+    defSites
+    |> Seq.fold (fun mergePoints (KeyValue (addr, defs)) ->
+      Set.toList defs
+      |> foldVertices mergePoints Set.empty defsPerNode addr
+      ) Map.empty
 
-    let rec evaluateExpr (state: VarBasedDataFlowState<_>) pp e =
-      match e.E with
-      | Num bv -> StackPointerDomain.ConstSP bv
-      | Var _ | TempVar _ -> evaluateVarPoint state pp (VarKind.ofIRExpr e)
-      | Nil -> StackPointerDomain.NotConstSP
-      | Load _ -> StackPointerDomain.NotConstSP
-      | UnOp _ -> StackPointerDomain.NotConstSP
-      | FuncName _ -> StackPointerDomain.NotConstSP
-      | BinOp (op, _, e1, e2) ->
-        let c1 = evaluateExpr state pp e1
-        let c2 = evaluateExpr state pp e2
-        StackPointerPropagation.evalBinOp op c1 c2
-      | RelOp _ -> StackPointerDomain.NotConstSP
-      | Ite _ -> StackPointerDomain.NotConstSP
-      | Cast _ -> StackPointerDomain.NotConstSP
-      | Extract _ -> StackPointerDomain.NotConstSP
-      | Undefined _ -> StackPointerDomain.NotConstSP
-      | _ -> Utils.impossible ()
+/// Variant of Constant Propagation. It only cares stack-related registers:
+/// stack pointer and frame pointer.
+type StackPointerPropagation (ssaCFG, spState) =
+  inherit ConstantPropagation<StackValue> (ssaCFG, spState)
 
-    let analysis =
-      { new IVarBasedDataFlowAnalysis<StackPointerDomain.Lattice> with
-          member __.OnInitialize state = state
-
-          member __.Bottom = StackPointerDomain.Undef
-
-          member __.Join a b = StackPointerDomain.join a b
-
-          member __.Subsume a b = StackPointerDomain.subsume a b
-
-          member __.EvalExpr state pp e = evaluateExpr state pp e }
-
-    { inherit VarBasedDataFlowAnalysis<StackPointerDomain.Lattice>
-        (hdl, analysis) }
+  static member Init hdl ssaCFG =
+    let spState =
+      CPState.initState hdl
+                        ssaCFG
+                        (StackState.initRegister hdl)
+                        id
+                        Undef
+                        NotAConst
+                        StackValue.goingUp
+                        StackValue.meet
+                        StackTransfer.evalStmt
+    StackPointerPropagation (ssaCFG, spState)

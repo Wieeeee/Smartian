@@ -25,11 +25,10 @@
 namespace B2R2.FrontEnd.BinLifter.EVM
 
 open B2R2
-open B2R2.FrontEnd.BinLifter
 open B2R2.BinIR.LowUIR
 
-type RegExprs () =
-  let var sz t name = AST.var sz t name
+type internal RegExprs () =
+  let var sz t name = AST.var sz t name (EVMRegisterSet.singleton t)
 
   member val PC = var 256<rt> (Register.toRegID Register.PC) "PC" with get
   member val GAS = var 64<rt> (Register.toRegID Register.GAS) "GAS" with get
@@ -40,6 +39,6 @@ type RegExprs () =
     | R.PC -> __.PC
     | R.GAS -> __.GAS
     | R.SP -> __.SP
-    | _ -> raise UnhandledRegExprException
+    | _ -> raise B2R2.FrontEnd.BinLifter.UnhandledRegExprException
 
 // vim: set tw=80 sts=2 sw=2:

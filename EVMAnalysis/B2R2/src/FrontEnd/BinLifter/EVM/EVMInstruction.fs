@@ -65,6 +65,7 @@ type EVMInstruction (addr, numBytes, insInfo, wordSize) =
 
   override __.IsRET () =
     match __.Info.Opcode with
+    | Opcode.REVERT
     | Opcode.RETURN -> true
     | _ -> false
 
@@ -77,7 +78,7 @@ type EVMInstruction (addr, numBytes, insInfo, wordSize) =
     || __.Info.Opcode = Opcode.INVALID
     || __.Info.Opcode = Opcode.STOP
 
-  override __.IsTerminator () =
+  override __.IsBBLEnd () =
     __.IsDirectBranch ()
     || __.IsIndirectBranch ()
     || __.Info.Opcode = Opcode.REVERT
@@ -92,12 +93,10 @@ type EVMInstruction (addr, numBytes, insInfo, wordSize) =
     // FIXME
     false
 
-  override __.Immediate (_) = false
-
   override __.GetNextInstrAddrs () =
     let fallthrough = __.Address + uint64 __.Length
-    let acc = [| (fallthrough, ArchOperationMode.NoMode) |]
-    if __.IsExit () then [||]
+    let acc = Seq.singleton (fallthrough, ArchOperationMode.NoMode)
+    if __.IsExit () then Seq.empty
     else acc
 
   override __.InterruptNum (_num: byref<int64>) = Utils.futureFeature ()
@@ -105,30 +104,25 @@ type EVMInstruction (addr, numBytes, insInfo, wordSize) =
   override __.IsNop () = false
 
   override __.Translate ctxt =
-    (Lifter.translate __.Info ctxt).ToStmts ()
-
-  override __.TranslateToList ctxt =
     Lifter.translate __.Info ctxt
 
-  override __.Disasm (showAddr, _) =
+  override __.Disasm (showAddr, _resolveSymbol, _fileInfo) =
     let builder =
       DisasmStringBuilder (showAddr, false, WordSize.Bit256, addr, numBytes)
     Disasm.disasm __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Disasm () =
     let builder =
       DisasmStringBuilder (false, false, WordSize.Bit256, addr, numBytes)
     Disasm.disasm __.Info builder
-    builder.ToString ()
+    builder.Finalize ()
 
   override __.Decompose (showAddr) =
     let builder =
       DisasmWordBuilder (showAddr, false, WordSize.Bit256, addr, numBytes, 8)
     Disasm.disasm __.Info builder
-    builder.ToArray ()
-
-  override __.IsInlinedAssembly () = false
+    builder.Finalize ()
 
   override __.Equals (_) = Utils.futureFeature ()
   override __.GetHashCode () = Utils.futureFeature ()
